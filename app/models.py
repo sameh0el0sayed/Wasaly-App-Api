@@ -148,6 +148,38 @@ class ServiceArea(Base):
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
 
 
+class Banner(Base):
+    """Home-screen banner shown in the apps (admin managed)."""
+    __tablename__ = "banners"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    title_ar: Mapped[str] = mapped_column(String(160))
+    title_en: Mapped[str | None] = mapped_column(String(160), nullable=True)
+    subtitle_ar: Mapped[str | None] = mapped_column(String(300), nullable=True)
+    subtitle_en: Mapped[str | None] = mapped_column(String(300), nullable=True)
+    image_file_key: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    bg_color: Mapped[str | None] = mapped_column(String(7), nullable=True)
+    action_type: Mapped[str] = mapped_column(String(10), default="NONE")  # NONE | URL | SCREEN
+    action_value: Mapped[str | None] = mapped_column(String(300), nullable=True)
+    audience: Mapped[str] = mapped_column(String(10), default="ALL")  # CUSTOMER | DRIVER | ALL
+    starts_at: Mapped[datetime | None] = mapped_column(UTCDateTime, nullable=True)
+    ends_at: Mapped[datetime | None] = mapped_column(UTCDateTime, nullable=True)
+    sort_order: Mapped[int] = mapped_column(Integer, default=0)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
+
+
+class SavedPlace(Base):
+    __tablename__ = "saved_places"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
+    label: Mapped[str] = mapped_column(String(5))  # HOME | WORK | OTHER
+    name: Mapped[str] = mapped_column(String(100))
+    address: Mapped[str] = mapped_column(String(300))
+    latitude: Mapped[float] = mapped_column(Float)
+    longitude: Mapped[float] = mapped_column(Float)
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
+
+
 class AirportZone(Base):
     """Airport area (same boundary format as service areas). Trips starting or ending inside pay `fee` on top of the normal price."""
     __tablename__ = "airport_zones"
@@ -217,6 +249,10 @@ class Order(Base):
     est_distance_km: Mapped[float | None] = mapped_column(Float, nullable=True)  # estimate shown before the trip (not used for pricing)
     est_duration_min: Mapped[int | None] = mapped_column(Integer, nullable=True)
     # customer preferences (hard requirements for dispatch) + the fixed extras they cost, snapshotted at creation
+    pickup_photo: Mapped[str | None] = mapped_column(String(120), nullable=True)  # driver proof: before start-trip
+    pickup_photo_at: Mapped[datetime | None] = mapped_column(UTCDateTime, nullable=True)
+    delivery_photo: Mapped[str | None] = mapped_column(String(120), nullable=True)  # driver proof: before arrived-at-destination
+    delivery_photo_at: Mapped[datetime | None] = mapped_column(UTCDateTime, nullable=True)
     pref_ac: Mapped[bool] = mapped_column(Boolean, default=False)
     pref_smoking: Mapped[str] = mapped_column(String(12), default="ANY")  # ANY | ALLOWED | NOT_ALLOWED
     pref_driver_gender: Mapped[str] = mapped_column(String(8), default="ANY")  # ANY | FEMALE | MALE

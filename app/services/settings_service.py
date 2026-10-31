@@ -62,6 +62,10 @@ DEFAULTS = {
     "auto_suspend_driver_one_star_count": "1",  # drivers: suspend automatically after N one-star ratings (0 = off)
     "default_driver_gender": "MALE",  # used for drivers whose gender was not set (old accounts / not provided)
     "default_pref_ac": "false", "default_pref_smoking": "ANY", "default_pref_driver_gender": "ANY", "default_pref_large_car": "false",  # when the app sends no value
+    "require_pickup_photo": "true", "require_delivery_photo": "true",  # driver proof photos
+    "proof_photos_apply_to": "DELIVERY",  # DELIVERY = parcel orders only (no photos of passengers) | ALL = every order
+    "customer_live_tracking_enabled": "true",  # customers can see their driver's live position during an active order
+    "service_categories": '[{"key": "DOCUMENTS", "title_ar": "مستندات", "title_en": "Documents", "icon": "description", "color": "#1652F0", "prefill": {"cargo_description": "مستندات", "pref_large_car": false}, "is_active": true}, {"key": "PARCEL", "title_ar": "طرد", "title_en": "Parcel", "icon": "inventory_2", "color": "#6D4AFF", "prefill": {}, "is_active": true}, {"key": "SHOP", "title_ar": "طلب محل", "title_en": "Shop order", "icon": "shopping_bag", "color": "#16A36A", "prefill": {}, "is_active": true}, {"key": "LARGE", "title_ar": "أغراض كبيرة", "title_en": "Large items", "icon": "airport_shuttle", "color": "#E59A0B", "prefill": {"pref_large_car": true}, "is_active": true}, {"key": "AIRPORT", "title_ar": "مطار وسفر", "title_en": "Airport & travel", "icon": "flight", "color": "#4FA3FF", "prefill": {"pref_large_car": true}, "is_active": true}]',  # JSON list shown by the customer app (reorder / hide / rename)
     "large_car_vehicle_types": "SUV,VAN",  # vehicle_type values that count as a 'large car for travel and luggage'
     "pref_fee_ac": "0", "pref_fee_smoking_allowed": "0", "pref_fee_non_smoking": "0",  # fixed fee per customer preference (system currency)
     "pref_fee_female_driver": "0", "pref_fee_male_driver": "0", "pref_fee_large_car": "0",

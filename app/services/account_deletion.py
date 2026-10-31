@@ -6,13 +6,13 @@ from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..constants import AccountStatus, Role
-from ..models import (AppOpenEvent, DeviceToken, DriverProfile, LocationSnapshot, LoginEvent, Notification, UploadedFile, User, UserDevice,
+from ..models import (SavedPlace, AppOpenEvent, DeviceToken, DriverProfile, LocationSnapshot, LoginEvent, Notification, UploadedFile, User, UserDevice,
                       Vehicle, VehicleDocument, utcnow)
 from . import settings_service
 from .files import delete_object
 
 log = logging.getLogger("account_deletion")
-KEEP_PREFIX = "payment/"  # payment proofs are accounting evidence: kept with the payments
+KEEP_PREFIXES = ("payment/", "PICKUP_PROOF/", "DELIVERY_PROOF/")  # evidence that stays with the order/payment
 DELETED_NAME = "مستخدم محذوف"
 
 
@@ -23,21 +23,22 @@ async def purge_devices(db: AsyncSession, user_id: int) -> None:
 
 async def anonymize(db: AsyncSession, u: User) -> None:
     keys = [k for k in (await db.execute(select(UploadedFile.file_key).where(UploadedFile.owner_id == u.id))).scalars()
-            if not k.startswith(KEEP_PREFIX)]
+            if not k.startswith(KEEP_PREFIXES)]
     if u.driver_profile and u.driver_profile.license_document:
         keys.append(u.driver_profile.license_document)
     if u.vehicle:
         keys += [d.file_path for d in (await db.execute(select(VehicleDocument).where(VehicleDocument.vehicle_id == u.vehicle.id))).scalars()]
         keys += list((u.vehicle.photos or {}).values())
-    for k in {k for k in keys if k and not k.startswith(KEEP_PREFIX)}:
+    for k in {k for k in keys if k and not k.startswith(KEEP_PREFIXES)}:
         try:
             await delete_object(k)
         except Exception:  # noqa - a storage hiccup must not stop the privacy job; the row is removed anyway
             log.exception("could not delete stored file %s", k)
-    await db.execute(delete(UploadedFile).where(UploadedFile.owner_id == u.id, ~UploadedFile.file_key.like(KEEP_PREFIX + "%")))
+    await db.execute(delete(UploadedFile).where(UploadedFile.owner_id == u.id, *[~UploadedFile.file_key.like(p + "%") for p in KEEP_PREFIXES]))
     await db.execute(delete(LocationSnapshot).where(LocationSnapshot.user_id == u.id))
     await db.execute(delete(LoginEvent).where(LoginEvent.user_id == u.id))
     await db.execute(delete(AppOpenEvent).where(AppOpenEvent.user_id == u.id))
+    await db.execute(delete(SavedPlace).where(SavedPlace.user_id == u.id))
     await db.execute(delete(Notification).where(Notification.user_id == u.id))
     await purge_devices(db, u.id)
     u.full_name, u.profile_photo, u.cpr_photo = DELETED_NAME, None, None

@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from ..constants import AccountStatus, Role
 from ..database import get_db
 from ..deps import approved_user, current_user, paging
-from ..models import (Complaint, DeviceToken, Notification, Order, UploadedFile, User, Vehicle,
+from ..models import (Banner, Complaint, DeviceToken, Notification, Order, UploadedFile, User, Vehicle,
                       VehicleDocument)
 from ..schemas import ComplaintIn, DeviceIn, DocumentIn, LicenseRenewIn, ProfilePatch, ReasonIn, SignIn
 from ..security import create_file_token, decode_file_token, encrypt
@@ -110,8 +110,16 @@ async def upload_file(kind: str = Form("misc"), file: UploadFile = File(...),
 async def sign_file(body: SignIn, user: User = Depends(current_user), db: AsyncSession = Depends(get_db)):
     """Returns a short-lived (5 min) URL. Owner or admin only."""
     row = await db.get(UploadedFile, body.file_key)
-    if not row or (row.owner_id != user.id and user.role not in Role.ADMINS):
+    if not row:
         raise HTTPException(404, "File not found")
+    if row.owner_id != user.id and user.role not in Role.ADMINS:
+        proof = (await db.execute(select(Order.id).where(
+            (Order.pickup_photo == body.file_key) | (Order.delivery_photo == body.file_key),
+            (Order.customer_id == user.id) | (Order.driver_id == user.id)).limit(1))).first()
+        banner = (await db.execute(select(Banner.id).where(Banner.image_file_key == body.file_key,
+                                                           Banner.is_active.is_(True)).limit(1))).first()
+        if not proof and not banner:  # proof photos: people on the order only; banner images: any signed-in user
+            raise HTTPException(404, "File not found")
     return {"url": f"/api/files/download/{create_file_token(body.file_key)}", "expires_in_seconds": 300}
 
 

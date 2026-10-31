@@ -10,7 +10,7 @@ cp .env.example .env            # set SECRET_KEY, FERNET_KEY, first admin
 docker compose up --build       # API on :8000, docs on /docs
 # or locally (SQLite by default):
 pip install -r requirements.txt && uvicorn app.main:app --reload
-pytest                          # 97 tests
+pytest                          # 104 tests
 ```
 First super admin is created from `FIRST_ADMIN_*` on startup (must change password).
 Production: use PostgreSQL and Alembic (`alembic revision --autogenerate -m init && alembic upgrade head`);
@@ -184,3 +184,15 @@ There is no routing engine: distance = straight line x `estimate_road_factor` (1
 - Matching data: AC = vehicle `has_ac`; large car = `vehicle_type` in setting `large_car_vehicle_types` (default `SUV,VAN`); smoking = driver `PATCH /api/driver/preferences {smoking_allowed}`; gender = set at registration (`driver.gender`), changed only by an admin (`PATCH /api/admin/drivers/{id}/gender`, reason required).
 - Fees: fixed amount per preference from settings `pref_fee_ac|smoking_allowed|non_smoking|female_driver|male_driver|large_car` (default 0) + an airport fee. Airport zones: `GET/POST/PATCH/DELETE /api/admin/airport-zones` (super admin; circle or polygon, `fee`). A trip that starts or ends inside a zone pays that zone's fee once (the highest if several). All fees are snapshotted on the order, shown as `extras_fee` + `extras[]`, and added to the trip price (the night surcharge applies to the time price only).
 - Defaults (all admin settings): `default_driver_gender` (MALE) is used for drivers with no gender; `default_pref_ac|smoking|driver_gender|large_car` apply when the app does not send a preference (factory: no restriction). Shown to the app in `GET /api/app-config` → `preference_defaults`.
+
+## Driver proof photos
+Before `start-trip` (pickup proof, body `pickup_photo_file_key`) and `arrived-at-destination` (delivery proof, body `delivery_photo_file_key`) the driver uploads via `POST /api/uploads` with `kind=PICKUP_PROOF|DELIVERY_PROOF`. Settings `require_pickup_photo`, `require_delivery_photo` (default true) and `proof_photos_apply_to` (`DELIVERY` = parcel orders only, default; `ALL` = every order, including passengers). Errors 422: `PICKUP_PHOTO_REQUIRED`, `DELIVERY_PHOTO_REQUIRED`, `INVALID_FILE_KEY`. Orders expose `pickup_photo`, `pickup_photo_at`, `delivery_photo`, `delivery_photo_at`; the customer, driver and admin of the order can sign the files. Notifications `ORDER_PICKED_UP` / `ORDER_DELIVERED`. Proof photos are kept when an account is anonymized.
+
+## Driver proof photos
+`start-trip` accepts `pickup_photo_file_key` (kind `PICKUP_PROOF`), `arrived-at-destination` accepts `delivery_photo_file_key` (kind `DELIVERY_PROOF`). Required by `require_pickup_photo` / `require_delivery_photo`; by default only for DELIVERY orders (`proof_photos_apply_to=DELIVERY`, set `ALL` to include passenger trips). Only the customer, the driver and admins can sign these files.
+
+## Customer UI (wasaly-customer-ui-v1)
+- Banners: `GET /api/banners` (optional auth, audience defaults to caller role, anonymous = ALL), admin `GET/POST/PATCH/DELETE /api/admin/banners` (writes SUPER_ADMIN). Banner images can be signed via `/api/files/sign` by any signed-in user.
+- Live tracking: `GET /api/orders/{id}/driver-location` (owner customer, active statuses, latest point only, no history). Kill switch `customer_live_tracking_enabled`; stale after `live_location_max_age_seconds`. Orders expose `driver_live`. The driver consent text must say customers can see the location during an active order.
+- Saved places: `/api/places` (HOME/WORK upsert, max 20, deleted with the account data).
+- Service categories: `service_categories` in `/api/app-config`, edited with the `service_categories` setting (SUPER_ADMIN, validated).

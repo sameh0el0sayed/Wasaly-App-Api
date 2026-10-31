@@ -1,3 +1,5 @@
+import json
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
@@ -6,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from ..constants import CURRENCIES, OrderStatus as S, Role
 from ..database import get_db
 from ..deps import approved_user, customer_user, paging
-from ..models import Complaint, Order, OrderStatusHistory, User, utcnow
+from ..models import Complaint, DriverProfile, Order, OrderStatusHistory, User, utcnow
 from ..schemas import EstimateIn, ComplaintIn, OptionalReasonIn, OrderCreateIn, ReasonIn
 from ..serializers import (history_out, order_for_admin, order_for_customer, order_for_driver)
 from ..services import settings_service
@@ -14,11 +16,19 @@ from ..services.extras import compute_extras, resolve_prefs
 from ..services.dispatch import dispatch_order
 from ..services.files import assert_owned
 from ..services.estimate import money_estimate, route_guess
-from ..services.geo import find_area, point_in_boundary
+from ..services.geo import _haversine_m, find_area, point_in_boundary
 from ..services.notifications import notify
 from ..services.orders import close_pending_offers, load_order, transition
 
 router = APIRouter(prefix="/api", tags=["orders"])
+
+
+def _categories(raw: str) -> list[dict]:
+    try:
+        items = json.loads(raw)
+    except ValueError:
+        return []
+    return [c for c in items if c.get("is_active", True)]
 
 
 @router.get("/app-config")
@@ -34,11 +44,15 @@ async def app_config(db: AsyncSession = Depends(get_db)):
             "driver_rates_customer_enabled": s["driver_rates_customer_enabled"] == "true",
             "live_mode_enabled": s["live_mode_enabled"] == "true",
             "live_location_interval_seconds": int(s["live_location_interval_seconds"]),
+            "require_pickup_photo": s["require_pickup_photo"] == "true", "require_delivery_photo": s["require_delivery_photo"] == "true",
+            "proof_photos_apply_to": s["proof_photos_apply_to"],
             "preference_fees": {k: s[f"pref_fee_{k}"] for k in ("ac", "smoking_allowed", "non_smoking", "female_driver", "male_driver", "large_car")},
             "preference_defaults": {"ac": s["default_pref_ac"] == "true", "smoking": s["default_pref_smoking"],
                                     "driver_gender": s["default_pref_driver_gender"], "large_car": s["default_pref_large_car"] == "true"},
             "large_car_vehicle_types": [t.strip() for t in s["large_car_vehicle_types"].split(",") if t.strip()],
             "location_snapshots_enabled": s["location_snapshots_enabled"] == "true",
+            "customer_live_tracking_enabled": s["customer_live_tracking_enabled"] == "true",
+            "service_categories": _categories(s["service_categories"]),
             "online_window_minutes": int(s["online_window_minutes"]),
             "currency": p.currency, "currency_decimals": p.decimals, "upload_max_mb": int(s["upload_max_mb"]),
             "payment_methods": [m for m, k in (("TAP", "tap_enabled"), ("BENEFITPAY", "benefitpay_enabled")) if s[k] == "true"],
@@ -248,3 +262,33 @@ async def dispute(order_id: int, body: ReasonIn, user: User = Depends(approved_u
     db.add(c)
     await db.commit()
     return {"id": c.id, "status": c.status}
+
+
+LIVE_STATUSES = {S.ACCEPTED, S.DRIVER_ON_THE_WAY, S.ARRIVED_AT_PICKUP, S.IN_PROGRESS}
+
+
+@router.get("/orders/{order_id}/driver-location")
+async def driver_location(order_id: int, user: User = Depends(customer_user), db: AsyncSession = Depends(get_db)):
+    """Latest LIVE position of the order's driver (no history). Poll every ~5 s while the tracking screen is open."""
+    o = await load_order(db, order_id)
+    if not o or o.customer_id != user.id:
+        raise HTTPException(404, "Order not found")
+    if o.order_status not in LIVE_STATUSES:
+        raise HTTPException(409, {"code": "ORDER_NOT_ACTIVE", "message": "Tracking is only available while the order is active"})
+    s = await settings_service.get_all(db)
+    p = o.driver.driver_profile if o.driver else None
+    if s["customer_live_tracking_enabled"] != "true" or not p or not p.is_online or p.mode != "LIVE":
+        return {"available": False, "reason": "DRIVER_NOT_LIVE"}
+    if not o.driver.location_consent:
+        return {"available": False, "reason": "NO_CONSENT"}
+    if p.last_lat is None or p.last_lng is None or not p.last_location_at or \
+            (utcnow() - p.last_location_at).total_seconds() > int(s["live_location_max_age_seconds"]):
+        return {"available": False, "reason": "STALE"}
+    to_dest = o.order_status == S.IN_PROGRESS
+    tlat, tlng = (o.destination_latitude, o.destination_longitude) if to_dest else (o.pickup_latitude, o.pickup_longitude)
+    eta = None
+    if tlat is not None and tlng is not None:
+        speed = max(float(s["estimate_avg_speed_kmh"]), 1.0)
+        eta = max(1, round(_haversine_m(p.last_lat, p.last_lng, tlat, tlng) / 1000 / speed * 60))
+    return {"available": True, "lat": p.last_lat, "lng": p.last_lng, "heading": p.last_heading,
+            "updated_at": p.last_location_at.isoformat(), "eta_min": eta, "eta_target": "DESTINATION" if to_dest else "PICKUP"}

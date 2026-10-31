@@ -5,8 +5,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from ..constants import AccountStatus, OfferStatus, OrderStatus as S
 from ..database import get_db
 from ..deps import driver_user, paging
-from ..models import (DriverPayout, DriverProfile, DriverServiceArea, DriverWorkSession, Order, OrderOffer, User, Vehicle, utcnow)
-from ..schemas import DriverLocationIn, DriverPrefsIn, PayoutAccountIn, AvailabilityIn, OptionalReasonIn, ReasonIn, VehiclePatch
+from ..models import (DriverPayout, DriverProfile, DriverServiceArea, DriverWorkSession, Order, OrderOffer, UploadedFile, User, Vehicle, utcnow)
+from ..schemas import ArrivedIn, StartTripIn, DriverLocationIn, DriverPrefsIn, PayoutAccountIn, AvailabilityIn, OptionalReasonIn, ReasonIn, VehiclePatch
 from ..security import decrypt, encrypt
 from ..serializers import dt, money, offer_out, payout_out, order_for_driver, vehicle_full
 from ..services.dispatch import expire_offers_and_orders, force_offline, has_active_order, work_blockers
@@ -28,6 +28,20 @@ def _arrival_view(o) -> dict:
     d["customer_name"] = o.customer.full_name  # for the "rate your passenger" screen
     d["my_rating"] = None
     return d
+
+
+async def _proof_photo(db, user, o, file_key, kind: str, require_key: str, required_code: str) -> str | None:
+    """Validates a proof photo: uploaded by this driver with kind=<kind>. Required by setting (parcel orders by default)."""
+    s = await settings_service.get_all(db)
+    applies = o.service_type == "DELIVERY" or s["proof_photos_apply_to"] == "ALL"
+    if not file_key:
+        if applies and s[require_key] == "true":
+            raise HTTPException(422, {"code": required_code})
+        return None
+    row = await db.get(UploadedFile, file_key)
+    if not row or row.owner_id != user.id or not file_key.startswith(kind + "/"):
+        raise HTTPException(422, {"code": "INVALID_FILE_KEY"})
+    return file_key
 
 
 def _clear_location(profile) -> None:
@@ -191,22 +205,31 @@ async def arrived_at_pickup(order_id: int, user: User = Depends(driver_user), db
 
 
 @router.post("/orders/{order_id}/start-trip")
-async def start_trip(order_id: int, user: User = Depends(driver_user), db: AsyncSession = Depends(get_db)):
+async def start_trip(order_id: int, body: StartTripIn = StartTripIn(), user: User = Depends(driver_user), db: AsyncSession = Depends(get_db)):
     o = await _my_order(db, order_id, user)
     if o.order_status == S.IN_PROGRESS:
         return order_for_driver(o)  # retry after network loss: never overwrite trip_started_at
+    photo = await _proof_photo(db, user, o, body.pickup_photo_file_key, "PICKUP_PROOF", "require_pickup_photo", "PICKUP_PHOTO_REQUIRED")
+    if photo:
+        o.pickup_photo, o.pickup_photo_at = photo, utcnow()
     await transition(db, o, S.IN_PROGRESS, user.id, "DRIVER")
     o.trip_started_at = utcnow()  # SERVER clock; billing starts here
-    await notify(db, o.customer_id, "TRIP_STARTED", "بدأت الرحلة", "بدأت رحلتك.", o.id)
+    if o.pickup_photo:
+        await notify(db, o.customer_id, "ORDER_PICKED_UP", "تم استلام الطلب", "استلم السائق طلبك وبدأت الرحلة.", o.id)
+    else:
+        await notify(db, o.customer_id, "TRIP_STARTED", "بدأت الرحلة", "بدأت رحلتك.", o.id)
     await db.commit()
     return order_for_driver(o)
 
 
 @router.post("/orders/{order_id}/arrived-at-destination")
-async def arrived_at_destination(order_id: int, user: User = Depends(driver_user), db: AsyncSession = Depends(get_db)):
+async def arrived_at_destination(order_id: int, body: ArrivedIn = ArrivedIn(), user: User = Depends(driver_user), db: AsyncSession = Depends(get_db)):
     o = await _my_order(db, order_id, user)
     if o.order_status in (S.ARRIVED_AT_DESTINATION, S.COMPLETED):
         return _arrival_view(o)  # idempotent: never recompute
+    photo = await _proof_photo(db, user, o, body.delivery_photo_file_key, "DELIVERY_PROOF", "require_delivery_photo", "DELIVERY_PHOTO_REQUIRED")
+    if photo:
+        o.delivery_photo, o.delivery_photo_at = photo, utcnow()
     await transition(db, o, S.ARRIVED_AT_DESTINATION, user.id, "DRIVER")
     now = utcnow()
     o.trip_arrived_at = now
@@ -228,7 +251,10 @@ async def arrived_at_destination(order_id: int, user: User = Depends(driver_user
     await transition(db, o, S.COMPLETED, user.id, "DRIVER",
                      f"{secs}s, {units} unit(s), base {base}, night {night} +{surcharge}, extras {o.extras_fee}, trip {price}, outside {o.is_outside_bahrain} cut {o.outside_driver_cut}, commission {o.commission}, customer {o.customer_total}, driver {o.driver_earning}")
     o.completed_at = now
-    await notify(db, o.customer_id, "TRIP_COMPLETED", "اكتملت الرحلة", f"المبلغ المطلوب: {shown}", o.id)
+    if o.delivery_photo:
+        await notify(db, o.customer_id, "ORDER_DELIVERED", "تم التسليم", f"تم تسليم الطلب. المبلغ المطلوب: {shown}", o.id)
+    else:
+        await notify(db, o.customer_id, "TRIP_COMPLETED", "اكتملت الرحلة", f"المبلغ المطلوب: {shown}", o.id)
     await notify(db, user.id, "TRIP_COMPLETED", "اكتملت الرحلة", f"أرباحك من الرحلة: {earned}", o.id)
     await db.commit()
     return _arrival_view(o)

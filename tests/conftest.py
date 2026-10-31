@@ -88,7 +88,7 @@ async def setup_world(client, drivers=1, plain=True):
     await client.post(f"/api/admin/users/{cid}/approve", headers=auth(admin), json={})
     # most flow tests assume plain daytime pricing; night surcharge has its own tests
     r = await client.patch("/api/admin/settings", headers=auth(admin),
-                           json={"block_new_order_if_unpaid": False, "reason": "tests setup"})
+                           json={"block_new_order_if_unpaid": False, "require_pickup_photo": False, "require_delivery_photo": False, "reason": "tests setup"})
     assert r.status_code == 200, r.text
     if plain:  # most flow tests assume plain daytime pricing with 20% DEDUCT; defaults have their own test
         r = await client.patch("/api/admin/settings", headers=auth(admin),

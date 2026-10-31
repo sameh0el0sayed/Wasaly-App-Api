@@ -44,6 +44,19 @@ async def current_user(creds: HTTPAuthorizationCredentials | None = Depends(bear
     return user
 
 
+async def optional_user(creds: HTTPAuthorizationCredentials | None = Depends(bearer),
+                        db: AsyncSession = Depends(get_db)) -> User | None:
+    """For public endpoints that personalise when a valid token is sent (never raises)."""
+    if not creds:
+        return None
+    try:
+        data = decode_access_token(creds.credentials)
+        user = await db.get(User, int(data["sub"]))
+    except Exception:  # noqa
+        return None
+    return user if user and user.token_version == data.get("tv") and user.account_status != AccountStatus.DELETED else None
+
+
 async def approved_user(user: User = Depends(current_user)) -> User:
     if user.account_status != AccountStatus.APPROVED:
         raise HTTPException(status.HTTP_403_FORBIDDEN, {"code": "ACCOUNT_NOT_APPROVED",

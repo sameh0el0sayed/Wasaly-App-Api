@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime
 from decimal import Decimal
 from typing import Literal
 
@@ -247,6 +247,29 @@ class AreaPatch(BaseModel):
     v_boundary = field_validator("boundary")(lambda cls, v: _check_boundary(v))
 
 
+_HEX = r"^#[0-9A-Fa-f]{6}$"
+SCREENS = {"new_order", "pricing", "support"}
+PREFILL_KEYS = {"cargo_description", "pref_ac", "pref_smoking", "pref_driver_gender", "pref_large_car", "service_type"}
+
+
+class ServiceCategory(BaseModel):
+    key: str = Field(pattern=r"^[A-Z0-9_]{2,30}$")
+    title_ar: str = Field(min_length=1, max_length=60)
+    title_en: str = Field(min_length=1, max_length=60)
+    icon: str = Field(min_length=1, max_length=40)
+    color: str = Field(pattern=_HEX)
+    prefill: dict = {}
+    is_active: bool = True
+
+    @field_validator("prefill")
+    @classmethod
+    def _prefill(cls, v):
+        bad = set(v) - PREFILL_KEYS
+        if bad:
+            raise ValueError(f"unknown prefill keys: {sorted(bad)}")
+        return v
+
+
 class SettingsPatch(BaseModel):
     currency_code: str | None = None
     night_surcharge_enabled: bool | None = None
@@ -304,6 +327,11 @@ class SettingsPatch(BaseModel):
     default_pref_smoking: Literal["ANY", "ALLOWED", "NOT_ALLOWED"] | None = None
     default_pref_driver_gender: Literal["ANY", "FEMALE", "MALE"] | None = None
     default_pref_large_car: bool | None = None
+    customer_live_tracking_enabled: bool | None = None
+    service_categories: list[ServiceCategory] | None = Field(default=None, max_length=12)
+    require_pickup_photo: bool | None = None
+    require_delivery_photo: bool | None = None
+    proof_photos_apply_to: Literal["DELIVERY", "ALL"] | None = None
     large_car_vehicle_types: str | None = Field(default=None, max_length=200)
     pref_fee_ac: Decimal | None = Field(default=None, ge=0, le=1000)
     pref_fee_smoking_allowed: Decimal | None = Field(default=None, ge=0, le=1000)
@@ -443,6 +471,73 @@ class EstimateIn(PreferencesIn):
     pickup_longitude: float = Field(ge=-180, le=180)
     destination_latitude: float = Field(ge=-90, le=90)
     destination_longitude: float = Field(ge=-180, le=180)
+
+
+class BannerIn(BaseModel):
+    title_ar: str = Field(min_length=1, max_length=160)
+    title_en: str | None = Field(default=None, max_length=160)
+    subtitle_ar: str | None = Field(default=None, max_length=300)
+    subtitle_en: str | None = Field(default=None, max_length=300)
+    image_file_key: str | None = Field(default=None, max_length=120)
+    bg_color: str | None = Field(default=None, pattern=_HEX)
+    action: dict | None = None  # {"type": NONE|URL|SCREEN, "value": ...}
+    audience: Literal["CUSTOMER", "DRIVER", "ALL"] = "ALL"
+    starts_at: datetime | None = None
+    ends_at: datetime | None = None
+    sort_order: int = Field(default=0, ge=0, le=1000)
+    is_active: bool = True
+
+    @field_validator("action")
+    @classmethod
+    def _action(cls, v):
+        if v is None:
+            return {"type": "NONE", "value": None}
+        t, val = v.get("type", "NONE"), v.get("value")
+        if t not in ("NONE", "URL", "SCREEN"):
+            raise ValueError("action.type must be NONE, URL or SCREEN")
+        if t == "URL" and not (isinstance(val, str) and val.startswith("https://")):
+            raise ValueError("URL actions must start with https://")
+        if t == "SCREEN" and val not in SCREENS:
+            raise ValueError(f"SCREEN value must be one of {sorted(SCREENS)}")
+        return {"type": t, "value": val if t != "NONE" else None}
+
+    @model_validator(mode="after")
+    def _window(self):
+        if self.starts_at and self.ends_at and self.ends_at <= self.starts_at:
+            raise ValueError("ends_at must be after starts_at")
+        return self
+
+
+class BannerPatch(BannerIn):
+    title_ar: str | None = Field(default=None, min_length=1, max_length=160)
+    audience: Literal["CUSTOMER", "DRIVER", "ALL"] | None = None
+    sort_order: int | None = Field(default=None, ge=0, le=1000)
+    is_active: bool | None = None
+
+
+class PlaceIn(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+    label: Literal["HOME", "WORK", "OTHER"]
+    name: str = Field(min_length=1, max_length=100)
+    address: str = Field(min_length=1, max_length=300)
+    lat: float = Field(ge=-90, le=90)
+    lng: float = Field(ge=-180, le=180)
+
+
+class PlacePatch(BaseModel):
+    label: Literal["HOME", "WORK", "OTHER"] | None = None
+    name: str | None = Field(default=None, min_length=1, max_length=100)
+    address: str | None = Field(default=None, min_length=1, max_length=300)
+    lat: float | None = Field(default=None, ge=-90, le=90)
+    lng: float | None = Field(default=None, ge=-180, le=180)
+
+
+class StartTripIn(BaseModel):
+    pickup_photo_file_key: str | None = Field(default=None, max_length=120)
+
+
+class ArrivedIn(BaseModel):
+    delivery_photo_file_key: str | None = Field(default=None, max_length=120)
 
 
 class DriverPrefsIn(BaseModel):

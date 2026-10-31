@@ -41,6 +41,8 @@ def order_base(o: Order) -> dict:
         "night_surcharge": money(o.night_surcharge, d),
         "preferences": {"ac": o.pref_ac, "smoking": o.pref_smoking, "driver_gender": o.pref_driver_gender, "large_car": o.pref_large_car},
         "extras_fee": money(o.extras_fee, d), "extras": o.extras_breakdown or [],
+        "pickup_photo": o.pickup_photo, "pickup_photo_at": dt(o.pickup_photo_at),
+        "delivery_photo": o.delivery_photo, "delivery_photo_at": dt(o.delivery_photo_at),
         "night_applied": o.night_applied, "is_outside_bahrain": o.is_outside_bahrain, "currency": o.currency, "currency_decimals": d,
         "payment_id": o.payment_id, "payment_method": o.payment_method, "payment_status": o.payment_status,
         "completed_at": dt(o.completed_at), "cancelled_at": dt(o.cancelled_at),
@@ -58,6 +60,8 @@ def order_for_customer(o: Order) -> dict:
     d["driver"] = None
     if o.driver:  # never exposes CPR / license / documents
         d["driver"] = {"name": o.driver.full_name, "phone": o.driver.phone, "vehicle": vehicle_public(o.driver.vehicle)}
+    d["driver_live"] = bool(o.driver and o.driver.driver_profile and o.driver.driver_profile.is_online
+                            and o.driver.driver_profile.mode == "LIVE")
     return d
 
 

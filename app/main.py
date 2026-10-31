@@ -13,7 +13,7 @@ from .config import settings
 from .constants import AccountStatus, Role
 from .database import Base, SessionLocal, engine
 from .models import User, utcnow
-from .routers import account_deletion, activity, airports, admin, ratings, auth, driver, orders, payments, profile, subscriptions
+from .routers import account_deletion, activity, airports, admin, banners, places, ratings, auth, driver, orders, payments, profile, subscriptions
 from .security import hash_password, normalize_phone
 from .services.activity import sweep as activity_sweep
 from .services.subscriptions import sweep as subscriptions_sweep
@@ -89,5 +89,5 @@ async def health():
 
 for r in (auth.router, profile.router, orders.router, driver.router, payments.webhook_router, payments.router,
           payments.admin_router, subscriptions.router, subscriptions.admin_router, subscriptions.driver_router,
-          airports.router, account_deletion.router, account_deletion.admin_router, activity.router, activity.admin_router, ratings.router, admin.router):
+          airports.router, banners.router, places.router, account_deletion.router, account_deletion.admin_router, activity.router, activity.admin_router, ratings.router, admin.router):
     app.include_router(r)

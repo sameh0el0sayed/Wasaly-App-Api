@@ -444,7 +444,7 @@ async def patch_settings(body: SettingsPatch, admin: User = Depends(super_admin_
         if not fits_decimals(val, decimals):
             raise HTTPException(422, {"code": "TOO_MANY_DECIMALS", "field": k, "currency": new_cur, "max_decimals": decimals})
     for k, v in changes.items():
-        val = json.dumps(v) if isinstance(v, dict) else (str(v).lower() if isinstance(v, bool) else str(v))
+        val = json.dumps(v, ensure_ascii=False) if isinstance(v, (dict, list)) else (str(v).lower() if isinstance(v, bool) else str(v))
         await settings_service.set_value(db, k, val, admin.id)
     audit(db, admin.id, "SETTINGS_CHANGED", "settings", "global", body.reason,
           {"before": {k: before[k] for k in changes}, "after": {k: str(v) for k, v in changes.items()}})
