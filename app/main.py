@@ -28,6 +28,7 @@ from .routers import (
     profile,
     promo,
     ratings,
+    stream,
     subscriptions,
 )
 from .security import hash_password, normalize_phone
@@ -116,5 +117,5 @@ async def health():
 
 for r in (auth.router, profile.router, orders.router, driver.router, payments.webhook_router, payments.router,
           payments.admin_router, subscriptions.router, subscriptions.admin_router, subscriptions.driver_router,
-          airports.router, promo.router, banners.router, places.router, account_deletion.router, account_deletion.admin_router, activity.router, activity.admin_router, ratings.router, admin.router):
+          airports.router, promo.router, stream.router, banners.router, places.router, account_deletion.router, account_deletion.admin_router, activity.router, activity.admin_router, ratings.router, admin.router):
     app.include_router(r)

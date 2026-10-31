@@ -10,7 +10,7 @@ cp .env.example .env            # set SECRET_KEY, FERNET_KEY, first admin
 docker compose up --build       # API on :8000, docs on /docs
 # or locally (SQLite by default):
 pip install -r requirements.txt && uvicorn app.main:app --reload
-pytest                          # 109 tests
+pytest                          # 113 tests
 ```
 First super admin is created from `FIRST_ADMIN_*` on startup (must change password).
 Production: use PostgreSQL and Alembic (`alembic revision --autogenerate -m init && alembic upgrade head`);
@@ -209,3 +209,8 @@ Before `start-trip` (pickup proof, body `pickup_photo_file_key`) and `arrived-at
 - Admin: `GET /api/admin/promo-codes` (ADMIN); `POST/PATCH/DELETE` (SUPER_ADMIN). Fields: `code` (upper-cased), `percent` 1-100, `starts_at`, `ends_at`, `min_order_amount`, `is_active`. Master switch: setting `promo_enabled`.
 - Customer sends `promo_code` to `POST /api/orders/estimate` and `POST /api/orders`. Errors (422): `PROMO_INVALID`, `PROMO_EXPIRED`, `PROMO_NOT_STARTED`, `PROMO_MIN_ORDER`, `PROMO_DISABLED`.
 - The discount applies to the trip price only (base + night surcharge, never airport/preference extras) and is **paid by the platform**: the customer pays less, the driver's earning is unchanged, the company commission (`commission`) is reduced by the discount. The code is snapshotted on the order (`promo_code`, `promo_percent`, `discount_amount`).
+
+## Real-time stream (SSE)
+`GET /api/stream` (any signed-in user, `Authorization: Bearer`, `Accept: text/event-stream`). Admins receive every order/subscription event, customers and drivers only their own.
+Events (small notifications, the app refetches the resource): `order.created`, `order.status` (`old_status`, `new_status`), `subscription.created`, `subscription.status`; plus `: ping` comments every 15 s.
+Events are published **after the database commit** (never on rollback). In-process hub: with more than one server instance put Redis pub/sub behind `Hub.publish` (`services/realtime.py`).
