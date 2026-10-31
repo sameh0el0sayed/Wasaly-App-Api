@@ -10,7 +10,7 @@ cp .env.example .env            # set SECRET_KEY, FERNET_KEY, first admin
 docker compose up --build       # API on :8000, docs on /docs
 # or locally (SQLite by default):
 pip install -r requirements.txt && uvicorn app.main:app --reload
-pytest                          # 104 tests
+pytest                          # 106 tests
 ```
 First super admin is created from `FIRST_ADMIN_*` on startup (must change password).
 Production: use PostgreSQL and Alembic (`alembic revision --autogenerate -m init && alembic upgrade head`);
@@ -196,3 +196,11 @@ Before `start-trip` (pickup proof, body `pickup_photo_file_key`) and `arrived-at
 - Live tracking: `GET /api/orders/{id}/driver-location` (owner customer, active statuses, latest point only, no history). Kill switch `customer_live_tracking_enabled`; stale after `live_location_max_age_seconds`. Orders expose `driver_live`. The driver consent text must say customers can see the location during an active order.
 - Saved places: `/api/places` (HOME/WORK upsert, max 20, deleted with the account data).
 - Service categories: `service_categories` in `/api/app-config`, edited with the `service_categories` setting (SUPER_ADMIN, validated).
+
+## Architecture & migrations
+- **Migrations:** Alembic (`alembic upgrade head`). With `APP_ENV=production` the app runs migrations on start; dev/tests use `create_all`. After changing a model: `alembic revision --autogenerate -m "..."` (a test fails if models and migrations diverge).
+- **Admin API** is a package (`app/routers/admin/`: dashboard, users, drivers, orders, areas, settings, support, reports).
+- **Order state machine:** `services/orders.py` (`ALLOWED` table, `transition()` is the only writer of `order_status`).
+- **Storage strategy:** `services/storage_backends.py` (`CloudinaryStorage`, `LocalStorage`, `BACKENDS` registry).
+- **Events:** `services/events.py` in-process bus; `transition()` publishes `OrderStatusChanged`. Handlers can later move to a queue (outbox) when a module is split out.
+- **Lint:** `ruff check app tests`.

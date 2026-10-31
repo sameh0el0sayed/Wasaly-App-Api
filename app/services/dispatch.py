@@ -5,10 +5,9 @@ from datetime import date, timedelta
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..config import settings
-from ..constants import AccountStatus, OfferStatus, OrderStatus as S, ReviewStatus, Role
-from ..models import (DriverProfile, DriverServiceArea, DriverWorkSession, Notification, Order,
-                      OrderOffer, User, Vehicle, utcnow)
+from ..constants import AccountStatus, OfferStatus, ReviewStatus, Role
+from ..constants import OrderStatus as S
+from ..models import DriverProfile, DriverServiceArea, DriverWorkSession, Notification, Order, OrderOffer, User, utcnow
 from . import settings_service
 from .notifications import notify
 from .orders import close_pending_offers, transition

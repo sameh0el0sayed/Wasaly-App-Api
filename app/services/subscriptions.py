@@ -9,7 +9,7 @@ from fastapi import HTTPException
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..models import Notification, Payment, Subscription, SubscriptionTrip, User, utcnow
+from ..models import Notification, Payment, Subscription, SubscriptionTrip, utcnow
 from . import settings_service
 from .notifications import notify
 from .payments import create_payment

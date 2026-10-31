@@ -1,8 +1,7 @@
 from decimal import Decimal
 
-from .models import Order, OrderOffer, OrderStatusHistory, User
+from .models import Order, OrderOffer, OrderStatusHistory, User, utcnow
 from .security import decrypt
-from .models import utcnow
 
 
 def dt(v):

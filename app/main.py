@@ -1,8 +1,8 @@
 import asyncio
 import logging
 import time
-from pathlib import Path
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
@@ -14,19 +14,34 @@ from .config import settings
 from .constants import AccountStatus, Role
 from .database import Base, SessionLocal, engine
 from .models import User, utcnow
-from .routers import account_deletion, activity, airports, admin, banners, places, ratings, auth, driver, orders, payments, profile, subscriptions
+from .routers import (
+    account_deletion,
+    activity,
+    admin,
+    airports,
+    auth,
+    banners,
+    driver,
+    orders,
+    payments,
+    places,
+    profile,
+    ratings,
+    subscriptions,
+)
 from .security import hash_password, normalize_phone
 from .services.activity import sweep as activity_sweep
-from .services.subscriptions import sweep as subscriptions_sweep
 from .services.dispatch import enforce_driver_documents, expire_offers_and_orders
+from .services.subscriptions import sweep as subscriptions_sweep
 
 log = logging.getLogger("app")
 
 
 def run_migrations() -> None:
     """`alembic upgrade head` (runs in a thread because alembic/env.py starts its own event loop)."""
-    from alembic import command
     from alembic.config import Config
+
+    from alembic import command
     command.upgrade(Config(str(Path(__file__).resolve().parent.parent / "alembic.ini")), "head")
 
 

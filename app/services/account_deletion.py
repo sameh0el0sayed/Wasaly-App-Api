@@ -5,9 +5,20 @@ from datetime import timedelta
 from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..constants import AccountStatus, Role
-from ..models import (SavedPlace, AppOpenEvent, DeviceToken, DriverProfile, LocationSnapshot, LoginEvent, Notification, UploadedFile, User, UserDevice,
-                      Vehicle, VehicleDocument, utcnow)
+from ..constants import AccountStatus
+from ..models import (
+    AppOpenEvent,
+    DeviceToken,
+    LocationSnapshot,
+    LoginEvent,
+    Notification,
+    SavedPlace,
+    UploadedFile,
+    User,
+    UserDevice,
+    VehicleDocument,
+    utcnow,
+)
 from . import settings_service
 from .files import delete_object
 

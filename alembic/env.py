@@ -1,11 +1,11 @@
 import asyncio
 
-from alembic import context
 from sqlalchemy.ext.asyncio import create_async_engine
 
+import app.models  # noqa: F401
+from alembic import context
 from app.config import settings
 from app.database import Base
-import app.models  # noqa: F401
 
 target_metadata = Base.metadata
 

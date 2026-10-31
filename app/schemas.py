@@ -1,3 +1,4 @@
+import re as _re
 from datetime import date, datetime
 from decimal import Decimal
 from typing import Literal
@@ -404,7 +405,6 @@ class MarkTransferredIn(BaseModel):
     reference: str = Field(min_length=2, max_length=120)
 
 
-import re as _re
 
 
 class SubscriptionIn(BaseModel):

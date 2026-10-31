@@ -42,7 +42,7 @@ def test_commission_rounding_and_cap():
     assert calc_commission(Decimal("3.75"), "PERCENT", Decimal("20"), "DEDUCT", 2)[0] == Decimal("0.75")
 
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from zoneinfo import ZoneInfo
 
 from app.services.pricing import is_night_start, night_surcharge
@@ -57,7 +57,7 @@ def L(h, m, day=30):  # local Bahrain time
 def test_is_night_start_window():
     assert is_night_start(L(0, 0), BH) and is_night_start(L(3, 30), BH) and is_night_start(L(5, 59), BH)
     assert not is_night_start(L(6, 0), BH) and not is_night_start(L(12, 0), BH) and not is_night_start(L(23, 59), BH)
-    assert is_night_start(datetime(2026, 10, 29, 21, 0, tzinfo=timezone.utc), BH)  # 00:00 local from UTC input
+    assert is_night_start(datetime(2026, 10, 29, 21, 0, tzinfo=UTC), BH)  # 00:00 local from UTC input
 
 
 def test_is_night_start_custom_window_crossing_midnight():

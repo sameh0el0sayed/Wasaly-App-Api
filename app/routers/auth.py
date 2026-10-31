@@ -5,13 +5,12 @@ from sqlalchemy import or_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..config import settings
-from ..constants import AccountStatus, Role
+from ..constants import AccountStatus
 from ..database import get_db
 from ..deps import current_user
-from ..models import Complaint, DriverProfile, LoginEvent, User, UserDevice, Vehicle, VehicleDocument, utcnow
+from ..models import Complaint, DriverProfile, LoginEvent, User, UserDevice, Vehicle, utcnow
 from ..schemas import ChangePasswordIn, ForgotPasswordIn, LoginIn, RegisterIn
-from ..security import (cpr_hash, create_access_token, encrypt, hash_password, verify_password)
+from ..security import cpr_hash, create_access_token, encrypt, hash_password, verify_password
 from ..serializers import user_public
 from ..services import settings_service
 from ..services.files import assert_owned

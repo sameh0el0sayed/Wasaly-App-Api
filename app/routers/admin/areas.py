@@ -7,9 +7,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from ...constants import OrderStatus as S
 from ...database import get_db
 from ...deps import admin_user
-from ...models import (Order,
-                      ServiceArea, User)
-from ...schemas import (AreaIn, AreaPatch)
+from ...models import Order, ServiceArea, User
+from ...schemas import AreaIn, AreaPatch
 from ...services.audit import audit
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])

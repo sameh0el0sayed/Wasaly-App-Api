@@ -5,7 +5,8 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..constants import AccountStatus, OrderStatus as S, Role
+from ..constants import AccountStatus, Role
+from ..constants import OrderStatus as S
 from ..database import get_db
 from ..deps import admin_user, current_user
 from ..models import Order, Subscription, User, utcnow

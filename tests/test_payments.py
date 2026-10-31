@@ -6,8 +6,8 @@ from app.database import SessionLocal
 from app.models import Order, utcnow
 from app.services import tap as tap_mod
 
-from .test_cloudinary_storage import fake  # noqa: F401
 from .conftest import KHOBAR, auth, order_body, setup_world
+from .test_cloudinary_storage import fake  # noqa: F401
 
 PNG = (b"\x89PNG\r\n\x1a\n" + b"\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01\x08\x06\x00\x00\x00\x1f\x15\xc4\x89"
        b"\x00\x00\x00\rIDATx\x9cc\xf8\xff\xff?\x00\x05\xfe\x02\xfe\xa7\x9a\xa0\xa0\x00\x00\x00\x00IEND\xaeB`\x82")
@@ -197,6 +197,7 @@ async def test_new_reports_available(client):
 
 async def test_push_sent_to_registered_device_on_payment_confirmed(client, monkeypatch):
     import asyncio
+
     from app.services import notifications
     sent = []
 

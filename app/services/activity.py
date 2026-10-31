@@ -2,7 +2,7 @@
 import time
 from datetime import timedelta
 
-from sqlalchemy import delete, select, update
+from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..models import AppOpenEvent, DriverProfile, LocationSnapshot, LoginEvent, User, utcnow

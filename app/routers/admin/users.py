@@ -9,11 +9,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from ...constants import AccountStatus, ReviewStatus, Role
 from ...database import get_db
 from ...deps import admin_user, paging, super_admin_user
-from ...models import (AdminAuditLog, DriverServiceArea, Order,
-                      Rating, User, utcnow)
-from ...schemas import (AdminCreateIn, ApproveIn, ReasonIn, ReinstateIn, DebtSettleIn, ResetPasswordIn)
+from ...models import AdminAuditLog, DriverServiceArea, Order, Rating, User, utcnow
+from ...schemas import AdminCreateIn, ApproveIn, DebtSettleIn, ReasonIn, ReinstateIn, ResetPasswordIn
 from ...security import cpr_hash, decrypt, hash_password
-from ...serializers import (dt, driver_block, money, user_public)
+from ...serializers import driver_block, dt, money, user_public
 from ...services import settings_service
 from ...services.activity import is_online
 from ...services.audit import audit

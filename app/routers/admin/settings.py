@@ -7,8 +7,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from ...constants import CURRENCIES
 from ...database import get_db
 from ...deps import admin_user, super_admin_user
-from ...models import (User)
-from ...schemas import (SettingsPatch)
+from ...models import User
+from ...schemas import SettingsPatch
 from ...services import settings_service
 from ...services.audit import audit
 from ...services.pricing import fits_decimals

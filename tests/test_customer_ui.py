@@ -1,7 +1,6 @@
-import json
 from datetime import timedelta
 
-from app.models import DriverProfile, utcnow
+from app.models import utcnow
 from tests.conftest import auth, order_body, register_customer, setup_world
 
 BANNER = {"title_ar": "خصم 20%", "title_en": "20% off", "bg_color": "#1652F0", "audience": "CUSTOMER",

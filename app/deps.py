@@ -19,6 +19,7 @@ async def touch_last_seen(user: User) -> None:
         return
     try:
         from sqlalchemy import update
+
         from .database import SessionLocal
         async with SessionLocal() as s:
             await s.execute(update(User).where(User.id == user.id).values(last_seen_at=now))

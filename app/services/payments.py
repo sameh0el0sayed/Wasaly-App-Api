@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from ..constants import Role
 from ..models import DriverPayout, DriverProfile, Order, Payment, User, utcnow
 from ..security import decrypt
-from . import payouts, settings_service
+from . import payouts
 from .notifications import notify
 from .pricing import quantum
 

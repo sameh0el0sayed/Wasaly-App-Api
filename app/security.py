@@ -2,7 +2,7 @@ import base64
 import hashlib
 import hmac
 import re
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from functools import lru_cache
 
 import jwt
@@ -65,7 +65,7 @@ def validate_cpr(cpr: str) -> str:
 
 
 def _now() -> datetime:
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 def create_access_token(user_id: int, token_version: int) -> str:

@@ -6,7 +6,7 @@ from app.database import SessionLocal
 from app.models import AdminAuditLog, LocationSnapshot, User, utcnow
 from app.services import activity
 
-from .conftest import ADMIN, auth, login, order_body, register_customer, setup_world
+from .conftest import auth, order_body, setup_world
 
 DEV = {"device_id": "install-abc-123", "platform": "android", "model": "Pixel 8", "os_name": "Android", "os_version": "15",
        "app_version": "1.2.0", "locale": "ar-BH"}

@@ -1,7 +1,7 @@
 import csv
 import io
 from collections import defaultdict
-from datetime import date, datetime, timedelta, timezone
+from datetime import UTC, date, datetime, timedelta
 from decimal import Decimal
 from zoneinfo import ZoneInfo
 
@@ -14,16 +14,15 @@ from ...config import settings
 from ...constants import OrderStatus as S
 from ...database import get_db
 from ...deps import admin_user
-from ...models import (DriverPayout, DriverWorkSession, Order,
-                      Payment, ServiceArea, Subscription, User, utcnow)
-from ...serializers import (dt, money)
+from ...models import DriverPayout, DriverWorkSession, Order, Payment, ServiceArea, Subscription, User, utcnow
+from ...serializers import dt, money
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])
 
 
 # ---------------- reports ----------------
 def _local_start(d: date) -> datetime:
-    return datetime(d.year, d.month, d.day, tzinfo=ZoneInfo(settings.timezone)).astimezone(timezone.utc)
+    return datetime(d.year, d.month, d.day, tzinfo=ZoneInfo(settings.timezone)).astimezone(UTC)
 
 
 REPORTS = ("summary", "orders_by_period", "per_driver", "per_area", "no_driver", "driver_hours", "trips",

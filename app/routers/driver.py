@@ -1,22 +1,42 @@
+from zoneinfo import ZoneInfo
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..constants import AccountStatus, OfferStatus, OrderStatus as S
+from ..config import settings
+from ..constants import AccountStatus, OfferStatus
+from ..constants import OrderStatus as S
 from ..database import get_db
 from ..deps import driver_user, paging
-from ..models import (DriverPayout, DriverProfile, DriverServiceArea, DriverWorkSession, Order, OrderOffer, UploadedFile, User, Vehicle, utcnow)
-from ..schemas import ArrivedIn, StartTripIn, DriverLocationIn, DriverPrefsIn, PayoutAccountIn, AvailabilityIn, OptionalReasonIn, ReasonIn, VehiclePatch
+from ..models import (
+    DriverPayout,
+    DriverProfile,
+    DriverServiceArea,
+    DriverWorkSession,
+    Order,
+    OrderOffer,
+    UploadedFile,
+    User,
+    utcnow,
+)
+from ..schemas import (
+    ArrivedIn,
+    AvailabilityIn,
+    DriverLocationIn,
+    DriverPrefsIn,
+    PayoutAccountIn,
+    ReasonIn,
+    StartTripIn,
+    VehiclePatch,
+)
 from ..security import decrypt, encrypt
-from ..serializers import dt, money, offer_out, payout_out, order_for_driver, vehicle_full
-from ..services.dispatch import expire_offers_and_orders, force_offline, has_active_order, work_blockers
+from ..serializers import dt, money, offer_out, order_for_driver, payout_out, vehicle_full
 from ..services import settings_service
+from ..services.dispatch import expire_offers_and_orders, force_offline, has_active_order, work_blockers
 from ..services.files import assert_owned
 from ..services.notifications import notify
 from ..services.orders import close_pending_offers, load_order, transition
-from zoneinfo import ZoneInfo
-
-from ..config import settings
 from ..services.payments import create_payment
 from ..services.pricing import calc_price, duration_seconds, is_night_start, night_surcharge, split_order
 

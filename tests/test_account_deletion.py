@@ -1,11 +1,11 @@
 from datetime import timedelta
 
-from sqlalchemy import select, update
+from sqlalchemy import update
 
 from app.database import SessionLocal
-from app.models import Order, UploadedFile, User, utcnow
+from app.models import UploadedFile, User, utcnow
 from app.services.account_deletion import anonymize_due
-from tests.conftest import auth, login, order_body, setup_world
+from tests.conftest import auth, order_body, setup_world
 from tests.test_flow import _complete_trip
 
 PNG = b"\x89PNG\r\n\x1a\n" + b"0" * 64

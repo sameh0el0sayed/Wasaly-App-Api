@@ -1,3 +1,4 @@
+import jwt
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from fastapi.responses import Response
 from sqlalchemy import func, select, update
@@ -6,17 +7,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from ..constants import AccountStatus, Role
 from ..database import get_db
 from ..deps import approved_user, current_user, paging
-from ..models import (Banner, Complaint, DeviceToken, Notification, Order, UploadedFile, User, Vehicle,
-                      VehicleDocument)
+from ..models import Banner, Complaint, DeviceToken, Notification, Order, UploadedFile, User, VehicleDocument
 from ..schemas import ComplaintIn, DeviceIn, DocumentIn, LicenseRenewIn, ProfilePatch, ReasonIn, SignIn
-from ..security import create_file_token, decode_file_token, encrypt
-from ..serializers import dt, driver_block, user_public
-from ..services import settings_service
+from ..security import create_file_token, decode_file_token
+from ..serializers import driver_block, dt, user_public
 from ..services.dispatch import force_offline
 from ..services.files import assert_owned, get_bytes, save_upload
-from ..services.notifications import notify
-
-import jwt
 
 router = APIRouter(prefix="/api", tags=["profile"])
 

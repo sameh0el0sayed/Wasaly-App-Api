@@ -6,14 +6,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from ...constants import Role
 from ...database import get_db
 from ...deps import admin_user, paging
-from ...models import (DriverProfile, DriverServiceArea, ServiceArea, User, Vehicle, VehicleDocument, utcnow)
-from ...schemas import (DocReviewIn,
-                       DriverAreasIn)
-from ...serializers import (user_public)
+from ...models import DriverProfile, DriverServiceArea, ServiceArea, User, Vehicle, VehicleDocument, utcnow
+from ...schemas import DocReviewIn, DriverAreasIn
+from ...serializers import user_public
 from ...services.audit import audit
 from ...services.dispatch import force_offline
 from ...services.notifications import notify
-
 from .users import _target  # noqa: E402
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])

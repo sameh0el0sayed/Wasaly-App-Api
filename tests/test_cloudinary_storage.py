@@ -7,7 +7,7 @@ import pytest
 from fastapi import HTTPException
 
 from app.config import settings
-from app.services import files
+from app.services import files, storage_backends
 
 PNG = b"\x89PNG\r\n\x1a\n" + b"0" * 64
 SECRET = "test-secret-xyz"
@@ -48,7 +48,7 @@ def fake(monkeypatch):
     monkeypatch.setattr(settings, "cloudinary_cloud_name", "democloud")
     monkeypatch.setattr(settings, "cloudinary_api_key", "key123")
     monkeypatch.setattr(settings, "cloudinary_api_secret", SECRET)
-    monkeypatch.setattr(files, "_transport", httpx.MockTransport(handler))
+    monkeypatch.setattr(storage_backends, "_transport", httpx.MockTransport(handler))
     return store
 
 

@@ -5,10 +5,11 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..constants import OrderStatus as S, Role
+from ..constants import OrderStatus as S
+from ..constants import Role
 from ..database import get_db
 from ..deps import admin_user, current_user
-from ..models import (AppOpenEvent, DeviceToken, DriverWorkSession, LocationSnapshot, LoginEvent, Order, OrderOffer, User, UserDevice, utcnow)
+from ..models import AppOpenEvent, DeviceToken, DriverWorkSession, LocationSnapshot, LoginEvent, Order, OrderOffer, User, UserDevice, utcnow
 from ..schemas import AppOpenIn, LocationConsentIn, LocationSnapshotIn
 from ..serializers import dt
 from ..services import settings_service

@@ -7,7 +7,8 @@ from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..constants import AccountStatus, OrderStatus as S, Role
+from ..constants import AccountStatus, Role
+from ..constants import OrderStatus as S
 from ..database import get_db
 from ..deps import customer_user, driver_user
 from ..models import Order, Rating, User, utcnow

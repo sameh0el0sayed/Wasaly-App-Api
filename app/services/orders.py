@@ -4,8 +4,10 @@ from fastapi import HTTPException
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..constants import OfferStatus, OrderStatus as S
+from ..constants import OfferStatus
+from ..constants import OrderStatus as S
 from ..models import Order, OrderOffer, OrderStatusHistory, utcnow
+from . import events
 
 ALLOWED: dict[str, set[str]] = {
     S.PENDING: {S.OFFERED, S.NO_DRIVER_AVAILABLE, S.CANCELLED, S.EXPIRED},
@@ -37,6 +39,7 @@ async def transition(db: AsyncSession, order: Order, new: str, actor_id: int | N
     db.add(OrderStatusHistory(order_id=order.id, old_status=old, new_status=new, changed_by=actor_id,
                               changed_by_role=actor_role, changed_at=utcnow(), notes=notes))
     await db.flush()
+    await events.publish(events.OrderStatusChanged(order.id, old, new, actor_id, actor_role))
 
 
 async def load_order(db: AsyncSession, order_id: int, for_update: bool = False) -> Order | None:

@@ -1,14 +1,13 @@
 import asyncio
-from datetime import timedelta
+from datetime import UTC, timedelta
 
 from sqlalchemy import update
 
 from app.database import SessionLocal
 from app.models import Order, OrderOffer, utcnow
 from app.models import utcnow as real_utcnow
-from app.services.dispatch import expire_offers_and_orders
 
-from .conftest import KHOBAR, ADMIN, auth, login, make_area, order_body, register_customer, register_driver, setup_world
+from .conftest import KHOBAR, auth, login, make_area, order_body, register_customer, register_driver, setup_world
 
 
 async def test_no_otp_endpoints(client):
@@ -120,8 +119,9 @@ async def test_offers_only_to_drivers_in_pickup_area(client):
 
 async def test_expired_license_blocks_driver(client):
     admin, area, (cid, ctoken), [(did, dtoken)] = await setup_world(client)
-    from app.models import DriverProfile
     from datetime import date
+
+    from app.models import DriverProfile
     async with SessionLocal() as db:
         await db.execute(update(DriverProfile).where(DriverProfile.user_id == did).values(license_expiry_date=date(2020, 1, 1)))
         await db.commit()
@@ -271,7 +271,8 @@ async def test_commission_deduct_then_add_from_settings(client):
 
 
 async def test_night_surcharge_full_when_trip_starts_at_night(client, monkeypatch):
-    from datetime import datetime, timezone
+    from datetime import datetime
+
     import app.routers.driver as drv
     admin, area, (cid, ctoken), [(did, dtoken)] = await setup_world(client)
     r = await client.patch("/api/admin/settings", headers=auth(admin),
@@ -294,7 +295,7 @@ async def test_night_surcharge_full_when_trip_starts_at_night(client, monkeypatc
         return oid, res
 
     # 01:00 -> 01:20 Bahrain (22:00 -> 22:20 UTC): 20 min = 4 units = 2.000 -> night +25% = 2.500
-    oid, r = await run_trip(datetime(2026, 10, 29, 22, 0, tzinfo=timezone.utc), datetime(2026, 10, 29, 22, 20, tzinfo=timezone.utc))
+    oid, r = await run_trip(datetime(2026, 10, 29, 22, 0, tzinfo=UTC), datetime(2026, 10, 29, 22, 20, tzinfo=UTC))
     assert (r["base_price"], r["night_surcharge"], r["night_applied"], r["final_price"]) == ("2.000", "0.500", True, "2.500")
     # ADD mode: driver takes 2.500, company profit 20% of 2.500 = 0.500 added on top, customer pays 3.000
     assert (r["driver_earning"],) == ("2.500",)
@@ -304,18 +305,19 @@ async def test_night_surcharge_full_when_trip_starts_at_night(client, monkeypatc
     assert (a["commission"], a["customer_total"], a["driver_earning"]) == ("0.500", "3.000", "2.500")
 
     # trip starting at 06:10 Bahrain (03:10 UTC) is a normal trip: 2.000, no surcharge, driver 2.000, customer 2.400
-    oid2, r2 = await run_trip(datetime(2026, 10, 30, 3, 10, tzinfo=timezone.utc), datetime(2026, 10, 30, 3, 30, tzinfo=timezone.utc))
+    oid2, r2 = await run_trip(datetime(2026, 10, 30, 3, 10, tzinfo=UTC), datetime(2026, 10, 30, 3, 30, tzinfo=UTC))
     assert (r2["night_surcharge"], r2["night_applied"], r2["final_price"], r2["driver_earning"]) == ("0.000", False, "2.000", "2.000")
     assert (await client.get(f"/api/orders/{oid2}", headers=auth(ctoken))).json()["customer_total"] == "2.400"
 
     # DEDUCT mode keeps the same price but the commission comes out of it
     await client.patch("/api/admin/settings", headers=auth(admin), json={"commission_mode": "DEDUCT", "reason": "deduct"})
-    oid3, r3 = await run_trip(datetime(2026, 10, 29, 22, 0, tzinfo=timezone.utc), datetime(2026, 10, 29, 22, 20, tzinfo=timezone.utc))
+    oid3, r3 = await run_trip(datetime(2026, 10, 29, 22, 0, tzinfo=UTC), datetime(2026, 10, 29, 22, 20, tzinfo=UTC))
     assert (r3["final_price"], r3["driver_earning"], r3["platform_fee"]) == ("2.500", "2.000", "0.500")
 
 
 async def test_factory_defaults_30_percent_add_with_night_surcharge(client, monkeypatch):
-    from datetime import datetime, timezone
+    from datetime import datetime
+
     import app.routers.driver as drv
     admin, area, (cid, ctoken), [(did, dtoken)] = await setup_world(client, plain=False)
     pr = (await client.get("/api/pricing")).json()
@@ -337,7 +339,7 @@ async def test_factory_defaults_30_percent_add_with_night_surcharge(client, monk
         return oid, res
 
     # night (01:00-01:20 Bahrain): 2.000 + 25% = 2.500 ; company 30% of 2.500 = 0.750 on top ; driver takes 2.500
-    oid, r = await trip(datetime(2026, 10, 29, 22, 0, tzinfo=timezone.utc), datetime(2026, 10, 29, 22, 20, tzinfo=timezone.utc))
+    oid, r = await trip(datetime(2026, 10, 29, 22, 0, tzinfo=UTC), datetime(2026, 10, 29, 22, 20, tzinfo=UTC))
     assert (r["base_price"], r["night_surcharge"], r["final_price"], r["driver_earning"]) == ("2.000", "0.500", "2.500", "2.500")
     c = (await client.get(f"/api/orders/{oid}", headers=auth(ctoken))).json()
     assert (c["customer_total"], c["service_fee"]) == ("3.250", "0.750")
@@ -345,14 +347,15 @@ async def test_factory_defaults_30_percent_add_with_night_surcharge(client, monk
     assert (a["commission"], a["commission_mode"], a["commission_value"]) == ("0.750", "ADD", "30.000")
 
     # day (06:10-06:30 Bahrain): 2.000 ; company 30% = 0.600 ; customer pays 2.600 ; driver 2.000
-    oid2, r2 = await trip(datetime(2026, 10, 30, 3, 10, tzinfo=timezone.utc), datetime(2026, 10, 30, 3, 30, tzinfo=timezone.utc))
+    oid2, r2 = await trip(datetime(2026, 10, 30, 3, 10, tzinfo=UTC), datetime(2026, 10, 30, 3, 30, tzinfo=UTC))
     assert (r2["night_applied"], r2["final_price"], r2["driver_earning"]) == (False, "2.000", "2.000")
     c2 = (await client.get(f"/api/orders/{oid2}", headers=auth(ctoken))).json()
     assert (c2["customer_total"], c2["service_fee"]) == ("2.600", "0.600")
 
 
 async def test_outside_bahrain_customer_30_driver_minus_25_with_night(client, monkeypatch):
-    from datetime import datetime, timezone
+    from datetime import datetime
+
     import app.routers.driver as drv
     admin, area, (cid, ctoken), [(did, dtoken)] = await setup_world(client, plain=False)  # factory defaults
     pr = (await client.get("/api/pricing")).json()
@@ -377,8 +380,8 @@ async def test_outside_bahrain_customer_30_driver_minus_25_with_night(client, mo
         monkeypatch.setattr(drv, "utcnow", real_utcnow)
         return oid, res
 
-    day_s = datetime(2026, 10, 30, 9, 0, tzinfo=timezone.utc)   # 12:00 Bahrain
-    night_s = datetime(2026, 10, 29, 22, 0, tzinfo=timezone.utc)  # 01:00 Bahrain
+    day_s = datetime(2026, 10, 30, 9, 0, tzinfo=UTC)   # 12:00 Bahrain
+    night_s = datetime(2026, 10, 29, 22, 0, tzinfo=UTC)  # 01:00 Bahrain
 
     # inside Bahrain, day: company 30% only
     oid, r = await trip(day_s, day_s + timedelta(minutes=20))

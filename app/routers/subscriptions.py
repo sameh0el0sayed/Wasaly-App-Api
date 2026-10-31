@@ -1,5 +1,4 @@
 """Monthly subscriptions: customer (individual / parent), admin (price + driver), driver (daily trips)."""
-from datetime import timedelta
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
@@ -11,7 +10,8 @@ from ..deps import admin_user, customer_user, driver_user, paging
 from ..models import Subscription, SubscriptionTrip, User, utcnow
 from ..schemas import ReasonIn, SubscriptionIn, SubscriptionQuoteIn
 from ..serializers import payment_out, sub_trip_out, subscription_out
-from ..services import settings_service, subscriptions as svc
+from ..services import settings_service
+from ..services import subscriptions as svc
 from ..services.audit import audit
 from ..services.notifications import notify
 from ..services.payments import notify_admins

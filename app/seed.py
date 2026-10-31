@@ -2,13 +2,13 @@
 import json
 import logging
 from datetime import date
+from decimal import Decimal
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from .config import settings
 from .constants import AccountStatus, Role
-from decimal import Decimal
 from .models import AirportZone, DriverProfile, DriverServiceArea, ServiceArea, User, Vehicle, utcnow
 from .security import cpr_hash, encrypt, hash_password, normalize_phone
 

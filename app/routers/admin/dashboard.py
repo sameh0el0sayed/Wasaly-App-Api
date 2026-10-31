@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, Depends
@@ -6,12 +6,12 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ...config import settings
-from ...constants import AccountStatus, OrderStatus as S, Role
+from ...constants import AccountStatus, Role
+from ...constants import OrderStatus as S
 from ...database import get_db
 from ...deps import admin_user
-from ...models import (Complaint, DriverProfile, Order,
-                      User, utcnow)
-from ...serializers import (money)
+from ...models import Complaint, DriverProfile, Order, User, utcnow
+from ...serializers import money
 from ...services import settings_service
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])
@@ -22,7 +22,7 @@ router = APIRouter(prefix="/api/admin", tags=["admin"])
 async def dashboard(admin: User = Depends(admin_user), db: AsyncSession = Depends(get_db)):
     async def count(q):
         return (await db.execute(q)).scalar_one()
-    today_start = datetime.now(ZoneInfo(settings.timezone)).replace(hour=0, minute=0, second=0, microsecond=0).astimezone(timezone.utc)
+    today_start = datetime.now(ZoneInfo(settings.timezone)).replace(hour=0, minute=0, second=0, microsecond=0).astimezone(UTC)
     U, O = User, Order
     return {
         "customers_total": await count(select(func.count()).select_from(U).where(U.role == Role.CUSTOMER)),
