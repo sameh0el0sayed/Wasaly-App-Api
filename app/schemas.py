@@ -40,6 +40,8 @@ class DriverRegIn(BaseModel):
     license_number: str = Field(min_length=3, max_length=40)
     license_expiry_date: date
     license_document: str | None = None
+    gender: Literal["MALE", "FEMALE"] | None = None  # needed to receive orders that ask for a male/female driver
+    smoking_allowed: bool = False
     vehicle: VehicleIn
 
 
@@ -114,7 +116,15 @@ class AvailabilityIn(BaseModel):
         return self
 
 
-class OrderCreateIn(BaseModel):
+class PreferencesIn(BaseModel):
+    """None = "not sent": the server uses the admin-defined default (settings default_pref_*). Sending a value always wins."""
+    pref_ac: bool | None = None
+    pref_smoking: Literal["ANY", "ALLOWED", "NOT_ALLOWED"] | None = None
+    pref_driver_gender: Literal["ANY", "FEMALE", "MALE"] | None = None
+    pref_large_car: bool | None = None
+
+
+class OrderCreateIn(PreferencesIn):
     service_type: Literal["PERSON", "DELIVERY"]
     pickup_address: str = Field(min_length=2, max_length=300)
     pickup_latitude: float | None = Field(default=None, ge=-90, le=90)
@@ -289,6 +299,19 @@ class SettingsPatch(BaseModel):
     rating_window_hours: int | None = Field(default=None, ge=1, le=720)
     rating_comment_max_chars: int | None = Field(default=None, ge=50, le=2000)
     auto_suspend_driver_one_star_count: int | None = Field(default=None, ge=0, le=20)
+    default_driver_gender: Literal["MALE", "FEMALE"] | None = None
+    default_pref_ac: bool | None = None
+    default_pref_smoking: Literal["ANY", "ALLOWED", "NOT_ALLOWED"] | None = None
+    default_pref_driver_gender: Literal["ANY", "FEMALE", "MALE"] | None = None
+    default_pref_large_car: bool | None = None
+    large_car_vehicle_types: str | None = Field(default=None, max_length=200)
+    pref_fee_ac: Decimal | None = Field(default=None, ge=0, le=1000)
+    pref_fee_smoking_allowed: Decimal | None = Field(default=None, ge=0, le=1000)
+    pref_fee_non_smoking: Decimal | None = Field(default=None, ge=0, le=1000)
+    pref_fee_female_driver: Decimal | None = Field(default=None, ge=0, le=1000)
+    pref_fee_male_driver: Decimal | None = Field(default=None, ge=0, le=1000)
+    pref_fee_large_car: Decimal | None = Field(default=None, ge=0, le=1000)
+    account_deletion_grace_days: int | None = Field(default=None, ge=0, le=365)
     ban_reinstatement_fee: Decimal | None = Field(default=None, ge=0, le=100000)
     auto_ban_after_auto_suspensions: int | None = Field(default=None, ge=0, le=10)
     auto_suspend_customer_one_star_count: int | None = Field(default=None, ge=0, le=20)
@@ -415,11 +438,40 @@ class BroadcastIn(BaseModel):
         return self
 
 
-class EstimateIn(BaseModel):
+class EstimateIn(PreferencesIn):
     pickup_latitude: float = Field(ge=-90, le=90)
     pickup_longitude: float = Field(ge=-180, le=180)
     destination_latitude: float = Field(ge=-90, le=90)
     destination_longitude: float = Field(ge=-180, le=180)
+
+
+class DriverPrefsIn(BaseModel):
+    smoking_allowed: bool
+
+
+class DriverGenderIn(BaseModel):
+    gender: Literal["MALE", "FEMALE"]
+    reason: str = Field(min_length=2, max_length=300)
+
+
+class AirportIn(BaseModel):
+    name: str = Field(min_length=2, max_length=100)
+    boundary: dict
+    fee: Decimal = Field(ge=0, le=10000)
+    is_active: bool = True
+    v_boundary = field_validator("boundary")(lambda cls, v: _check_boundary(v))
+
+
+class AirportPatch(BaseModel):
+    name: str | None = Field(default=None, min_length=2, max_length=100)
+    boundary: dict | None = None
+    fee: Decimal | None = Field(default=None, ge=0, le=10000)
+    is_active: bool | None = None
+    v_boundary = field_validator("boundary")(lambda cls, v: _check_boundary(v))
+
+
+class AccountDeleteIn(BaseModel):
+    reason: str | None = Field(default=None, max_length=500)
 
 
 class ReinstateIn(BaseModel):

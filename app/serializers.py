@@ -39,6 +39,8 @@ def order_base(o: Order) -> dict:
         "unit_price": money(o.price_per_unit, d), "unit_duration_seconds": o.unit_duration_seconds,
         "final_price": money(o.final_price, d), "base_price": money(o.base_price, d),
         "night_surcharge": money(o.night_surcharge, d),
+        "preferences": {"ac": o.pref_ac, "smoking": o.pref_smoking, "driver_gender": o.pref_driver_gender, "large_car": o.pref_large_car},
+        "extras_fee": money(o.extras_fee, d), "extras": o.extras_breakdown or [],
         "night_applied": o.night_applied, "is_outside_bahrain": o.is_outside_bahrain, "currency": o.currency, "currency_decimals": d,
         "payment_id": o.payment_id, "payment_method": o.payment_method, "payment_status": o.payment_status,
         "completed_at": dt(o.completed_at), "cancelled_at": dt(o.cancelled_at),
@@ -115,6 +117,8 @@ def offer_out(of: OrderOffer, driver_profile=None) -> dict:
             "luggage_count": o.luggage_count, "cargo_description": o.cargo_description,
             "cargo_quantity": o.cargo_quantity, "cargo_weight_kg": money(o.cargo_weight_kg),
             "customer_notes": o.customer_notes,
+            "preferences": {"ac": o.pref_ac, "smoking": o.pref_smoking, "driver_gender": o.pref_driver_gender, "large_car": o.pref_large_car},
+            "extras_fee": money(o.extras_fee, o.currency_decimals),
         },
     }
 
@@ -156,6 +160,7 @@ def driver_block(u: User, reveal: bool = False) -> dict | None:
     return {"driver_status": p.driver_status, "is_online": p.is_online,
             "license_number": lic if reveal else "****" + lic[-3:],
             "license_expiry_date": p.license_expiry_date.isoformat(), "license_document": p.license_document,
+            "gender": p.gender, "gender_is_default": p.gender is None, "smoking_allowed": p.smoking_allowed,
             "vehicle": vehicle_full(u.vehicle)}
 
 

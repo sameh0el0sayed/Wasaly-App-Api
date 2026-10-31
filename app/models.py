@@ -38,7 +38,7 @@ class User(Base):
     __tablename__ = "users"
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     full_name: Mapped[str] = mapped_column(String(120))
-    phone: Mapped[str] = mapped_column(String(20), unique=True, index=True)
+    phone: Mapped[str | None] = mapped_column(String(20), unique=True, index=True, nullable=True)  # NULL after anonymization
     cpr_encrypted: Mapped[str | None] = mapped_column(Text, nullable=True)
     cpr_hash: Mapped[str | None] = mapped_column(String(64), unique=True, index=True, nullable=True)
     cpr_last3: Mapped[str | None] = mapped_column(String(3), nullable=True)
@@ -64,6 +64,9 @@ class User(Base):
     auto_suspended: Mapped[bool] = mapped_column(Boolean, default=False)
     auto_suspend_count: Mapped[int] = mapped_column(Integer, default=0)
     rating_reset_at: Mapped[datetime | None] = mapped_column(UTCDateTime, nullable=True)  # 1-star counting restarts after an admin reactivation
+    deleted_at: Mapped[datetime | None] = mapped_column(UTCDateTime, nullable=True, index=True)
+    deleted_prev_status: Mapped[str | None] = mapped_column(String(30), nullable=True)  # restored to this by an admin
+    anonymized_at: Mapped[datetime | None] = mapped_column(UTCDateTime, nullable=True)
     location_consent: Mapped[bool] = mapped_column(Boolean, default=False)
     location_consent_at: Mapped[datetime | None] = mapped_column(UTCDateTime, nullable=True)
 
@@ -75,6 +78,8 @@ class User(Base):
 
 class DriverProfile(Base):
     __tablename__ = "driver_profiles"
+    gender: Mapped[str | None] = mapped_column(String(8), nullable=True)  # MALE | FEMALE, set at registration, changed by admin only
+    smoking_allowed: Mapped[bool] = mapped_column(Boolean, default=False)  # driver's car allows smoking
     debt_balance: Mapped[Decimal] = mapped_column(Numeric(12, 3), default=0)  # owed to the company; deducted from payouts before any transfer
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), unique=True)
@@ -143,6 +148,16 @@ class ServiceArea(Base):
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
 
 
+class AirportZone(Base):
+    """Airport area (same boundary format as service areas). Trips starting or ending inside pay `fee` on top of the normal price."""
+    __tablename__ = "airport_zones"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    name: Mapped[str] = mapped_column(String(100), unique=True)
+    boundary: Mapped[dict] = mapped_column(JSON)  # {"type":"circle","center":[lat,lng],"radius_m":2500} or polygon
+    fee: Mapped[Decimal] = mapped_column(Numeric(12, 3), default=0)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+
+
 class DriverServiceArea(Base):
     __tablename__ = "driver_service_areas"
     driver_id: Mapped[int] = mapped_column(ForeignKey("users.id"), primary_key=True)
@@ -201,6 +216,13 @@ class Order(Base):
     retry_count: Mapped[int] = mapped_column(Integer, default=0)
     est_distance_km: Mapped[float | None] = mapped_column(Float, nullable=True)  # estimate shown before the trip (not used for pricing)
     est_duration_min: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    # customer preferences (hard requirements for dispatch) + the fixed extras they cost, snapshotted at creation
+    pref_ac: Mapped[bool] = mapped_column(Boolean, default=False)
+    pref_smoking: Mapped[str] = mapped_column(String(12), default="ANY")  # ANY | ALLOWED | NOT_ALLOWED
+    pref_driver_gender: Mapped[str] = mapped_column(String(8), default="ANY")  # ANY | FEMALE | MALE
+    pref_large_car: Mapped[bool] = mapped_column(Boolean, default=False)
+    extras_fee: Mapped[Decimal] = mapped_column(Numeric(12, 3), default=0)  # airport + preference fees, part of the trip price
+    extras_breakdown: Mapped[list] = mapped_column(JSON, default=list)
     is_outside_bahrain: Mapped[bool] = mapped_column(Boolean, default=False)  # destination outside the country boundary
     outside_driver_percent: Mapped[Decimal] = mapped_column(Numeric(6, 2), default=0)  # snapshot
     outside_driver_cut: Mapped[Decimal | None] = mapped_column(Numeric(12, 3), nullable=True)

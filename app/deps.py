@@ -32,14 +32,14 @@ async def current_user(creds: HTTPAuthorizationCredentials | None = Depends(bear
                        db: AsyncSession = Depends(get_db)) -> User:
     """Any authenticated user, any account status (so pending users can see their review state)."""
     if not creds:
-        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Not authenticated")
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, {"code": "UNAUTHORIZED", "message": "Not authenticated"})
     try:
         data = decode_access_token(creds.credentials)
     except jwt.PyJWTError:
-        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Invalid or expired token")
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, {"code": "UNAUTHORIZED", "message": "Invalid or expired token"})
     user = await db.get(User, int(data["sub"]))
     if not user or user.token_version != data.get("tv"):
-        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Session is no longer valid")
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, {"code": "UNAUTHORIZED", "message": "Session is no longer valid"})
     await touch_last_seen(user)
     return user
 

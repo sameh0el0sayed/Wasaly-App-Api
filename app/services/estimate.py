@@ -18,13 +18,14 @@ def route_guess(lat1, lng1, lat2, lng2, road_factor: str, speed_kmh: str) -> tup
 
 def money_estimate(*, minutes: int, now: datetime, unit_seconds: int, unit_price: Decimal, min_price: Decimal, decimals: int,
                    night_enabled: bool, night_percent: Decimal, night_start: str, night_end: str,
-                   ctype: str, cvalue: Decimal, mode: str, outside: bool, outside_percent: Decimal) -> dict:
+                   ctype: str, cvalue: Decimal, mode: str, outside: bool, outside_percent: Decimal,
+                   extras: Decimal = Decimal(0)) -> dict:
     _, base = calc_price(minutes * 60, unit_seconds, unit_price, min_price, decimals)
     night = bool(night_enabled) and is_night_start(now, ZoneInfo(settings.timezone), night_start, night_end)
     extra = night_surcharge(base, night_percent, decimals) if night else Decimal(0).quantize(base)
-    price = base + extra
+    price = base + extra + Decimal(extras or 0)  # extras = airport + preference fees (not multiplied by the night surcharge)
     commission, total, driver, cut = split_rules(price, ctype, cvalue, mode, outside, outside_percent, decimals)
-    return {"base": base, "night_applied": night, "night_surcharge": extra, "price": price, "commission": commission,
+    return {"base": base, "night_applied": night, "night_surcharge": extra, "extras": Decimal(extras or 0), "price": price, "commission": commission,
             "customer_total": total, "driver_earning": driver, "outside_cut": cut}
 
 
@@ -36,4 +37,4 @@ def order_estimate(o, now: datetime) -> dict | None:
                           min_price=o.min_price, decimals=o.currency_decimals, night_enabled=o.night_enabled,
                           night_percent=o.night_percent, night_start=o.night_start, night_end=o.night_end,
                           ctype=o.commission_type, cvalue=o.commission_value, mode=o.commission_mode,
-                          outside=bool(o.is_outside_bahrain), outside_percent=o.outside_driver_percent)
+                          outside=bool(o.is_outside_bahrain), outside_percent=o.outside_driver_percent, extras=o.extras_fee or 0)

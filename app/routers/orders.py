@@ -10,6 +10,7 @@ from ..models import Complaint, Order, OrderStatusHistory, User, utcnow
 from ..schemas import EstimateIn, ComplaintIn, OptionalReasonIn, OrderCreateIn, ReasonIn
 from ..serializers import (history_out, order_for_admin, order_for_customer, order_for_driver)
 from ..services import settings_service
+from ..services.extras import compute_extras, resolve_prefs
 from ..services.dispatch import dispatch_order
 from ..services.files import assert_owned
 from ..services.estimate import money_estimate, route_guess
@@ -33,6 +34,10 @@ async def app_config(db: AsyncSession = Depends(get_db)):
             "driver_rates_customer_enabled": s["driver_rates_customer_enabled"] == "true",
             "live_mode_enabled": s["live_mode_enabled"] == "true",
             "live_location_interval_seconds": int(s["live_location_interval_seconds"]),
+            "preference_fees": {k: s[f"pref_fee_{k}"] for k in ("ac", "smoking_allowed", "non_smoking", "female_driver", "male_driver", "large_car")},
+            "preference_defaults": {"ac": s["default_pref_ac"] == "true", "smoking": s["default_pref_smoking"],
+                                    "driver_gender": s["default_pref_driver_gender"], "large_car": s["default_pref_large_car"] == "true"},
+            "large_car_vehicle_types": [t.strip() for t in s["large_car_vehicle_types"].split(",") if t.strip()],
             "location_snapshots_enabled": s["location_snapshots_enabled"] == "true",
             "online_window_minutes": int(s["online_window_minutes"]),
             "currency": p.currency, "currency_decimals": p.decimals, "upload_max_mb": int(s["upload_max_mb"]),
@@ -89,15 +94,20 @@ async def estimate(body: EstimateIn, user: User = Depends(customer_user), db: As
     km, minutes = route_guess(body.pickup_latitude, body.pickup_longitude, body.destination_latitude,
                               body.destination_longitude, s["estimate_road_factor"], s["estimate_avg_speed_kmh"])
     outside = bool(p.outside_enabled) and not point_in_boundary(body.destination_latitude, body.destination_longitude, p.country_boundary)
+    pf = resolve_prefs(body, s)
+    extras, breakdown = await compute_extras(
+        db, s, p.decimals, ac=pf["pref_ac"], smoking=pf["pref_smoking"], gender=pf["pref_driver_gender"], large_car=pf["pref_large_car"],
+        pickup=(body.pickup_latitude, body.pickup_longitude), destination=(body.destination_latitude, body.destination_longitude))
     e = money_estimate(minutes=minutes, now=utcnow(), unit_seconds=p.unit_seconds, unit_price=p.unit_price, min_price=p.min_price,
                        decimals=p.decimals, night_enabled=p.night_enabled, night_percent=p.night_percent, night_start=p.night_start,
                        night_end=p.night_end, ctype=p.commission_type, cvalue=p.commission_value, mode=p.commission_mode,
-                       outside=outside, outside_percent=p.outside_driver_percent)
+                       outside=outside, outside_percent=p.outside_driver_percent, extras=extras)
     d = p.decimals
     area = await find_area(db, body.pickup_latitude, body.pickup_longitude)
     return {"is_estimate": True, "currency": p.currency, "currency_decimals": d, "distance_km": km, "duration_min": minutes,
             "estimated_trip_price": f"{e['price']:.{d}f}", "night_applied": e["night_applied"],
-            "night_surcharge": f"{e['night_surcharge']:.{d}f}",
+            "night_surcharge": f"{e['night_surcharge']:.{d}f}", "extras_fee": f"{extras:.{d}f}", "extras": breakdown,
+            "airport_applied": any(x["key"] == "AIRPORT" for x in breakdown),
             "service_fee": f"{e['customer_total'] - e['price']:.{d}f}" if p.commission_mode == "ADD" else None,
             "estimated_total": f"{e['customer_total']:.{d}f}", "is_outside_bahrain": outside, "pickup_in_service_area": area is not None,
             "note": "تقديري: السعر النهائي يُحسب من وقت الرحلة الفعلي من بدء الرحلة حتى الوصول."}
@@ -138,7 +148,13 @@ async def create_order(body: OrderCreateIn, user: User = Depends(customer_user),
     est_km, est_min = route_guess(body.pickup_latitude or body.destination_latitude, body.pickup_longitude or body.destination_longitude,
                                   body.destination_latitude, body.destination_longitude,
                                   s_all["estimate_road_factor"], s_all["estimate_avg_speed_kmh"])
-    order = Order(est_distance_km=est_km, est_duration_min=est_min, customer_id=user.id, service_area_id=area_id, currency=p.currency, currency_decimals=p.decimals,
+    pf = resolve_prefs(body, s_all)
+    data.update(pf)  # defaults filled in for preferences the app did not send
+    extras, breakdown = await compute_extras(
+        db, s_all, p.decimals, ac=pf["pref_ac"], smoking=pf["pref_smoking"], gender=pf["pref_driver_gender"], large_car=pf["pref_large_car"],
+        pickup=(body.pickup_latitude, body.pickup_longitude) if body.pickup_latitude is not None else None,
+        destination=(body.destination_latitude, body.destination_longitude))
+    order = Order(extras_fee=extras, extras_breakdown=breakdown, est_distance_km=est_km, est_duration_min=est_min, customer_id=user.id, service_area_id=area_id, currency=p.currency, currency_decimals=p.decimals,
                   price_per_unit=p.unit_price, unit_duration_seconds=p.unit_seconds, min_price=p.min_price,
                   commission_type=p.commission_type, commission_value=p.commission_value,
                   commission_mode=p.commission_mode, night_enabled=p.night_enabled,

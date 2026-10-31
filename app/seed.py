@@ -8,7 +8,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from .config import settings
 from .constants import AccountStatus, Role
-from .models import DriverProfile, DriverServiceArea, ServiceArea, User, Vehicle, utcnow
+from decimal import Decimal
+from .models import AirportZone, DriverProfile, DriverServiceArea, ServiceArea, User, Vehicle, utcnow
 from .security import cpr_hash, encrypt, hash_password, normalize_phone
 
 log = logging.getLogger("seed")
@@ -68,7 +69,8 @@ async def seed_demo(db: AsyncSession) -> None:
             db.add(u)
             await db.flush()
             prof = DriverProfile(user_id=u.id, license_number_encrypted=encrypt(settings.seed_driver_license),
-                                 license_expiry_date=date.fromisoformat(settings.seed_driver_license_expiry), driver_status=AccountStatus.APPROVED)
+                                 license_expiry_date=date.fromisoformat(settings.seed_driver_license_expiry), driver_status=AccountStatus.APPROVED,
+                                 gender=settings.seed_driver_gender or None)
             if settings.seed_driver_payout_iban:
                 prof.payout_method, prof.payout_account_encrypted, prof.payout_holder_name = "IBAN", encrypt(settings.seed_driver_payout_iban), settings.seed_driver_name
             db.add(prof)
@@ -77,4 +79,8 @@ async def seed_demo(db: AsyncSession) -> None:
             if area:
                 db.add(DriverServiceArea(driver_id=u.id, service_area_id=area.id))
             log.warning("Seeded demo driver %s", phone)
+    if settings.seed_airport_name and settings.seed_airport_boundary:
+        if not (await db.execute(select(AirportZone.id).where(AirportZone.name == settings.seed_airport_name))).first():
+            db.add(AirportZone(name=settings.seed_airport_name, boundary=json.loads(settings.seed_airport_boundary),
+                               fee=Decimal(settings.seed_airport_fee)))
     await db.commit()

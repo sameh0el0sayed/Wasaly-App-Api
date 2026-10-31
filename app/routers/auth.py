@@ -52,7 +52,8 @@ async def register(body: RegisterIn, db: AsyncSession = Depends(get_db)):
         if (await db.execute(select(Vehicle.id).where(Vehicle.plate_number == v.plate_number))).first():
             raise HTTPException(409, "Vehicle plate number is already registered")
         db.add(DriverProfile(user_id=user.id, license_number_encrypted=encrypt(d.license_number),
-                             license_expiry_date=d.license_expiry_date, license_document=d.license_document))
+                             license_expiry_date=d.license_expiry_date, license_document=d.license_document,
+                             gender=d.gender, smoking_allowed=d.smoking_allowed))
         db.add(Vehicle(driver_id=user.id, **v.model_dump()))
     await db.commit()
     return {"user": user_public(user), "access_token": create_access_token(user.id, user.token_version),
@@ -76,6 +77,8 @@ async def login(body: LoginIn, request: Request, db: AsyncSession = Depends(get_
                 user.failed_logins = 0
             await db.commit()
         raise HTTPException(401, "Invalid phone or password")
+    if user.account_status == "DELETED":  # checked after the password so the state is not revealed to strangers
+        raise HTTPException(403, {"code": "ACCOUNT_DELETED", "message": "هذا الحساب محذوف"})
     user.failed_logins, user.locked_until = 0, None
     known = bool(body.device_id) and (await db.execute(select(UserDevice.id).where(
         UserDevice.user_id == user.id, UserDevice.device_id == body.device_id))).first() is not None

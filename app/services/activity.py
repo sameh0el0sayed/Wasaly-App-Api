@@ -11,6 +11,7 @@ from .dispatch import force_offline
 
 _last_minute = 0.0
 _last_hour = 0.0
+_last_day = 0.0
 
 
 def is_online(last_seen_at, window_minutes: int, now=None) -> bool:
@@ -22,7 +23,7 @@ def is_online(last_seen_at, window_minutes: int, now=None) -> bool:
 
 async def sweep(db: AsyncSession) -> None:
     """Background: auto-offline idle drivers (setting) every minute, delete old history every hour."""
-    global _last_minute, _last_hour
+    global _last_minute, _last_hour, _last_day
     t = time.time()
     if t - _last_minute < 60:
         return
@@ -37,6 +38,10 @@ async def sweep(db: AsyncSession) -> None:
             DriverProfile.is_online.is_(True), (User.last_seen_at.is_(None)) | (User.last_seen_at < cutoff)))).scalars().all()
         for uid in ids:
             await force_offline(db, uid)
+    if t - _last_day >= 86400:
+        _last_day = t
+        from .account_deletion import anonymize_due
+        await anonymize_due(db)
     if t - _last_hour >= 3600:
         _last_hour = t
         old = utcnow() - timedelta(days=int(s["activity_retention_days"]))

@@ -60,6 +60,12 @@ DEFAULTS = {
     "rating_window_hours": "48",  # how long after COMPLETED a rating is still accepted
     "rating_comment_max_chars": "500",
     "auto_suspend_driver_one_star_count": "1",  # drivers: suspend automatically after N one-star ratings (0 = off)
+    "default_driver_gender": "MALE",  # used for drivers whose gender was not set (old accounts / not provided)
+    "default_pref_ac": "false", "default_pref_smoking": "ANY", "default_pref_driver_gender": "ANY", "default_pref_large_car": "false",  # when the app sends no value
+    "large_car_vehicle_types": "SUV,VAN",  # vehicle_type values that count as a 'large car for travel and luggage'
+    "pref_fee_ac": "0", "pref_fee_smoking_allowed": "0", "pref_fee_non_smoking": "0",  # fixed fee per customer preference (system currency)
+    "pref_fee_female_driver": "0", "pref_fee_male_driver": "0", "pref_fee_large_car": "0",
+    "account_deletion_grace_days": "30",  # deleted accounts can be restored by an admin until this many days pass, then they are anonymized
     "ban_reinstatement_fee": "50",  # fee (in the system currency) charged before the SUPER ADMIN may lift a permanent ban
     "auto_ban_after_auto_suspensions": "2",  # Nth automatic suspension becomes a permanent ban (0 = never)
     "auto_suspend_customer_one_star_count": "0",  # customers: same rule (0 = off; abusable by drivers, so off by default)

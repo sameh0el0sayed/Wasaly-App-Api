@@ -10,7 +10,7 @@ cp .env.example .env            # set SECRET_KEY, FERNET_KEY, first admin
 docker compose up --build       # API on :8000, docs on /docs
 # or locally (SQLite by default):
 pip install -r requirements.txt && uvicorn app.main:app --reload
-pytest                          # 87 tests
+pytest                          # 97 tests
 ```
 First super admin is created from `FIRST_ADMIN_*` on startup (must change password).
 Production: use PostgreSQL and Alembic (`alembic revision --autogenerate -m init && alembic upgrade head`);
@@ -175,3 +175,12 @@ There is no routing engine: distance = straight line x `estimate_road_factor` (1
 ## Demo seed & environments
 - `cp .env.example .env`, fill the values. With `SEED_DEMO_DATA=true` the first start creates a super admin (`FIRST_ADMIN_*`), a normal admin, a demo customer, and a demo driver (approved, vehicle approved, IBAN, service area "Manama"). Everything is read from `.env`; nothing is hard-coded.
 - `APP_ENV=production` makes the API refuse to start with demo seed enabled, the default `SECRET_KEY`/`FIRST_ADMIN_PASSWORD`, or an empty `FERNET_KEY`.
+
+## Account deletion
+`POST /api/account/delete {reason?}` soft-deletes (status `DELETED`, all tokens revoked, devices/FCM tokens removed, driver forced OFF). Refused with `ACTIVE_ORDER_EXISTS`, `UNPAID_ORDER_EXISTS` (+ `order_id`, `payment_id`), `ACTIVE_SUBSCRIPTION_EXISTS`, `DEBT_OUTSTANDING`. Login afterwards: 403 `ACCOUNT_DELETED`. Admin can `POST /api/admin/users/{id}/restore` inside `account_deletion_grace_days` (30). A daily job then anonymizes (name, phone, CPR, photos/documents, locations, logins); orders and payments (and payment proofs) are kept. A banned user keeps phone + CPR hash so deleting cannot escape the ban.
+
+## Customer preferences & airport pricing
+- Order fields (also in `POST /api/orders/estimate`): `pref_ac` (bool), `pref_smoking` (ANY|ALLOWED|NOT_ALLOWED), `pref_driver_gender` (ANY|FEMALE|MALE), `pref_large_car` (bool). They are **hard requirements**: only matching drivers get the offer, otherwise the order is `NO_DRIVER_AVAILABLE`.
+- Matching data: AC = vehicle `has_ac`; large car = `vehicle_type` in setting `large_car_vehicle_types` (default `SUV,VAN`); smoking = driver `PATCH /api/driver/preferences {smoking_allowed}`; gender = set at registration (`driver.gender`), changed only by an admin (`PATCH /api/admin/drivers/{id}/gender`, reason required).
+- Fees: fixed amount per preference from settings `pref_fee_ac|smoking_allowed|non_smoking|female_driver|male_driver|large_car` (default 0) + an airport fee. Airport zones: `GET/POST/PATCH/DELETE /api/admin/airport-zones` (super admin; circle or polygon, `fee`). A trip that starts or ends inside a zone pays that zone's fee once (the highest if several). All fees are snapshotted on the order, shown as `extras_fee` + `extras[]`, and added to the trip price (the night surcharge applies to the time price only).
+- Defaults (all admin settings): `default_driver_gender` (MALE) is used for drivers with no gender; `default_pref_ac|smoking|driver_gender|large_car` apply when the app does not send a preference (factory: no restriction). Shown to the app in `GET /api/app-config` → `preference_defaults`.

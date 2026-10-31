@@ -43,6 +43,10 @@ class Settings(BaseSettings):
     seed_driver_license_expiry: str = "2099-01-01"
     seed_driver_vehicle: str = ""  # JSON: {"make":..,"model":..,"year":..,"color":..,"plate_number":..,"passenger_capacity":..,"has_ac":true}
     seed_driver_payout_iban: str = ""
+    seed_driver_gender: str = ""  # MALE | FEMALE
+    seed_airport_name: str = ""
+    seed_airport_boundary: str = ""  # JSON, e.g. {"type":"circle","center":[lat,lng],"radius_m":2500}
+    seed_airport_fee: str = "0"
     max_failed_logins: int = 5
     lockout_minutes: int = 15
     timezone: str = "Asia/Bahrain"

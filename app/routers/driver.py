@@ -6,7 +6,7 @@ from ..constants import AccountStatus, OfferStatus, OrderStatus as S
 from ..database import get_db
 from ..deps import driver_user, paging
 from ..models import (DriverPayout, DriverProfile, DriverServiceArea, DriverWorkSession, Order, OrderOffer, User, Vehicle, utcnow)
-from ..schemas import DriverLocationIn, PayoutAccountIn, AvailabilityIn, OptionalReasonIn, ReasonIn, VehiclePatch
+from ..schemas import DriverLocationIn, DriverPrefsIn, PayoutAccountIn, AvailabilityIn, OptionalReasonIn, ReasonIn, VehiclePatch
 from ..security import decrypt, encrypt
 from ..serializers import dt, money, offer_out, payout_out, order_for_driver, vehicle_full
 from ..services.dispatch import expire_offers_and_orders, force_offline, has_active_order, work_blockers
@@ -214,7 +214,7 @@ async def arrived_at_destination(order_id: int, user: User = Depends(driver_user
     units, base = calc_price(secs, o.unit_duration_seconds, o.price_per_unit, o.min_price, o.currency_decimals)
     night = bool(o.night_enabled) and is_night_start(o.trip_started_at, ZoneInfo(settings.timezone), o.night_start, o.night_end)
     surcharge = night_surcharge(base, o.night_percent, o.currency_decimals) if night else base - base
-    price = base + surcharge  # trip price incl. night surcharge; company commission is calculated on this
+    price = base + surcharge + (o.extras_fee or 0)  # trip price incl. night surcharge and fixed extras (airport/preferences); commission is calculated on this
     o.base_price, o.night_applied, o.night_surcharge = base, night, surcharge
     o.actual_duration_seconds, o.final_price = secs, price
     o.commission, o.customer_total, o.driver_earning, cut = split_order(o, price)
@@ -226,7 +226,7 @@ async def arrived_at_destination(order_id: int, user: User = Depends(driver_user
     shown = f"{money(o.customer_total, o.currency_decimals)} {o.currency}"
     earned = f"{money(o.driver_earning, o.currency_decimals)} {o.currency}"
     await transition(db, o, S.COMPLETED, user.id, "DRIVER",
-                     f"{secs}s, {units} unit(s), base {base}, night {night} +{surcharge}, trip {price}, outside {o.is_outside_bahrain} cut {o.outside_driver_cut}, commission {o.commission}, customer {o.customer_total}, driver {o.driver_earning}")
+                     f"{secs}s, {units} unit(s), base {base}, night {night} +{surcharge}, extras {o.extras_fee}, trip {price}, outside {o.is_outside_bahrain} cut {o.outside_driver_cut}, commission {o.commission}, customer {o.customer_total}, driver {o.driver_earning}")
     o.completed_at = now
     await notify(db, o.customer_id, "TRIP_COMPLETED", "اكتملت الرحلة", f"المبلغ المطلوب: {shown}", o.id)
     await notify(db, user.id, "TRIP_COMPLETED", "اكتملت الرحلة", f"أرباحك من الرحلة: {earned}", o.id)
@@ -312,6 +312,14 @@ async def get_payout_account(user: User = Depends(driver_user)):
     p = user.driver_profile
     acc = decrypt(p.payout_account_encrypted) if p.payout_account_encrypted else None
     return {"method": p.payout_method, "account": ("****" + acc[-4:]) if acc else None, "holder_name": p.payout_holder_name}
+
+
+@router.patch("/preferences")
+async def set_driver_preferences(body: DriverPrefsIn, user: User = Depends(driver_user), db: AsyncSession = Depends(get_db)):
+    """The driver declares whether smoking is allowed in his car (used to match customer preferences)."""
+    user.driver_profile.smoking_allowed = body.smoking_allowed
+    await db.commit()
+    return {"smoking_allowed": user.driver_profile.smoking_allowed, "gender": user.driver_profile.gender}
 
 
 @router.get("/balance")

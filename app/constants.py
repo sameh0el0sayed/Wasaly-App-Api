@@ -12,6 +12,7 @@ class AccountStatus:
     REJECTED = "REJECTED"
     NEEDS_CORRECTION = "NEEDS_CORRECTION"
     SUSPENDED = "SUSPENDED"
+    DELETED = "DELETED"  # user deleted their account; anonymized after the grace period
     BANNED = "BANNED"  # permanent: cannot be reactivated, CPR/phone cannot register again
 
 

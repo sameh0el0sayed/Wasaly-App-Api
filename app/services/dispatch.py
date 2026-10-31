@@ -58,10 +58,24 @@ async def eligible_drivers(db: AsyncSession, order: Order) -> list[User]:
                    DriverProfile.is_online.is_(True),
                    User.id.not_in(busy), User.id.not_in(pending)))
     out = []
+    cfg = await settings_service.get_all(db)
+    default_gender = cfg["default_driver_gender"]
+    large_types = {t.strip().upper() for t in cfg["large_car_vehicle_types"].split(",") if t.strip()}
     for u in (await db.execute(stmt)).scalars().unique().all():
         if work_blockers(u):
             continue
-        v = u.vehicle
+        v, prof = u.vehicle, u.driver_profile
+        # customer preferences are hard requirements
+        if order.pref_ac and not v.has_ac:
+            continue
+        if order.pref_smoking == "ALLOWED" and not prof.smoking_allowed:
+            continue
+        if order.pref_smoking == "NOT_ALLOWED" and prof.smoking_allowed:
+            continue
+        if order.pref_driver_gender in ("MALE", "FEMALE") and (prof.gender or default_gender) != order.pref_driver_gender:
+            continue
+        if order.pref_large_car and (v.vehicle_type or "").upper() not in large_types:
+            continue
         if order.service_type == "PERSON" and order.passenger_count and order.passenger_count > v.passenger_capacity:
             continue
         if order.service_type == "DELIVERY" and order.cargo_weight_kg and v.cargo_capacity_kg is not None \

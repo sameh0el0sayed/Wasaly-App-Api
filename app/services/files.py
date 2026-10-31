@@ -84,6 +84,19 @@ async def get_bytes(key: str) -> bytes:
     return resolve(key).read_bytes()
 
 
+async def delete_object(key: str) -> None:
+    """Best effort: a missing file is fine."""
+    if settings.storage_backend == "cloudinary":
+        params = {"public_id": _public_id(key), "timestamp": int(time.time()), "type": "authenticated"}
+        async with _http() as c:
+            await c.post(_api("raw/destroy"), data={**params, "api_key": settings.cloudinary_api_key, "signature": _sign(params)})
+        return
+    try:
+        resolve(key).unlink()
+    except HTTPException:
+        pass
+
+
 async def save_upload(db: AsyncSession, owner_id: int | None, file: UploadFile, kind: str) -> UploadedFile:
     from . import settings_service
     limit_mb = int((await settings_service.get_all(db))["upload_max_mb"])
