@@ -1,6 +1,7 @@
 import asyncio
 import logging
 import time
+from pathlib import Path
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
@@ -22,10 +23,20 @@ from .services.dispatch import enforce_driver_documents, expire_offers_and_order
 log = logging.getLogger("app")
 
 
+def run_migrations() -> None:
+    """`alembic upgrade head` (runs in a thread because alembic/env.py starts its own event loop)."""
+    from alembic import command
+    from alembic.config import Config
+    command.upgrade(Config(str(Path(__file__).resolve().parent.parent / "alembic.ini")), "head")
+
+
 async def bootstrap() -> None:
-    """Creates tables (dev convenience; use Alembic migrations in production) and the first super admin."""
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
+    """Schema (Alembic in production, create_all for dev/tests) and the first super admin."""
+    if settings.app_env == "production":
+        await asyncio.to_thread(run_migrations)
+    else:
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
     from .seed import assert_safe_environment, seed_demo
     from .services.files import ensure_storage
     assert_safe_environment()
