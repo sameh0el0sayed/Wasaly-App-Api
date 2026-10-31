@@ -20,6 +20,7 @@ from ..services.files import assert_owned
 from ..services.geo import _haversine_m, find_area, point_in_boundary
 from ..services.notifications import notify
 from ..services.orders import close_pending_offers, load_order, transition
+from ..services.promo import validate_promo
 
 router = APIRouter(prefix="/api", tags=["orders"])
 
@@ -52,6 +53,7 @@ async def app_config(db: AsyncSession = Depends(get_db)):
                                     "driver_gender": s["default_pref_driver_gender"], "large_car": s["default_pref_large_car"] == "true"},
             "large_car_vehicle_types": [t.strip() for t in s["large_car_vehicle_types"].split(",") if t.strip()],
             "location_snapshots_enabled": s["location_snapshots_enabled"] == "true",
+            "promo_enabled": s["promo_enabled"] == "true",
             "customer_live_tracking_enabled": s["customer_live_tracking_enabled"] == "true",
             "service_categories": _categories(s["service_categories"]),
             "online_window_minutes": int(s["online_window_minutes"]),
@@ -117,13 +119,21 @@ async def estimate(body: EstimateIn, user: User = Depends(customer_user), db: As
                        decimals=p.decimals, night_enabled=p.night_enabled, night_percent=p.night_percent, night_start=p.night_start,
                        night_end=p.night_end, ctype=p.commission_type, cvalue=p.commission_value, mode=p.commission_mode,
                        outside=outside, outside_percent=p.outside_driver_percent, extras=extras)
+    promo = await validate_promo(db, s, body.promo_code, e["trip_price"])
+    if promo:  # recompute with the percentage (validation needed the undiscounted trip price)
+        e = money_estimate(minutes=minutes, now=utcnow(), unit_seconds=p.unit_seconds, unit_price=p.unit_price, min_price=p.min_price,
+                           decimals=p.decimals, night_enabled=p.night_enabled, night_percent=p.night_percent, night_start=p.night_start,
+                           night_end=p.night_end, ctype=p.commission_type, cvalue=p.commission_value, mode=p.commission_mode,
+                           outside=outside, outside_percent=p.outside_driver_percent, extras=extras, promo_percent=promo.percent)
     d = p.decimals
     area = await find_area(db, body.pickup_latitude, body.pickup_longitude)
     return {"is_estimate": True, "currency": p.currency, "currency_decimals": d, "distance_km": km, "duration_min": minutes,
             "estimated_trip_price": f"{e['price']:.{d}f}", "night_applied": e["night_applied"],
             "night_surcharge": f"{e['night_surcharge']:.{d}f}", "extras_fee": f"{extras:.{d}f}", "extras": breakdown,
             "airport_applied": any(x["key"] == "AIRPORT" for x in breakdown),
-            "service_fee": f"{e['customer_total'] - e['price']:.{d}f}" if p.commission_mode == "ADD" else None,
+            "promo_code": promo.code if promo else None, "promo_percent": promo.percent if promo else None,
+            "discount_amount": f"{e['discount']:.{d}f}",
+            "service_fee": f"{e['customer_total'] + e['discount'] - e['price']:.{d}f}" if p.commission_mode == "ADD" else None,
             "estimated_total": f"{e['customer_total']:.{d}f}", "is_outside_bahrain": outside, "pickup_in_service_area": area is not None,
             "note": "تقديري: السعر النهائي يُحسب من وقت الرحلة الفعلي من بدء الرحلة حتى الوصول."}
 
@@ -157,7 +167,7 @@ async def create_order(body: OrderCreateIn, user: User = Depends(customer_user),
         if not area:
             raise HTTPException(422, {"code": "OUTSIDE_SERVICE_AREA", "message": "نقطة الالتقاء خارج مناطق الخدمة"})
     p = await settings_service.get_pricing(db)  # currency + price snapshot (new orders only)
-    data = body.model_dump(exclude={"accept_capacity_terms", "service_area_id"})
+    data = body.model_dump(exclude={"accept_capacity_terms", "service_area_id", "promo_code"})
     outside = bool(p.outside_enabled) and not point_in_boundary(body.destination_latitude, body.destination_longitude, p.country_boundary)
     s_all = await settings_service.get_all(db)
     est_km, est_min = route_guess(body.pickup_latitude or body.destination_latitude, body.pickup_longitude or body.destination_longitude,
@@ -169,7 +179,15 @@ async def create_order(body: OrderCreateIn, user: User = Depends(customer_user),
         db, s_all, p.decimals, ac=pf["pref_ac"], smoking=pf["pref_smoking"], gender=pf["pref_driver_gender"], large_car=pf["pref_large_car"],
         pickup=(body.pickup_latitude, body.pickup_longitude) if body.pickup_latitude is not None else None,
         destination=(body.destination_latitude, body.destination_longitude))
-    order = Order(extras_fee=extras, extras_breakdown=breakdown, est_distance_km=est_km, est_duration_min=est_min, customer_id=user.id, service_area_id=area_id, currency=p.currency, currency_decimals=p.decimals,
+    promo = None
+    if body.promo_code and body.promo_code.strip():
+        est = money_estimate(minutes=est_min, now=utcnow(), unit_seconds=p.unit_seconds, unit_price=p.unit_price, min_price=p.min_price,
+                             decimals=p.decimals, night_enabled=p.night_enabled, night_percent=p.night_percent, night_start=p.night_start,
+                             night_end=p.night_end, ctype=p.commission_type, cvalue=p.commission_value, mode=p.commission_mode,
+                             outside=outside, outside_percent=p.outside_driver_percent, extras=extras)
+        promo = await validate_promo(db, s_all, body.promo_code, est["trip_price"])
+    order = Order(promo_code=promo.code if promo else None, promo_percent=promo.percent if promo else None,
+                  extras_fee=extras, extras_breakdown=breakdown, est_distance_km=est_km, est_duration_min=est_min, customer_id=user.id, service_area_id=area_id, currency=p.currency, currency_decimals=p.decimals,
                   price_per_unit=p.unit_price, unit_duration_seconds=p.unit_seconds, min_price=p.min_price,
                   commission_type=p.commission_type, commission_value=p.commission_value,
                   commission_mode=p.commission_mode, night_enabled=p.night_enabled,

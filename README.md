@@ -10,7 +10,7 @@ cp .env.example .env            # set SECRET_KEY, FERNET_KEY, first admin
 docker compose up --build       # API on :8000, docs on /docs
 # or locally (SQLite by default):
 pip install -r requirements.txt && uvicorn app.main:app --reload
-pytest                          # 106 tests
+pytest                          # 109 tests
 ```
 First super admin is created from `FIRST_ADMIN_*` on startup (must change password).
 Production: use PostgreSQL and Alembic (`alembic revision --autogenerate -m init && alembic upgrade head`);
@@ -204,3 +204,8 @@ Before `start-trip` (pickup proof, body `pickup_photo_file_key`) and `arrived-at
 - **Storage strategy:** `services/storage_backends.py` (`CloudinaryStorage`, `LocalStorage`, `BACKENDS` registry).
 - **Events:** `services/events.py` in-process bus; `transition()` publishes `OrderStatusChanged`. Handlers can later move to a queue (outbox) when a module is split out.
 - **Lint:** `ruff check app tests`.
+
+## Promo codes
+- Admin: `GET /api/admin/promo-codes` (ADMIN); `POST/PATCH/DELETE` (SUPER_ADMIN). Fields: `code` (upper-cased), `percent` 1-100, `starts_at`, `ends_at`, `min_order_amount`, `is_active`. Master switch: setting `promo_enabled`.
+- Customer sends `promo_code` to `POST /api/orders/estimate` and `POST /api/orders`. Errors (422): `PROMO_INVALID`, `PROMO_EXPIRED`, `PROMO_NOT_STARTED`, `PROMO_MIN_ORDER`, `PROMO_DISABLED`.
+- The discount applies to the trip price only (base + night surcharge, never airport/preference extras) and is **paid by the platform**: the customer pays less, the driver's earning is unchanged, the company commission (`commission`) is reduced by the discount. The code is snapshotted on the order (`promo_code`, `promo_percent`, `discount_amount`).

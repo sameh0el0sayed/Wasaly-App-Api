@@ -13,7 +13,7 @@ from ...serializers import history_out, order_for_admin
 from ...services.audit import audit
 from ...services.notifications import notify
 from ...services.orders import close_pending_offers, load_order, transition
-from ...services.pricing import fits_decimals, split_order
+from ...services.pricing import apply_discount, fits_decimals, split_order
 from .reports import _local_start  # noqa: E402
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])
@@ -84,6 +84,7 @@ async def adjust_price(order_id: int, body: PriceAdjustIn, admin: User = Depends
         raise HTTPException(422, {"code": "TOO_MANY_DECIMALS", "currency": o.currency, "max_decimals": o.currency_decimals})
     o.final_price, o.price_adjusted = body.new_price, True
     o.commission, o.customer_total, o.driver_earning, cut = split_order(o, o.final_price)
+    o.commission, o.customer_total = apply_discount(o.commission, o.customer_total, o.discount_amount or 0)  # keeps the order's original discount
     o.outside_driver_cut = cut if o.is_outside_bahrain else None
     pay = (await db.execute(select(Payment).where(Payment.order_id == o.id))).scalars().first()
     if pay:

@@ -39,6 +39,7 @@ def order_base(o: Order) -> dict:
         "final_price": money(o.final_price, d), "base_price": money(o.base_price, d),
         "night_surcharge": money(o.night_surcharge, d),
         "preferences": {"ac": o.pref_ac, "smoking": o.pref_smoking, "driver_gender": o.pref_driver_gender, "large_car": o.pref_large_car},
+        "promo_code": o.promo_code, "promo_percent": o.promo_percent, "discount_amount": money(o.discount_amount, d) if o.discount_amount is not None else None,
         "extras_fee": money(o.extras_fee, d), "extras": o.extras_breakdown or [],
         "pickup_photo": o.pickup_photo, "pickup_photo_at": dt(o.pickup_photo_at),
         "delivery_photo": o.delivery_photo, "delivery_photo_at": dt(o.delivery_photo_at),
@@ -54,7 +55,7 @@ def order_for_customer(o: Order) -> dict:
     d = order_base(o)
     dec = o.currency_decimals
     d["customer_total"] = money(o.customer_total, dec)  # what the customer pays
-    d["service_fee"] = money(o.customer_total - o.final_price, dec) if o.commission_mode == "ADD" and o.customer_total is not None else None  # only the part added on top of the price
+    d["service_fee"] = money(o.customer_total + (o.discount_amount or 0) - o.final_price, dec) if o.commission_mode == "ADD" and o.customer_total is not None else None  # only the part added on top of the price
     d["receiver_name"], d["receiver_phone"] = o.receiver_name, o.receiver_phone
     d["driver"] = None
     if o.driver:  # never exposes CPR / license / documents
@@ -69,7 +70,7 @@ def order_for_driver(o: Order) -> dict:
     dec = o.currency_decimals
     d["driver_earning"] = money(o.driver_earning, dec)  # what the driver receives
     d["outside_fee"] = money(o.outside_driver_cut, dec) if o.is_outside_bahrain else None  # company cut on outside-Bahrain trips
-    d["platform_fee"] = money(o.commission - (o.outside_driver_cut or 0), dec) if o.commission_mode == "DEDUCT" and o.commission is not None else None  # deducted from the trip price
+    d["platform_fee"] = money(o.commission + (o.discount_amount or 0) - (o.outside_driver_cut or 0), dec) if o.commission_mode == "DEDUCT" and o.commission is not None else None  # deducted from the trip price
     d["customer"] = {"name": o.customer.full_name, "phone": o.contact_phone or o.customer.phone}
     d["receiver_name"], d["receiver_phone"] = o.receiver_name, o.receiver_phone
     return d

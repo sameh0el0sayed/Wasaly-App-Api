@@ -38,7 +38,7 @@ from ..services.files import assert_owned
 from ..services.notifications import notify
 from ..services.orders import close_pending_offers, load_order, transition
 from ..services.payments import create_payment
-from ..services.pricing import calc_price, duration_seconds, is_night_start, night_surcharge, split_order
+from ..services.pricing import apply_discount, calc_price, duration_seconds, is_night_start, night_surcharge, promo_discount, split_order
 
 router = APIRouter(prefix="/api/driver", tags=["driver"])
 
@@ -261,6 +261,8 @@ async def arrived_at_destination(order_id: int, body: ArrivedIn = ArrivedIn(), u
     o.base_price, o.night_applied, o.night_surcharge = base, night, surcharge
     o.actual_duration_seconds, o.final_price = secs, price
     o.commission, o.customer_total, o.driver_earning, cut = split_order(o, price)
+    o.discount_amount = promo_discount(base + surcharge, o.promo_percent, o.currency_decimals)  # platform pays it; driver untouched
+    o.commission, o.customer_total = apply_discount(o.commission, o.customer_total, o.discount_amount)
     o.outside_driver_cut = cut if o.is_outside_bahrain else None
     pay = await create_payment(db, kind="ORDER", order_id=o.id, customer_id=o.customer_id, driver_id=o.driver_id,
                                amount=o.customer_total, driver_amount=o.driver_earning, company_amount=o.commission,

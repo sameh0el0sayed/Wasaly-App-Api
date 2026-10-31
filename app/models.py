@@ -147,6 +147,19 @@ class ServiceArea(Base):
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
 
 
+class PromoCode(Base):
+    """Percentage discount on the trip price, paid by the platform (driver earnings are unchanged)."""
+    __tablename__ = "promo_codes"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    code: Mapped[str] = mapped_column(String(40), unique=True, index=True)
+    percent: Mapped[int] = mapped_column(Integer)
+    starts_at: Mapped[datetime | None] = mapped_column(UTCDateTime, nullable=True)
+    ends_at: Mapped[datetime | None] = mapped_column(UTCDateTime, nullable=True)
+    min_order_amount: Mapped[Decimal | None] = mapped_column(Numeric(12, 3), nullable=True)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
+
+
 class Banner(Base):
     """Home-screen banner shown in the apps (admin managed)."""
     __tablename__ = "banners"
@@ -256,6 +269,9 @@ class Order(Base):
     pref_smoking: Mapped[str] = mapped_column(String(12), default="ANY")  # ANY | ALLOWED | NOT_ALLOWED
     pref_driver_gender: Mapped[str] = mapped_column(String(8), default="ANY")  # ANY | FEMALE | MALE
     pref_large_car: Mapped[bool] = mapped_column(Boolean, default=False)
+    promo_code: Mapped[str | None] = mapped_column(String(40), nullable=True)  # snapshot: later edits never change old orders
+    promo_percent: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    discount_amount: Mapped[Decimal | None] = mapped_column(Numeric(12, 3), nullable=True)
     extras_fee: Mapped[Decimal] = mapped_column(Numeric(12, 3), default=0)  # airport + preference fees, part of the trip price
     extras_breakdown: Mapped[list] = mapped_column(JSON, default=list)
     is_outside_bahrain: Mapped[bool] = mapped_column(Boolean, default=False)  # destination outside the country boundary

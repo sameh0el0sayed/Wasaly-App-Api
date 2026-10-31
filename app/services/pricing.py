@@ -86,6 +86,20 @@ def split_rules(price: Decimal, ctype: str, cvalue: Decimal, mode: str, outside:
     return commission, customer_total, driver, cut
 
 
+def promo_discount(trip_price: Decimal, percent, decimals: int = 3) -> Decimal:
+    """Percentage promo on the trip price only (base + night surcharge; never on airport/preference extras)."""
+    q = quantum(decimals)
+    pct = Decimal(str(percent or 0))
+    if pct <= 0:
+        return Decimal(0).quantize(q)
+    return min((trip_price * pct / Decimal(100)).quantize(q, ROUND_HALF_UP), trip_price)
+
+
+def apply_discount(commission: Decimal, customer_total: Decimal, discount: Decimal) -> tuple[Decimal, Decimal]:
+    """The platform pays for the promo: the customer pays less, the driver is untouched, the company keeps less."""
+    return commission - discount, customer_total - discount
+
+
 def split_order(o, price: Decimal) -> tuple[Decimal, Decimal, Decimal, Decimal]:
     """Full money split of an order from its snapshotted rules."""
     return split_rules(price, o.commission_type, o.commission_value, o.commission_mode,

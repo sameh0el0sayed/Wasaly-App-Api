@@ -125,7 +125,36 @@ class PreferencesIn(BaseModel):
     pref_large_car: bool | None = None
 
 
+class PromoIn(BaseModel):
+    code: str = Field(min_length=3, max_length=40, pattern=r"^[A-Za-z0-9_-]+$")
+    percent: int = Field(ge=1, le=100)
+    starts_at: datetime | None = None
+    ends_at: datetime | None = None
+    min_order_amount: Decimal | None = Field(default=None, ge=0)
+    is_active: bool = True
+
+    @field_validator("code")
+    @classmethod
+    def _upper(cls, v):
+        return v.upper()
+
+    @model_validator(mode="after")
+    def _window(self):
+        if self.starts_at and self.ends_at and self.ends_at <= self.starts_at:
+            raise ValueError("ends_at must be after starts_at")
+        return self
+
+
+class PromoPatch(BaseModel):
+    percent: int | None = Field(default=None, ge=1, le=100)
+    starts_at: datetime | None = None
+    ends_at: datetime | None = None
+    min_order_amount: Decimal | None = Field(default=None, ge=0)
+    is_active: bool | None = None
+
+
 class OrderCreateIn(PreferencesIn):
+    promo_code: str | None = Field(default=None, max_length=40)
     service_type: Literal["PERSON", "DELIVERY"]
     pickup_address: str = Field(min_length=2, max_length=300)
     pickup_latitude: float | None = Field(default=None, ge=-90, le=90)
@@ -329,6 +358,7 @@ class SettingsPatch(BaseModel):
     default_pref_driver_gender: Literal["ANY", "FEMALE", "MALE"] | None = None
     default_pref_large_car: bool | None = None
     customer_live_tracking_enabled: bool | None = None
+    promo_enabled: bool | None = None
     service_categories: list[ServiceCategory] | None = Field(default=None, max_length=12)
     require_pickup_photo: bool | None = None
     require_delivery_photo: bool | None = None
@@ -467,6 +497,7 @@ class BroadcastIn(BaseModel):
 
 
 class EstimateIn(PreferencesIn):
+    promo_code: str | None = Field(default=None, max_length=40)
     pickup_latitude: float = Field(ge=-90, le=90)
     pickup_longitude: float = Field(ge=-180, le=180)
     destination_latitude: float = Field(ge=-90, le=90)
