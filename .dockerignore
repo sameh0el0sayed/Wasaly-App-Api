@@ -1,0 +1,7 @@
+secrets/
+.env
+*.db
+storage/
+__pycache__/
+.pytest_cache/
+tests/

@@ -1,0 +1,118 @@
+import json
+from decimal import Decimal
+from typing import NamedTuple
+
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from ..constants import CURRENCIES
+from ..models import AppSetting
+
+DEFAULTS = {
+    "currency_code": "BHD",
+    "unit_price": "0.500",
+    "unit_duration_seconds": "300",
+    "min_price": "0.500",
+    "night_surcharge_enabled": "true",
+    "night_surcharge_percent": "25",
+    "night_start": "00:00",
+    "night_end": "06:00",
+    "outside_bahrain_enabled": "true",
+    "outside_bahrain_driver_percent": "25",  # extra cut taken from the DRIVER share on trips ending outside Bahrain
+    "country_boundary": json.dumps({"type": "polygon", "points": [[25.50, 50.37], [25.50, 50.85], [26.35, 50.85], [26.35, 50.37]]}),
+    "estimate_road_factor": "1.35",  # straight-line km x factor = road km (estimates only)
+    "estimate_avg_speed_kmh": "35",  # average city speed used to guess duration (estimates only)
+    "tap_fee_percent": "0",   # gateway fee charged to the customer on top (Tap)
+    "tap_fee_fixed": "0",
+    "tap_enabled": "true",
+    "benefitpay_enabled": "true",
+    "benefitpay_instructions": "",  # text shown to the customer, e.g. "حوّل المبلغ ثم ارفع صورة التحويل"
+    "benefitpay_account_name": "",
+    "benefitpay_account_number": "",
+    "block_new_order_if_unpaid": "true",
+    "subscription_commission_value": "30",  # company % on monthly subscriptions (same mode as trips)
+    "commission_type": "PERCENT",   # PERCENT | FIXED
+    "commission_value": "30",       # 30 = 30% when PERCENT, or an amount when FIXED
+    "commission_mode": "ADD",       # DEDUCT (taken from the price) | ADD (added on top of the price)
+    "offer_ttl_seconds": "10",  # how long each driver has to accept an offer
+    "offer_max_drivers": "0",   # 0 = offer to every eligible driver in the pickup area; N = only the first N
+    "order_timeout_seconds": "600",
+    "subscription_period_days": "30",  # length of one paid subscription period
+    "subscription_renewal_reminder_days": "3",  # remind the customer this many days before it ends
+    "login_max_failed_attempts": "5",
+    "login_lockout_minutes": "15",
+    "upload_max_mb": "8",
+    "support_phone": "",
+    "support_whatsapp": "",
+    "support_email": "",
+    "maintenance_mode": "false",  # true = new orders are refused with 503 MAINTENANCE_MODE
+    "maintenance_message": "",
+    "min_app_version_android": "1.0.0",  # apps older than this must show the update screen
+    "min_app_version_ios": "1.0.0",
+    "cancel_after_accept_allowed": "true",
+    "require_cpr_photo": "false",
+    "doc_expiry_warning_days": "14",
+    "min_app_version": "1.0.0",  # one value for both platforms (the app sends nothing else)
+    "latest_app_version": "1.0.0",
+    "update_message": "",
+    "ratings_enabled": "true",
+    "driver_rates_customer_enabled": "true",
+    "rating_window_hours": "48",  # how long after COMPLETED a rating is still accepted
+    "rating_comment_max_chars": "500",
+    "auto_suspend_driver_one_star_count": "1",  # drivers: suspend automatically after N one-star ratings (0 = off)
+    "ban_reinstatement_fee": "50",  # fee (in the system currency) charged before the SUPER ADMIN may lift a permanent ban
+    "auto_ban_after_auto_suspensions": "2",  # Nth automatic suspension becomes a permanent ban (0 = never)
+    "auto_suspend_customer_one_star_count": "0",  # customers: same rule (0 = off; abusable by drivers, so off by default)
+    "live_mode_enabled": "true",  # master switch for the driver LIVE mode (location sharing)
+    "live_location_interval_seconds": "10",  # how often the app sends POST /api/driver/location while LIVE
+    "live_location_max_age_seconds": "120",  # an older position is ignored for dispatch
+    "dispatch_nearest_first": "true",  # offers go to the drivers nearest the pickup first (needs LIVE location)
+    "dispatch_max_pickup_km": "0",  # 0 = no limit. N = LIVE drivers farther than N km from the pickup get no offer
+    "max_order_retries": "3",  # how many times a customer can press "retry" on one order
+    "driver_auto_offline_minutes": "0",  # 0 = off. N = a driver with no app activity for N minutes is set offline
+    "online_window_minutes": "15",  # a user counts as ONLINE if any request reached the server within this window
+    "activity_retention_days": "90",  # login history and location snapshots older than this are deleted
+    "location_snapshots_enabled": "true",  # master switch; users must also give consent in the app
+}
+
+
+class Pricing(NamedTuple):
+    currency: str
+    decimals: int
+    unit_price: Decimal
+    unit_seconds: int
+    min_price: Decimal
+    commission_type: str
+    commission_value: Decimal
+    commission_mode: str
+    night_enabled: bool
+    night_percent: Decimal
+    night_start: str
+    night_end: str
+    outside_enabled: bool = True
+    outside_driver_percent: Decimal = Decimal(0)
+    country_boundary: dict | None = None
+
+
+async def get_all(db: AsyncSession) -> dict[str, str]:
+    rows = (await db.execute(select(AppSetting))).scalars().all()
+    data = dict(DEFAULTS)
+    data.update({r.key: r.value for r in rows})
+    return data
+
+
+async def get_pricing(db: AsyncSession) -> Pricing:
+    s = await get_all(db)
+    cur = s["currency_code"]
+    return Pricing(cur, CURRENCIES[cur], Decimal(s["unit_price"]), int(s["unit_duration_seconds"]), Decimal(s["min_price"]),
+                   s["commission_type"], Decimal(s["commission_value"]), s["commission_mode"],
+                   s["night_surcharge_enabled"] == "true", Decimal(s["night_surcharge_percent"]), s["night_start"], s["night_end"],
+                   s["outside_bahrain_enabled"] == "true", Decimal(s["outside_bahrain_driver_percent"]), json.loads(s["country_boundary"]))
+
+
+async def set_value(db: AsyncSession, key: str, value: str, user_id: int | None):
+    row = await db.get(AppSetting, key)
+    if row:
+        row.value, row.updated_by = value, user_id
+    else:
+        db.add(AppSetting(key=key, value=value, updated_by=user_id))
