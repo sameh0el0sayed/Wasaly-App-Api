@@ -8,7 +8,7 @@ from ...constants import OrderStatus as S
 from ...database import get_db
 from ...deps import admin_user
 from ...models import Order, ServiceArea, User
-from ...schemas import AreaIn, AreaPatch
+from ...schemas import AreaBulkIn, AreaIn, AreaPatch
 from ...services.audit import audit
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])
@@ -40,6 +40,25 @@ async def create_area(body: AreaIn, admin: User = Depends(admin_user), db: Async
     audit(db, admin.id, "AREA_CREATED", "area", a.id)
     await db.commit()
     return _area(a)
+
+
+@router.post("/service-areas/bulk", status_code=201)
+async def create_areas_bulk(body: AreaBulkIn, admin: User = Depends(admin_user), db: AsyncSession = Depends(get_db)):
+    """Create many areas at once. Safe to re-run: names that already exist are skipped."""
+    existing = set((await db.execute(select(ServiceArea.name))).scalars().all())
+    created, skipped = [], []
+    for item in body.areas:
+        if item.name in existing:
+            skipped.append(item.name)
+            continue
+        a = ServiceArea(**item.model_dump())
+        db.add(a)
+        await db.flush()
+        existing.add(item.name)
+        created.append(_area(a))
+        audit(db, admin.id, "AREA_CREATED", "area", a.id)
+    await db.commit()
+    return {"created": created, "skipped_existing": skipped}
 
 
 @router.patch("/service-areas/{area_id}")

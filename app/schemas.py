@@ -272,6 +272,44 @@ class AreaIn(BaseModel):
     v_boundary = field_validator("boundary")(lambda cls, v: _check_boundary(v))
 
 
+class AdminUserEditIn(BaseModel):
+    full_name: str | None = Field(default=None, min_length=2, max_length=120)
+    phone: str | None = None
+    cpr: str | None = None
+    profile_photo: str | None = None
+    cpr_photo: str | None = None
+    reason: str = Field(min_length=2, max_length=500)
+    v_phone = field_validator("phone")(lambda cls, v: normalize_phone(v) if v is not None else v)
+    v_cpr = field_validator("cpr")(lambda cls, v: validate_cpr(v) if v is not None else v)
+
+
+class AdminLicenseEditIn(BaseModel):
+    license_number: str | None = Field(default=None, min_length=1, max_length=60)
+    license_expiry_date: date | None = None
+    license_document: str | None = None
+    reason: str = Field(min_length=2, max_length=500)
+
+
+class AdminVehicleEditIn(BaseModel):
+    make: str | None = Field(default=None, min_length=1, max_length=60)
+    model: str | None = Field(default=None, min_length=1, max_length=60)
+    year: int | None = Field(default=None, ge=1990, le=2100)
+    color: str | None = Field(default=None, min_length=1, max_length=30)
+    plate_number: str | None = Field(default=None, min_length=1, max_length=20)
+    vehicle_type: str | None = Field(default=None, max_length=30)
+    passenger_capacity: int | None = Field(default=None, ge=1, le=14)
+    luggage_capacity: int | None = Field(default=None, ge=0, le=20)
+    cargo_capacity_kg: Decimal | None = Field(default=None, ge=0)
+    has_ac: bool | None = None
+    is_comfortable: bool | None = None
+    photos: dict[str, str] | None = None
+    reason: str = Field(min_length=2, max_length=500)
+
+
+class AreaBulkIn(BaseModel):
+    areas: list[AreaIn] = Field(min_length=1, max_length=200)
+
+
 class AreaPatch(BaseModel):
     name: str | None = Field(default=None, min_length=2, max_length=100)
     boundary: dict | None = None

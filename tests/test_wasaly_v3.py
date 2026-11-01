@@ -209,3 +209,51 @@ async def test_banned_customer_reinstatement_needs_fee_collected(client):
     assert r.status_code == 402 and r.json()["detail"]["code"] == "REINSTATEMENT_FEE_REQUIRED"
     r = await client.post(f"/api/admin/users/{cid}/reinstate", headers=auth(admin), json={"reason": "appeal", "fee_received": True, "payment_reference": "REF9"})
     assert r.status_code == 200 and r.json()["account_status"] == "APPROVED"
+
+
+async def test_bulk_service_areas_idempotent(client):
+    from .conftest import ADMIN, auth, login
+    admin = await login(client, ADMIN["phone"], ADMIN["password"])
+    body = {"areas": [
+        {"name": "Manama", "boundary": {"type": "circle", "center": [26.2285, 50.586], "radius_m": 4000}},
+        {"name": "Riffa", "boundary": {"type": "circle", "center": [26.13, 50.555], "radius_m": 6000}}]}
+    r = await client.post("/api/admin/service-areas/bulk", headers=auth(admin), json=body)
+    assert r.status_code == 201 and len(r.json()["created"]) == 2
+    r = await client.post("/api/admin/service-areas/bulk", headers=auth(admin), json=body)
+    assert r.json()["created"] == [] and r.json()["skipped_existing"] == ["Manama", "Riffa"]
+    bad = {"areas": [{"name": "X1", "boundary": {"type": "circle", "center": [1, 2], "radius_m": 0}}]}
+    assert (await client.post("/api/admin/service-areas/bulk", headers=auth(admin), json=bad)).status_code == 422
+
+
+async def test_admin_edit_user_license_vehicle(client):
+    from .conftest import ADMIN, auth, login, register_customer, register_driver
+    admin = await login(client, ADMIN["phone"], ADMIN["password"])
+    cid, ctoken, _ = await register_customer(client)
+    did, dtoken, _ = await register_driver(client)
+    did2, _, _ = await register_driver(client)
+    h = auth(admin)
+    # reason is required; non super-admin refused
+    assert (await client.patch(f"/api/admin/users/{cid}", headers=h, json={"full_name": "New Name"})).status_code == 422
+    assert (await client.patch(f"/api/admin/users/{cid}", headers=auth(ctoken), json={"full_name": "x", "reason": "no"})).status_code == 403
+    r = await client.patch(f"/api/admin/users/{cid}", headers=h, json={"full_name": "New Name", "phone": "33991234", "cpr": "123456789", "reason": "fix typo"})
+    assert r.status_code == 200 and r.json()["full_name"] == "New Name" and r.json()["phone"] == "+97333991234"
+    # duplicates
+    r = await client.patch(f"/api/admin/users/{did}", headers=h, json={"phone": "33991234", "reason": "dup"})
+    assert r.status_code == 409 and r.json()["detail"]["code"] == "PHONE_EXISTS"
+    r = await client.patch(f"/api/admin/users/{did}", headers=h, json={"cpr": "123456789", "reason": "dup"})
+    assert r.status_code == 409 and r.json()["detail"]["code"] == "CPR_EXISTS"
+    assert (await client.patch(f"/api/admin/users/{did}", headers=h, json={"profile_photo": "nope/x.jpg", "reason": "bad"})).status_code == 422
+    # admins cannot be edited here
+    assert (await client.patch("/api/admin/users/1", headers=h, json={"full_name": "Boss", "reason": "no"})).status_code == 404
+    # licence + vehicle
+    r = await client.patch(f"/api/admin/drivers/{did}/license", headers=h, json={"license_number": "LIC-999", "license_expiry_date": "2031-05-05", "reason": "renewed"})
+    assert r.status_code == 200 and r.json()["driver"]["license_expiry_date"] == "2031-05-05"
+    r = await client.patch(f"/api/admin/drivers/{did}/vehicle", headers=h, json={"color": "Black", "passenger_capacity": 6, "reason": "update"})
+    assert r.status_code == 200 and r.json()["driver"]["vehicle"]["color"] == "Black"
+    plate = (await client.get(f"/api/admin/users/{did2}", headers=h)).json()["driver"]["vehicle"]["plate_number"]
+    r = await client.patch(f"/api/admin/drivers/{did}/vehicle", headers=h, json={"plate_number": plate, "reason": "dup"})
+    assert r.status_code == 409 and r.json()["detail"]["code"] == "PLATE_EXISTS"
+    assert (await client.patch(f"/api/admin/drivers/{cid}/license", headers=h, json={"license_number": "x", "reason": "no"})).status_code == 404
+    # user notified + audited
+    n = (await client.get("/api/notifications", headers=auth(dtoken))).json()
+    assert any(x["type"] == "PROFILE_UPDATED_BY_ADMIN" for x in n["items"])

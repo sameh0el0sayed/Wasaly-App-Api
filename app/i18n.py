@@ -19,6 +19,8 @@ PAIRS: list[tuple[str, str]] = [
     ("يوجد مبلغ مستحق للشركة", "You owe an outstanding amount to the company"),
     ("تم حذف حسابك", "Your account has been deleted"),
     ("حسابك قيد المراجعة من الإدارة", "Your account is under review"),
+    ("تم تحديث بياناتك", "Your details were updated"),
+    ("قامت الإدارة بتحديث بياناتك.", "The administration updated your details."),
     ("هذا الحساب محذوف", "This account has been deleted"),
     ("إذا كان الحساب موجودًا فسيتواصل معك المدير لإعادة تعيين كلمة المرور",
      "If the account exists, an administrator will contact you to reset your password"),
