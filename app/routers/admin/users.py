@@ -120,14 +120,6 @@ async def reject(user_id: int, body: ReasonIn, admin: User = Depends(admin_user)
     return user_public(u)
 
 
-@router.post("/users/{user_id}/request-correction")
-async def request_correction(user_id: int, body: ReasonIn, admin: User = Depends(admin_user), db: AsyncSession = Depends(get_db)):
-    u = await _target(db, user_id)
-    await _set_status(db, admin, u, AccountStatus.NEEDS_CORRECTION, body.reason, "ACCOUNT_NEEDS_CORRECTION", "مطلوب تعديل البيانات", "يرجى تعديل بياناتك.")
-    await db.commit()
-    return user_public(u)
-
-
 @router.post("/users/{user_id}/suspend")
 async def suspend(user_id: int, body: ReasonIn, admin: User = Depends(admin_user), db: AsyncSession = Depends(get_db)):
     u = await _target(db, user_id)

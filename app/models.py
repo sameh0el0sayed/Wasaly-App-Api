@@ -1,7 +1,7 @@
 from datetime import UTC, date, datetime
 from decimal import Decimal
 
-from sqlalchemy import JSON, Boolean, Date, DateTime, Float, ForeignKey, Index, Integer, Numeric, String, Text, UniqueConstraint
+from sqlalchemy import JSON, Boolean, Date, DateTime, Float, ForeignKey, Index, Integer, Numeric, String, Text, UniqueConstraint, false
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.types import TypeDecorator
 
@@ -86,6 +86,8 @@ class DriverProfile(Base):
     license_number_encrypted: Mapped[str] = mapped_column(Text)
     license_expiry_date: Mapped[date] = mapped_column(Date)
     license_document: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    license_document_back: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    has_open_corrections: Mapped[bool] = mapped_column(Boolean, default=False, server_default=false())
     driver_status: Mapped[str] = mapped_column(String(30), default=AccountStatus.PENDING_APPROVAL)
     payout_method: Mapped[str | None] = mapped_column(String(20), nullable=True)  # IBAN | BENEFITPAY
     payout_account_encrypted: Mapped[str | None] = mapped_column(Text, nullable=True)
@@ -159,6 +161,25 @@ class PromoCode(Base):
     min_order_amount: Mapped[Decimal | None] = mapped_column(Numeric(12, 3), nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
+
+
+class ProfileChange(Base):
+    """An admin-reviewed data change. kind=CORRECTION: admin asked the user to fix a field (status OPEN -> SUBMITTED ->
+    ACCEPTED). kind=CHANGE: the user asked to change a sensitive field (PENDING_REVIEW -> ACCEPTED | REJECTED).
+    The account is never locked by either; the new value is only applied when an admin accepts it."""
+    __tablename__ = "profile_changes"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
+    kind: Mapped[str] = mapped_column(String(12))  # CORRECTION | CHANGE
+    field: Mapped[str] = mapped_column(String(40))
+    reason: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    status: Mapped[str] = mapped_column(String(20), index=True)
+    new_value: Mapped[str | None] = mapped_column(Text, nullable=True)
+    requested_by: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True)
+    requested_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
+    submitted_at: Mapped[datetime | None] = mapped_column(UTCDateTime, nullable=True)
+    reviewed_by: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True)
+    reviewed_at: Mapped[datetime | None] = mapped_column(UTCDateTime, nullable=True)
 
 
 class Banner(Base):

@@ -306,6 +306,35 @@ class AdminVehicleEditIn(BaseModel):
     reason: str = Field(min_length=2, max_length=500)
 
 
+class CorrectionFieldIn(BaseModel):
+    field: str = Field(min_length=3, max_length=40)
+    reason: str = Field(min_length=2, max_length=500)
+
+
+class CorrectionRequestIn(BaseModel):
+    reason: str | None = Field(default=None, max_length=500)  # general message
+    fields: list[CorrectionFieldIn] = Field(min_length=1, max_length=20)
+
+
+class CorrectionSubmitItem(BaseModel):
+    id: int
+    value: str = Field(max_length=500)
+
+
+class CorrectionSubmitIn(BaseModel):
+    items: list[CorrectionSubmitItem] = []
+
+
+class ChangeReviewIn(BaseModel):
+    status: Literal["ACCEPTED", "REJECTED"]
+    reason: str | None = Field(default=None, max_length=500)
+
+
+class PhoneChangeIn(BaseModel):
+    phone: str
+    v_phone = field_validator("phone")(lambda cls, v: normalize_phone(v))
+
+
 class AreaBulkIn(BaseModel):
     areas: list[AreaIn] = Field(min_length=1, max_length=200)
 

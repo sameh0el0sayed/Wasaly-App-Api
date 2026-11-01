@@ -1,4 +1,5 @@
-secrets/
+secrets/*
+!secrets/firebase-service-account.json
 .env
 *.db
 storage/

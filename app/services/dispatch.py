@@ -24,6 +24,8 @@ def work_blockers(user: User, today: date | None = None) -> list[str]:
         r.append("ACCOUNT_NOT_APPROVED")
     if not p or p.driver_status != AccountStatus.APPROVED:
         r.append("DRIVER_NOT_APPROVED")
+    if p and p.has_open_corrections:
+        r.append("CORRECTIONS_REQUIRED")
     if p and p.license_expiry_date < today:
         r.append("LICENSE_EXPIRED")
     if not v or v.vehicle_status != AccountStatus.APPROVED:

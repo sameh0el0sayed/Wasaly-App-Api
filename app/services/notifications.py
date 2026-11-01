@@ -64,7 +64,9 @@ def _send_sync(token: str, title: str, body: str, data: dict) -> str:
         messaging.send(messaging.Message(
             token=token, notification=messaging.Notification(title=title, body=body),
             data={k: str(v) for k, v in data.items()},
-            android=messaging.AndroidConfig(priority="high"),
+            android=messaging.AndroidConfig(
+                priority="high",
+                notification=messaging.AndroidNotification(channel_id="new_offers") if data.get("type") == "NEW_OFFER" else None),
             apns=messaging.APNSConfig(headers={"apns-priority": "10"})), app=_app)
         return "ok"
     except messaging.UnregisteredError:

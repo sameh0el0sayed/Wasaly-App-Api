@@ -19,9 +19,16 @@ router = APIRouter(prefix="/api", tags=["profile"])
 
 
 @router.get("/profile")
-async def get_profile(user: User = Depends(current_user)):
+async def get_profile(user: User = Depends(current_user), db: AsyncSession = Depends(get_db)):
+    from ..models import ProfileChange
+    from ..services import corrections as C
     d = user_public(user)
     d["created_at"] = dt(user.created_at)
+    rows = (await db.execute(select(ProfileChange).where(ProfileChange.user_id == user.id, ProfileChange.status.in_([C.OPEN, C.SUBMITTED, C.PENDING]))
+                             .order_by(ProfileChange.id))).scalars().all()
+    d["required_corrections"] = [C.row_out(c) for c in rows if c.kind == C.CORRECTION]
+    d["pending_changes"] = [{"field": c.field, "new_value": c.new_value, "status": c.status, "submitted_at": dt(c.submitted_at)}
+                            for c in rows if c.kind == C.CHANGE]
     if user.role == Role.DRIVER:
         d["driver"] = driver_block(user)
     return d
