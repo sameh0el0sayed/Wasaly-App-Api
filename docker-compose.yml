@@ -3,7 +3,7 @@ services:
     image: postgres:16
     environment:
       POSTGRES_USER: transport
-      POSTGRES_PASSWORD: transport
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-transport}
       POSTGRES_DB: transport
     volumes: [pgdata:/var/lib/postgresql/data]
   api:
