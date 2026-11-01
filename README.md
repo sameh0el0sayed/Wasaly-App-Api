@@ -10,7 +10,7 @@ cp .env.example .env            # set SECRET_KEY, FERNET_KEY, first admin
 docker compose up --build       # API on :8000, docs on /docs
 # or locally (SQLite by default):
 pip install -r requirements.txt && uvicorn app.main:app --reload
-pytest                          # 113 tests
+pytest                          # 117 tests
 ```
 First super admin is created from `FIRST_ADMIN_*` on startup (must change password).
 Production: use PostgreSQL and Alembic (`alembic revision --autogenerate -m init && alembic upgrade head`);
@@ -214,3 +214,9 @@ Before `start-trip` (pickup proof, body `pickup_photo_file_key`) and `arrived-at
 `GET /api/stream` (any signed-in user, `Authorization: Bearer`, `Accept: text/event-stream`). Admins receive every order/subscription event, customers and drivers only their own.
 Events (small notifications, the app refetches the resource): `order.created`, `order.status` (`old_status`, `new_status`), `subscription.created`, `subscription.status`; plus `: ping` comments every 15 s.
 Events are published **after the database commit** (never on rollback). In-process hub: with more than one server instance put Redis pub/sub behind `Hub.publish` (`services/realtime.py`).
+
+## Languages (Arabic / English)
+- `users.language` (`ar` default | `en`): language of notifications and pushes (written in the recipient's language when created). Set at register (`language`, else the `Accept-Language` header) and changed with `PATCH /api/profile {"language":"en"}`.
+- Error messages, notes and `message` fields follow the request header `Accept-Language: en|ar` (default `ar`). Error `code`s never change.
+- All texts live in `app/i18n.py` (`PAIRS`: Arabic -> English, with `{placeholders}`); unknown or user-written text passes through unchanged. A new language = a new column there + `LANGUAGES`.
+- Migration `0004` adds `users.language`. If the server has an untracked `0003_*` file, delete it before `alembic upgrade head` (two heads otherwise).

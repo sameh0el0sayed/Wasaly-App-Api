@@ -9,6 +9,7 @@ from ..constants import AccountStatus, Role
 from ..constants import OrderStatus as S
 from ..database import get_db
 from ..deps import admin_user, current_user
+from ..i18n import localize
 from ..models import Order, Subscription, User, utcnow
 from ..schemas import AccountDeleteIn
 from ..services import settings_service
@@ -51,7 +52,7 @@ async def delete_account(body: AccountDeleteIn = AccountDeleteIn(), user: User =
         await force_offline(db, user.id)  # mode = OFF, live location erased, open offers closed
     audit(db, None, "ACCOUNT_DELETED", "user", user.id, body.reason)
     await db.commit()
-    return {"message": "تم حذف حسابك"}
+    return {"message": localize("تم حذف حسابك", user.language)}
 
 
 @admin_router.post("/users/{user_id}/restore")

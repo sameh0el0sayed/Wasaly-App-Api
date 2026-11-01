@@ -7,7 +7,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..constants import AccountStatus
 from ..database import get_db
-from ..deps import current_user
+from ..deps import current_user, request_lang
+from ..i18n import localize
 from ..models import Complaint, DriverProfile, LoginEvent, User, UserDevice, Vehicle, utcnow
 from ..schemas import ChangePasswordIn, ForgotPasswordIn, LoginIn, RegisterIn
 from ..security import cpr_hash, create_access_token, encrypt, hash_password, verify_password
@@ -19,7 +20,7 @@ router = APIRouter(prefix="/api", tags=["auth"])
 
 
 @router.post("/auth/register", status_code=201)
-async def register(body: RegisterIn, db: AsyncSession = Depends(get_db)):
+async def register(body: RegisterIn, db: AsyncSession = Depends(get_db), lang: str = Depends(request_lang)):
     """Creates the account as PENDING_APPROVAL. No OTP anywhere. The returned token is a normal token;
     approval-only endpoints answer 403 ACCOUNT_NOT_APPROVED until an admin approves."""
     dup = await db.execute(select(User.id).where(or_(User.phone == body.phone, User.cpr_hash == cpr_hash(body.cpr))))
@@ -34,7 +35,7 @@ async def register(body: RegisterIn, db: AsyncSession = Depends(get_db)):
         raise HTTPException(422, "CPR photo is required")
     user = User(full_name=body.full_name, phone=body.phone, cpr_encrypted=encrypt(body.cpr),
                 cpr_hash=cpr_hash(body.cpr), cpr_last3=body.cpr[-3:], password_hash=hash_password(body.password),
-                role=body.role, account_status=AccountStatus.PENDING_APPROVAL)
+                role=body.role, account_status=AccountStatus.PENDING_APPROVAL, language=body.language or lang)
     db.add(user)
     try:
         await db.flush()
@@ -56,7 +57,7 @@ async def register(body: RegisterIn, db: AsyncSession = Depends(get_db)):
         db.add(Vehicle(driver_id=user.id, **v.model_dump()))
     await db.commit()
     return {"user": user_public(user), "access_token": create_access_token(user.id, user.token_version),
-            "token_type": "bearer", "message": "حسابك قيد المراجعة من الإدارة"}
+            "token_type": "bearer", "message": localize("حسابك قيد المراجعة من الإدارة", user.language)}
 
 
 @router.post("/auth/login")
@@ -109,14 +110,14 @@ async def change_password(body: ChangePasswordIn, user: User = Depends(current_u
 
 
 @router.post("/auth/forgot-password", status_code=202)
-async def forgot_password(body: ForgotPasswordIn, db: AsyncSession = Depends(get_db)):
+async def forgot_password(body: ForgotPasswordIn, db: AsyncSession = Depends(get_db), lang: str = Depends(request_lang)):
     """No OTP: creates a reset request that an admin handles (POST /api/admin/users/{id}/reset-password)."""
     user = (await db.execute(select(User).where(User.phone == body.phone))).scalar_one_or_none()
     if user:
         db.add(Complaint(user_id=user.id, type="PASSWORD_RESET", subject="Password reset request",
                          message=f"Phone {body.phone}, name given: {body.full_name or '-'}"))
         await db.commit()
-    return {"message": "إذا كان الحساب موجودًا فسيتواصل معك المدير لإعادة تعيين كلمة المرور"}
+    return {"message": localize("إذا كان الحساب موجودًا فسيتواصل معك المدير لإعادة تعيين كلمة المرور", lang)}
 
 
 @router.get("/account/status")

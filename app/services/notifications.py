@@ -6,7 +6,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..config import settings
 from ..database import SessionLocal
-from ..models import DeviceToken, Notification
+from ..i18n import localize
+from ..models import DeviceToken, Notification, User
 
 log = logging.getLogger("notifications")
 
@@ -14,6 +15,8 @@ log = logging.getLogger("notifications")
 async def notify(db: AsyncSession, user_id: int, ntype: str, title: str, message: str,
                  order_id: int | None = None) -> None:
     """Stores an in-app notification and triggers push. The app must always re-fetch state from the API."""
+    lang = (await db.execute(select(User.language).where(User.id == user_id))).scalar_one_or_none() or "ar"
+    title, message = localize(title, lang), localize(message, lang)  # stored (and pushed) in the recipient's language
     db.add(Notification(user_id=user_id, notification_type=ntype, title=title, message=message,
                         related_order_id=order_id))
     tokens = (await db.execute(select(DeviceToken.token).where(DeviceToken.user_id == user_id))).scalars().all()

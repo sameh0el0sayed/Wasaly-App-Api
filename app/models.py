@@ -47,6 +47,7 @@ class User(Base):
     status_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
     profile_photo: Mapped[str | None] = mapped_column(String(255), nullable=True)
     cpr_photo: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    language: Mapped[str] = mapped_column(String(2), default="ar", server_default="ar")  # notification language (ar | en)
     must_change_password: Mapped[bool] = mapped_column(Boolean, default=False)
     token_version: Mapped[int] = mapped_column(Integer, default=0)
     failed_logins: Mapped[int] = mapped_column(Integer, default=0)

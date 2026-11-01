@@ -8,7 +8,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from ..constants import CURRENCIES, Role
 from ..constants import OrderStatus as S
 from ..database import get_db
-from ..deps import approved_user, customer_user, paging
+from ..deps import approved_user, customer_user, paging, request_lang
+from ..i18n import localize
 from ..models import Complaint, Order, OrderStatusHistory, User, utcnow
 from ..schemas import EstimateIn, OptionalReasonIn, OrderCreateIn, ReasonIn
 from ..serializers import history_out, order_for_admin, order_for_customer, order_for_driver
@@ -53,6 +54,7 @@ async def app_config(db: AsyncSession = Depends(get_db)):
                                     "driver_gender": s["default_pref_driver_gender"], "large_car": s["default_pref_large_car"] == "true"},
             "large_car_vehicle_types": [t.strip() for t in s["large_car_vehicle_types"].split(",") if t.strip()],
             "location_snapshots_enabled": s["location_snapshots_enabled"] == "true",
+            "languages": ["ar", "en"], "default_language": "ar",
             "promo_enabled": s["promo_enabled"] == "true",
             "customer_live_tracking_enabled": s["customer_live_tracking_enabled"] == "true",
             "service_categories": _categories(s["service_categories"]),
@@ -104,7 +106,8 @@ async def _with_my_rating(db: AsyncSession, o: Order, user: User) -> dict:
 
 
 @router.post("/orders/estimate")
-async def estimate(body: EstimateIn, user: User = Depends(customer_user), db: AsyncSession = Depends(get_db)):
+async def estimate(body: EstimateIn, user: User = Depends(customer_user), db: AsyncSession = Depends(get_db),
+                   lang: str = Depends(request_lang)):
     """Approximate price BEFORE ordering. The final price depends on the real trip time. The app must label it 'تقديري'."""
     s = await settings_service.get_all(db)
     p = await settings_service.get_pricing(db)
@@ -135,7 +138,7 @@ async def estimate(body: EstimateIn, user: User = Depends(customer_user), db: As
             "discount_amount": f"{e['discount']:.{d}f}",
             "service_fee": f"{e['customer_total'] + e['discount'] - e['price']:.{d}f}" if p.commission_mode == "ADD" else None,
             "estimated_total": f"{e['customer_total']:.{d}f}", "is_outside_bahrain": outside, "pickup_in_service_area": area is not None,
-            "note": "تقديري: السعر النهائي يُحسب من وقت الرحلة الفعلي من بدء الرحلة حتى الوصول."}
+            "note": localize("تقديري: السعر النهائي يُحسب من وقت الرحلة الفعلي من بدء الرحلة حتى الوصول.", lang)}
 
 
 @router.post("/orders", status_code=201)

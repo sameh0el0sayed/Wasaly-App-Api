@@ -1,10 +1,11 @@
 import jwt
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from .constants import AccountStatus, Role
 from .database import get_db
+from .i18n import DEFAULT_LANGUAGE, parse_accept_language
 from .models import User, utcnow
 from .security import decode_access_token
 
@@ -43,6 +44,12 @@ async def current_user(creds: HTTPAuthorizationCredentials | None = Depends(bear
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, {"code": "UNAUTHORIZED", "message": "Session is no longer valid"})
     await touch_last_seen(user)
     return user
+
+
+def request_lang(request: Request) -> str:
+    """Language of this request: Accept-Language (ar|en), else the signed-in user's saved language is NOT consulted here
+    (errors/notes follow the header; notifications follow the user's saved language). Default: ar."""
+    return parse_accept_language(request.headers.get("accept-language")) or DEFAULT_LANGUAGE
 
 
 async def optional_user(creds: HTTPAuthorizationCredentials | None = Depends(bearer),

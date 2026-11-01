@@ -6,7 +6,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..constants import AccountStatus, Role
 from ..database import get_db
-from ..deps import approved_user, current_user, paging
+from ..deps import approved_user, current_user, paging, request_lang
+from ..i18n import localize
 from ..models import Banner, Complaint, DeviceToken, Notification, Order, UploadedFile, User, VehicleDocument
 from ..schemas import ComplaintIn, DeviceIn, DocumentIn, LicenseRenewIn, ProfilePatch, ReasonIn, SignIn
 from ..security import create_file_token, decode_file_token
@@ -33,6 +34,8 @@ async def patch_profile(body: ProfilePatch, user: User = Depends(current_user), 
     for k in ("profile_photo", "cpr_photo"):
         if data.get(k):
             await assert_owned(db, user.id, data[k])
+    if data.get("language") is None:
+        data.pop("language", None)
     for k, v in data.items():
         setattr(user, k, v)
     if "cpr_photo" in data and user.account_status == AccountStatus.NEEDS_CORRECTION:
@@ -42,17 +45,19 @@ async def patch_profile(body: ProfilePatch, user: User = Depends(current_user), 
 
 
 @router.post("/profile/sensitive-change-request", status_code=202)
-async def sensitive_change(body: ReasonIn, user: User = Depends(current_user), db: AsyncSession = Depends(get_db)):
+async def sensitive_change(body: ReasonIn, user: User = Depends(current_user), db: AsyncSession = Depends(get_db),
+                           lang: str = Depends(request_lang)):
     db.add(Complaint(user_id=user.id, type="SENSITIVE_CHANGE", subject="Sensitive data change request", message=body.reason))
     await db.commit()
-    return {"message": "تم إرسال الطلب للمراجعة"}
+    return {"message": localize("تم إرسال الطلب للمراجعة", lang)}
 
 
 @router.post("/profile/deletion-request", status_code=202)
-async def deletion_request(body: ReasonIn, user: User = Depends(current_user), db: AsyncSession = Depends(get_db)):
+async def deletion_request(body: ReasonIn, user: User = Depends(current_user), db: AsyncSession = Depends(get_db),
+                           lang: str = Depends(request_lang)):
     db.add(Complaint(user_id=user.id, type="DELETION_REQUEST", subject="Account suspension/deletion request", message=body.reason))
     await db.commit()
-    return {"message": "تم إرسال طلبك للإدارة"}
+    return {"message": localize("تم إرسال طلبك للإدارة", lang)}
 
 
 # ---------- driver-side profile updates ----------

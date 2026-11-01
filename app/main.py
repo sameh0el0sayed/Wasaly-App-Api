@@ -9,10 +9,12 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from sqlalchemy import select
+from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from .config import settings
 from .constants import AccountStatus, Role
 from .database import Base, SessionLocal, engine
+from .i18n import localize_detail, parse_accept_language
 from .models import User, utcnow
 from .routers import (
     account_deletion,
@@ -102,6 +104,13 @@ app = FastAPI(title="Bahrain Transport & Delivery API", version="1.0.0", lifespa
               description="Backend for customer app, driver app and admin dashboard. No OTP. Driver LIVE mode shares location only with consent. "
                           "All prices, times and permissions are enforced server-side.")
 app.add_middleware(CORSMiddleware, allow_origins=settings.cors_origins, allow_methods=["*"], allow_headers=["*"])
+
+
+@app.exception_handler(StarletteHTTPException)
+async def http_error_handler(request: Request, exc: StarletteHTTPException):
+    """Same body as FastAPI's default, with message/note translated when the app sends Accept-Language: en."""
+    lang = parse_accept_language(request.headers.get("accept-language")) or "ar"
+    return JSONResponse({"detail": localize_detail(exc.detail, lang)}, status_code=exc.status_code, headers=getattr(exc, "headers", None))
 
 
 @app.exception_handler(RequestValidationError)

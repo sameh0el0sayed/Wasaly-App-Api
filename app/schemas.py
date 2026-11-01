@@ -48,6 +48,7 @@ class DriverRegIn(BaseModel):
 
 class RegisterIn(BaseModel):
     role: Literal["CUSTOMER", "DRIVER"]
+    language: Literal["ar", "en"] | None = None  # default: Accept-Language header, else ar
     full_name: str = Field(min_length=2, max_length=120)
     phone: str
     cpr: str
@@ -93,6 +94,7 @@ class ProfilePatch(BaseModel):
     full_name: str | None = Field(default=None, min_length=2, max_length=120)
     profile_photo: str | None = None
     cpr_photo: str | None = None
+    language: Literal["ar", "en"] | None = None  # language of notifications and pushes
 
 
 class DocumentIn(BaseModel):
