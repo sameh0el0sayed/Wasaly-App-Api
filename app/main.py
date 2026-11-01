@@ -51,9 +51,9 @@ def run_migrations() -> None:
 
 async def bootstrap() -> None:
     """Schema (Alembic in production, create_all for dev/tests) and the first super admin."""
-    if settings.app_env == "production":
-        await asyncio.to_thread(run_migrations)
-    else:
+    # Database migrations are managed explicitly during deployment.
+    # Do not run Alembic automatically against an existing production database.
+    if settings.app_env != "production":
         async with engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
     from .seed import assert_safe_environment, seed_demo
@@ -100,7 +100,7 @@ async def lifespan(app: FastAPI):
         task.cancel()
 
 
-app = FastAPI(title="Bahrain Transport & Delivery API", version="1.0.0", lifespan=lifespan,
+app = FastAPI(title="Bahrain Transport & Delivery API", version="1.0.0", lifespan=lifespan, root_path="/wasaly-api",
               description="Backend for customer app, driver app and admin dashboard. No OTP. Driver LIVE mode shares location only with consent. "
                           "All prices, times and permissions are enforced server-side.")
 app.add_middleware(CORSMiddleware, allow_origins=settings.cors_origins, allow_methods=["*"], allow_headers=["*"])
