@@ -39,3 +39,17 @@ async def test_order_status_change_publishes_event(client):
         assert seen and seen[0][0] == "PENDING"
     finally:
         events.clear()
+
+
+def test_migrations_commit_on_postgres(tmp_path):
+    """Regression: without context.begin_transaction() PostgreSQL rolled the whole migration back (SQLite hid it).
+    Runs only when TEST_POSTGRES_URL points at an empty database, e.g. postgresql+asyncpg://user@127.0.0.1:5432/test"""
+    import pytest
+    url = os.environ.get("TEST_POSTGRES_URL")
+    if not url:
+        pytest.skip("TEST_POSTGRES_URL not set")
+    env = {**os.environ, "DATABASE_URL": url}
+    up = subprocess.run([sys.executable, "-m", "alembic", "upgrade", "head"], cwd=ROOT, env=env, capture_output=True, text=True)
+    assert up.returncode == 0, up.stderr
+    chk = subprocess.run([sys.executable, "-m", "alembic", "check"], cwd=ROOT, env=env, capture_output=True, text=True)
+    assert chk.returncode == 0, chk.stdout + chk.stderr  # fails if nothing was committed (alembic_version missing)
