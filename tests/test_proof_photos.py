@@ -69,3 +69,13 @@ async def test_passenger_orders_skip_photos_unless_setting_all(client):
     oid2 = (await client.post("/api/orders", headers=auth(ct), json=order_body())).json()
     assert oid2.get("id") or oid2  # open order exists -> 409 is fine; the rule itself is covered by the setting round-trip
     assert (await client.get("/api/app-config")).json()["proof_photos_apply_to"] == "ALL"
+
+
+async def test_driver_gets_single_order_only_if_it_is_theirs(client):
+    admin, _, (cid, ct), [(did, dt)] = await setup_world(client)
+    oid = await _delivery_order(client, ct, dt)
+    r = await client.get(f"/api/driver/orders/{oid}", headers=auth(dt))
+    assert r.status_code == 200 and r.json()["id"] == oid and "driver_earning" in r.json() and "customer_total" not in r.json()
+    assert (await client.get("/api/driver/orders/active", headers=auth(dt))).status_code == 200  # static routes still win
+    assert (await client.get("/api/driver/orders/999999", headers=auth(dt))).status_code == 404
+    assert (await client.get(f"/api/driver/orders/{oid}", headers=auth(ct))).status_code == 403

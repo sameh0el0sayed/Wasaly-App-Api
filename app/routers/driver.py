@@ -398,3 +398,13 @@ async def patch_vehicle(body: VehiclePatch, user: User = Depends(driver_user), d
     await force_offline(db, user.id)
     await db.commit()
     return vehicle_full(user.vehicle)
+
+
+@router.get("/orders/{order_id}")  # declared after the static /orders/accepted|active|... routes
+async def get_my_order(order_id: int, user: User = Depends(driver_user), db: AsyncSession = Depends(get_db)):
+    """One trip of the signed-in driver (active-trip screen / deep links). 404 when it is not theirs."""
+    o = await _my_order(db, order_id, user, for_update=False)
+    d = order_for_driver(o)
+    from .ratings import my_rating
+    d["my_rating"] = await my_rating(db, o.id, user.id)
+    return d
