@@ -47,6 +47,10 @@ async def register(body: RegisterIn, db: AsyncSession = Depends(get_db), lang: s
     for key in filter(None, keys):
         await assert_owned(db, user.id, key, claim=True)
     user.profile_photo, user.cpr_photo = body.profile_photo, body.cpr_photo
+    if body.role == "CUSTOMER":
+        from .v11 import apply_referral, ensure_code
+        await ensure_code(db, user)
+        await apply_referral(db, user, body.referral_code, body.device_id)
     if body.role == "DRIVER":
         d, v = body.driver, body.driver.vehicle
         if (await db.execute(select(Vehicle.id).where(Vehicle.plate_number == v.plate_number))).first():

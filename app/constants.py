@@ -22,6 +22,7 @@ class ServiceType:
 
 
 class OrderStatus:
+    SCHEDULED = "SCHEDULED"  # waiting for its dispatch time
     PENDING = "PENDING"
     OFFERED = "OFFERED"
     NO_DRIVER_AVAILABLE = "NO_DRIVER_AVAILABLE"

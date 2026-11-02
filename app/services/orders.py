@@ -10,6 +10,7 @@ from ..models import CounterOffer, Order, OrderOffer, OrderStatusHistory, utcnow
 from . import events
 
 ALLOWED: dict[str, set[str]] = {
+    S.SCHEDULED: {S.PENDING, S.OFFERED, S.NO_DRIVER_AVAILABLE, S.CANCELLED, S.EXPIRED},
     S.PENDING: {S.OFFERED, S.NO_DRIVER_AVAILABLE, S.CANCELLED, S.EXPIRED},
     S.OFFERED: {S.ACCEPTED, S.NO_DRIVER_AVAILABLE, S.CANCELLED, S.EXPIRED},
     S.NO_DRIVER_AVAILABLE: {S.OFFERED, S.CANCELLED, S.EXPIRED},

@@ -2,7 +2,7 @@
 import logging
 from datetime import date, timedelta
 
-from sqlalchemy import select, update
+from sqlalchemy import and_, or_, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..constants import AccountStatus, CounterStatus, OfferStatus, ReviewStatus, Role
@@ -57,7 +57,8 @@ async def eligible_drivers(db: AsyncSession, order: Order) -> list[User]:
             .where(DriverServiceArea.service_area_id == order.service_area_id,
                    User.role == Role.DRIVER, User.account_status == AccountStatus.APPROVED,
                    DriverProfile.is_online.is_(True),
-                   User.id.not_in(busy), User.id.not_in(pending)))
+                   User.id.not_in(busy), User.id.not_in(pending),
+                   User.id.not_in(select(OrderOffer.driver_id).where(OrderOffer.order_id == order.id, OrderOffer.offer_status == OfferStatus.ACCEPTED))))  # a driver who cancelled is not re-offered
     if order.preferred_driver_id:  # direct trip: only the driver the customer picked
         stmt = stmt.where(User.id == order.preferred_driver_id)
     out = []
@@ -136,6 +137,7 @@ async def dispatch_order(db: AsyncSession, order: Order) -> int:
 
 async def expire_offers_and_orders(db: AsyncSession) -> None:
     now = utcnow()
+    s_all = await settings_service.get_all(db)
     # 1) offers whose time (offer_ttl_seconds) is over -> EXPIRED (driver's "unaccepted" list)
     expired = (await db.execute(select(OrderOffer).where(OrderOffer.offer_status == OfferStatus.PENDING,
                                                          OrderOffer.expires_at <= now))).scalars().all()
@@ -157,11 +159,24 @@ async def expire_offers_and_orders(db: AsyncSession) -> None:
         await transition(db, order, S.NO_DRIVER_AVAILABLE, None, "SYSTEM", "All offers expired")
         await notify(db, order.customer_id, "NO_DRIVER", "لا يوجد سائق متاح",
                      "لم يقبل أي سائق الطلب حتى الآن. يمكنك إعادة المحاولة.", order.id)
+    # 2b) scheduled trips whose dispatch time has come
+    lead = timedelta(minutes=int(s_all["scheduled_dispatch_minutes_before"]))
+    due = (await db.execute(select(Order).where(Order.order_status == S.SCHEDULED, Order.scheduled_at <= now + lead).with_for_update())).scalars().all()
+    for order in due:
+        await notify(db, order.customer_id, "SCHEDULED_DISPATCHING", "نبحث لك عن سائق", "حان موعد رحلتك المجدولة، نبحث عن سائق الآن.", order.id)
+        await dispatch_order(db, order)
+    remind = (await db.execute(select(Order).where(Order.order_status == S.SCHEDULED, Order.scheduled_at <= now + timedelta(minutes=60),
+                                                   Order.scheduled_at > now + lead))).scalars().all()
+    for order in remind:
+        if not (await db.execute(select(Notification.id).where(Notification.related_order_id == order.id,
+                                                               Notification.notification_type == "SCHEDULED_REMINDER").limit(1))).first():
+            await notify(db, order.customer_id, "SCHEDULED_REMINDER", "تذكير برحلتك", "رحلتك المجدولة بعد أقل من ساعة.", order.id)
     # 3) orders that stayed driver-less longer than the configured timeout -> EXPIRED
     timeout = int((await settings_service.get_all(db))["order_timeout_seconds"])
     cutoff = now - timedelta(seconds=timeout)
     stale = (await db.execute(select(Order).where(Order.order_status.in_(S.SEARCHING),
-                                                  Order.created_at <= cutoff))).scalars().all()
+                                                  or_(and_(Order.scheduled_at.is_(None), Order.created_at <= cutoff),
+                                                      and_(Order.scheduled_at.is_not(None), Order.scheduled_at <= cutoff))))).scalars().all()
     for order in stale:
         await close_pending_offers(db, order.id)
         await transition(db, order, S.EXPIRED, None, "SYSTEM", "Order timeout")

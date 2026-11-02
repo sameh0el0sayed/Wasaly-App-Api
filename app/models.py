@@ -47,6 +47,8 @@ class User(Base):
     status_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
     profile_photo: Mapped[str | None] = mapped_column(String(255), nullable=True)
     cpr_photo: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    referral_code: Mapped[str | None] = mapped_column(String(16), unique=True, index=True, nullable=True)
+    wallet_balance: Mapped[Decimal] = mapped_column(Numeric(12, 3), default=0, server_default="0")
     language: Mapped[str] = mapped_column(String(2), default="ar", server_default="ar")  # notification language (ar | en)
     must_change_password: Mapped[bool] = mapped_column(Boolean, default=False)
     token_version: Mapped[int] = mapped_column(Integer, default=0)
@@ -80,6 +82,7 @@ class DriverProfile(Base):
     __tablename__ = "driver_profiles"
     gender: Mapped[str | None] = mapped_column(String(8), nullable=True)  # MALE | FEMALE, set at registration, changed by admin only
     smoking_allowed: Mapped[bool] = mapped_column(Boolean, default=False)  # driver's car allows smoking
+    daily_goal: Mapped[Decimal] = mapped_column(Numeric(12, 3), default=0, server_default="0")  # earnings goal per day (0 = none)
     debt_balance: Mapped[Decimal] = mapped_column(Numeric(12, 3), default=0)  # owed to the company; deducted from payouts before any transfer
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), unique=True)
@@ -291,6 +294,11 @@ class Order(Base):
     pref_smoking: Mapped[str] = mapped_column(String(12), default="ANY")  # ANY | ALLOWED | NOT_ALLOWED
     pref_driver_gender: Mapped[str] = mapped_column(String(8), default="ANY")  # ANY | FEMALE | MALE
     pref_large_car: Mapped[bool] = mapped_column(Boolean, default=False)
+    scheduled_at: Mapped[datetime | None] = mapped_column(UTCDateTime, nullable=True, index=True)  # scheduled trip: dispatch starts shortly before
+    scheduled_fee: Mapped[Decimal] = mapped_column(Numeric(12, 3), default=0, server_default="0")
+    cancel_fee: Mapped[Decimal | None] = mapped_column(Numeric(12, 3), nullable=True)
+    cancel_fee_payer: Mapped[str | None] = mapped_column(String(10), nullable=True)  # CUSTOMER | DRIVER
+    stops_fee: Mapped[Decimal] = mapped_column(Numeric(12, 3), default=0, server_default="0")
     preferred_driver_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True, index=True)  # direct trip with a favourite driver
     choose_driver: Mapped[bool] = mapped_column(Boolean, default=True, server_default=false())  # customer picks among the drivers who respond
     price_increase_percent: Mapped[int] = mapped_column(Integer, default=0, server_default="0")  # 0..max over the ORIGINAL estimate (raise / accepted counter-offer)
@@ -633,3 +641,66 @@ class AppOpenEvent(Base):
     device_id: Mapped[str | None] = mapped_column(String(100), nullable=True)
     app_version: Mapped[str | None] = mapped_column(String(30), nullable=True)
     created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow, index=True)
+
+
+class SosAlert(Base):
+    __tablename__ = "sos_alerts"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    order_id: Mapped[int] = mapped_column(ForeignKey("orders.id"), index=True)
+    raised_by_user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
+    role: Mapped[str] = mapped_column(String(10))
+    lat: Mapped[float | None] = mapped_column(Float, nullable=True)
+    lng: Mapped[float | None] = mapped_column(Float, nullable=True)
+    note: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    status: Mapped[str] = mapped_column(String(10), default="OPEN", index=True)  # OPEN | ESCALATED | RESOLVED
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
+    escalated_at: Mapped[datetime | None] = mapped_column(UTCDateTime, nullable=True)
+    resolved_by: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True)
+    resolved_at: Mapped[datetime | None] = mapped_column(UTCDateTime, nullable=True)
+    resolution: Mapped[str | None] = mapped_column(String(500), nullable=True)
+
+
+class TripShare(Base):
+    __tablename__ = "trip_shares"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    order_id: Mapped[int] = mapped_column(ForeignKey("orders.id"), index=True)
+    token: Mapped[str] = mapped_column(String(48), unique=True, index=True)
+    revoked: Mapped[bool] = mapped_column(Boolean, default=False)
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
+
+
+class OrderStop(Base):
+    __tablename__ = "order_stops"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    order_id: Mapped[int] = mapped_column(ForeignKey("orders.id"), index=True)
+    seq: Mapped[int] = mapped_column(Integer, default=0)
+    address: Mapped[str] = mapped_column(String(300))
+    lat: Mapped[float] = mapped_column(Float)
+    lng: Mapped[float] = mapped_column(Float)
+    note: Mapped[str | None] = mapped_column(String(300), nullable=True)
+    status: Mapped[str] = mapped_column(String(10), default="PENDING")  # PENDING | ARRIVED | DONE
+    fee: Mapped[Decimal] = mapped_column(Numeric(12, 3), default=0)
+    added_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
+
+
+class Referral(Base):
+    __tablename__ = "referrals"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    inviter_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
+    invitee_id: Mapped[int] = mapped_column(ForeignKey("users.id"), unique=True)
+    device_id: Mapped[str | None] = mapped_column(String(100), nullable=True, index=True)
+    status: Mapped[str] = mapped_column(String(16), default="REGISTERED")  # REGISTERED | REWARDED | REVOKED
+    reward_inviter: Mapped[Decimal] = mapped_column(Numeric(12, 3), default=0)
+    reward_invitee: Mapped[Decimal] = mapped_column(Numeric(12, 3), default=0)
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
+    rewarded_at: Mapped[datetime | None] = mapped_column(UTCDateTime, nullable=True)
+
+
+class WalletEntry(Base):
+    __tablename__ = "wallet_entries"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
+    amount: Mapped[Decimal] = mapped_column(Numeric(12, 3))  # + credit / - spend
+    kind: Mapped[str] = mapped_column(String(20))  # REFERRAL_INVITER | REFERRAL_INVITEE | REVOKED | SPEND
+    ref_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)

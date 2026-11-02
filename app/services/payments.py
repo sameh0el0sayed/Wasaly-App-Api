@@ -52,6 +52,8 @@ async def finalize_paid(db: AsyncSession, payment: Payment, verified_by: int | N
     if payment.kind == "ORDER" and payment.order_id:
         order = await db.get(Order, payment.order_id)
         order.payment_status, order.payment_method = "PAID", payment.payment_method
+        from ..routers.v11 import reward_referral
+        await reward_referral(db, payment.customer_id)
     elif payment.kind == "SUBSCRIPTION":
         from .subscriptions import on_paid
         await on_paid(db, payment)

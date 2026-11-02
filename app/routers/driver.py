@@ -1,3 +1,4 @@
+from decimal import Decimal
 from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -5,7 +6,7 @@ from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..config import settings
-from ..constants import OfferStatus
+from ..constants import OfferStatus, Role
 from ..constants import OrderStatus as S
 from ..database import get_db
 from ..deps import driver_user, paging
@@ -18,6 +19,7 @@ from ..models import (
     OrderOffer,
     UploadedFile,
     User,
+    WalletEntry,
     utcnow,
 )
 from ..schemas import (
@@ -37,7 +39,7 @@ from ..serializers import dt, money, offer_out, order_for_driver, payout_out, ve
 from ..services import price_increase as pi
 from ..services import settings_service
 from ..services.audit import audit
-from ..services.dispatch import expire_offers_and_orders, has_active_order, work_blockers
+from ..services.dispatch import dispatch_order, expire_offers_and_orders, has_active_order, work_blockers
 from ..services.files import assert_owned
 from ..services.notifications import notify
 from ..services.orders import close_pending_offers, load_order, transition
@@ -323,11 +325,27 @@ async def driver_cancel(order_id: int, body: ReasonIn, user: User = Depends(driv
         return order_for_driver(o)
     if o.order_status not in (S.ACCEPTED, S.DRIVER_ON_THE_WAY, S.ARRIVED_AT_PICKUP):
         raise HTTPException(409, {"code": "CANNOT_CANCEL_NOW"})
-    o.cancelled_at, o.cancelled_by, o.cancelled_by_role, o.cancellation_reason = utcnow(), user.id, "DRIVER", body.reason
-    await transition(db, o, S.CANCELLED, user.id, "DRIVER", body.reason)
-    await notify(db, o.customer_id, "ORDER_CANCELLED", "تم إلغاء الطلب", f"ألغى السائق الطلب: {body.reason}", o.id)
+    s_cfg = await settings_service.get_all(db)
+    dec = o.currency_decimals
+    fee = Decimal(s_cfg["cancel_fee_driver_amount"]).quantize(Decimal(1).scaleb(-dec))
+    if fee > 0:  # the penalty is taken from the driver's next earnings; optionally credited to the customer
+        prof = (await db.execute(select(DriverProfile).where(DriverProfile.user_id == user.id).with_for_update())).scalar_one()
+        prof.debt_balance = Decimal(prof.debt_balance or 0) + fee
+        o.cancel_fee, o.cancel_fee_payer = fee, "DRIVER"
+        if s_cfg["cancel_fee_driver_to"] == "CUSTOMER_CREDIT":
+            cust = await db.get(User, o.customer_id)
+            cust.wallet_balance = Decimal(cust.wallet_balance or 0) + fee
+            db.add(WalletEntry(user_id=cust.id, amount=fee, kind="DRIVER_CANCEL", ref_id=o.id))
+        await notify(db, user.id, "CANCEL_FEE_CHARGED", "غرامة إلغاء", f"تم احتساب غرامة {fee:.{dec}f} {o.currency} على إلغائك.", o.id)
+    for aid in (await db.execute(select(User.id).where(User.role.in_(list(Role.ADMINS)), User.account_status == "APPROVED"))).scalars().all():
+        await notify(db, aid, "DRIVER_CANCELLED_AFTER_ACCEPT", "سائق ألغى بعد القبول", f"ألغى السائق {user.full_name} الرحلة #{o.id}.", o.id)
+    # back to searching (the same driver is not offered again); the customer keeps the order
+    o.driver_id, o.accepted_at, o.cancellation_reason = None, None, body.reason
+    await transition(db, o, S.PENDING, user.id, "DRIVER", f"Driver cancelled: {body.reason}", exceptional=True)
+    await notify(db, o.customer_id, "DRIVER_CANCELLED", "السائق اعتذر", "اعتذر السائق، نبحث لك عن سائق آخر.", o.id)
+    await dispatch_order(db, o)
     await db.commit()
-    return order_for_driver(o)
+    return {"status": "RE_DISPATCHED", "cancel_fee": f"{fee:.{dec}f}", "currency": o.currency}
 
 
 async def _list(db, user, statuses, page):

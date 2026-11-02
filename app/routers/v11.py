@@ -1,0 +1,622 @@
+"""v11: admin live map, SOS, trip share link, extra stops, referrals + wallet, driver demand map, earnings goal."""
+import secrets
+from datetime import UTC, date, datetime, timedelta
+from decimal import Decimal
+
+from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import HTMLResponse
+from pydantic import BaseModel, Field
+from sqlalchemy import func, select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from ..constants import OrderStatus as S
+from ..constants import Role
+from ..database import get_db
+from ..deps import approved_user, customer_user, driver_user
+from ..models import (
+    DriverProfile,
+    DriverServiceArea,
+    DriverWorkSession,
+    Order,
+    OrderStop,
+    Referral,
+    ServiceArea,
+    SosAlert,
+    TripShare,
+    User,
+    WalletEntry,
+    utcnow,
+)
+from ..services import settings_service
+from ..services.audit import audit
+from ..services.geo import _haversine_m, find_area
+from ..services.notifications import notify
+from ..services.orders import load_order
+from ..services.realtime import hub
+
+
+def publish_raw(kind: str, payload: dict, user_ids: list[int] | None = None) -> None:
+    hub.publish({"type": kind, **payload, "at": utcnow().isoformat()}, set(user_ids or []))
+
+
+router = APIRouter(prefix="/api", tags=["v11"])
+admin_router = APIRouter(prefix="/api/admin", tags=["v11-admin"])
+public_router = APIRouter(tags=["v11-public"])
+
+
+def _admin(user: User = Depends(approved_user)) -> User:
+    if user.role not in Role.ADMINS:
+        raise HTTPException(403, {"code": "FORBIDDEN"})
+    return user
+
+
+def _aware(d):
+    return d if d is None or d.tzinfo else d.replace(tzinfo=UTC)
+
+
+def _iso(d):
+    return _aware(d).isoformat() if d else None
+
+
+async def _notify_admins(db: AsyncSession, ntype: str, title: str, message: str, order_id: int | None = None) -> None:
+    for aid in (await db.execute(select(User.id).where(User.role.in_(list(Role.ADMINS)), User.account_status == "APPROVED"))).scalars().all():
+        await notify(db, aid, ntype, title, message, order_id)
+
+
+# ======================= 1) admin live map =======================
+@admin_router.get("/live-map")
+async def live_map(service_area_id: int | None = None, include_offline_minutes: int = 0, admin: User = Depends(_admin),
+                   db: AsyncSession = Depends(get_db)):
+    now = utcnow()
+    busy = {o.driver_id: o.id for o in (await db.execute(select(Order).where(Order.order_status.in_(S.DRIVER_BUSY)))).scalars().all() if o.driver_id}
+    areas_of: dict[int, list[int]] = {}
+    for r in (await db.execute(select(DriverServiceArea))).scalars().all():
+        areas_of.setdefault(r.driver_id, []).append(r.service_area_id)
+    drivers = []
+    q = select(User).join(DriverProfile, DriverProfile.user_id == User.id).where(User.role == Role.DRIVER, User.account_status == "APPROVED")
+    for u in (await db.execute(q)).scalars().unique().all():
+        p = u.driver_profile
+        if not p.is_online:
+            if not (include_offline_minutes and p.last_location_at and _aware(p.last_location_at) >= now - timedelta(minutes=include_offline_minutes)):
+                continue
+        if service_area_id and service_area_id not in areas_of.get(u.id, []):
+            continue
+        age = round((now - _aware(p.last_location_at)).total_seconds()) if p.last_location_at else None
+        drivers.append({"id": u.id, "name": u.full_name, "phone": u.phone, "mode": p.mode, "busy": u.id in busy, "order_id": busy.get(u.id),
+                        "lat": p.last_lat, "lng": p.last_lng, "location_at": _iso(p.last_location_at), "location_age_s": age,
+                        "service_area_ids": areas_of.get(u.id, []),
+                        "vehicle": {"plate_number": u.vehicle.plate_number, "vehicle_type": u.vehicle.vehicle_type} if u.vehicle else None})
+    open_sos = {a.order_id for a in (await db.execute(select(SosAlert).where(SosAlert.status != "RESOLVED"))).scalars().all()}
+    oq = select(Order).where(Order.order_status.not_in(list(S.FINAL)))
+    if service_area_id:
+        oq = oq.where(Order.service_area_id == service_area_id)
+    orders = []
+    searching: dict[int, int] = {}
+    active: dict[int, int] = {}
+    for o in (await db.execute(oq)).scalars().all():
+        stops = (await db.execute(select(OrderStop).where(OrderStop.order_id == o.id).order_by(OrderStop.seq))).scalars().all()
+        orders.append({"id": o.id, "status": o.order_status, "service_type": o.service_type,
+                       "pickup": {"lat": o.pickup_latitude, "lng": o.pickup_longitude, "address": o.pickup_address},
+                       "destination": {"lat": o.destination_latitude, "lng": o.destination_longitude, "address": o.destination_address},
+                       "stops": [{"id": s.id, "lat": s.lat, "lng": s.lng, "address": s.address, "status": s.status} for s in stops],
+                       "driver_id": o.driver_id, "customer_name": o.customer.full_name, "created_at": _iso(o.created_at),
+                       "is_scheduled": o.scheduled_at is not None, "sos_open": o.id in open_sos})
+        if o.service_area_id:
+            bucket = searching if o.order_status in S.SEARCHING else active if o.order_status in S.DRIVER_BUSY else None
+            if bucket is not None:
+                bucket[o.service_area_id] = bucket.get(o.service_area_id, 0) + 1
+    areas = []
+    for a in (await db.execute(select(ServiceArea).where(ServiceArea.is_active.is_(True)))).scalars().all():
+        in_area = [d for d in drivers if a.id in d["service_area_ids"] and d["mode"] is not None]
+        areas.append({"id": a.id, "name": a.name, "boundary": a.boundary, "drivers_online": len(in_area),
+                      "drivers_free": len([d for d in in_area if not d["busy"]]),
+                      "orders_searching": searching.get(a.id, 0), "orders_active": active.get(a.id, 0)})
+    return {"server_time": now.isoformat(), "drivers": drivers, "orders": orders, "areas": areas}
+
+
+# ======================= 2) SOS =======================
+class SosIn(BaseModel):
+    lat: float | None = None
+    lng: float | None = None
+    note: str | None = Field(default=None, max_length=500)
+
+
+class LocIn(BaseModel):
+    lat: float | None = None
+    lng: float | None = None
+
+
+class ResolveIn(BaseModel):
+    resolution: str = Field(min_length=2, max_length=500)
+
+
+async def _sos_order(db: AsyncSession, order_id: int, user: User) -> Order:
+    o = await load_order(db, order_id)
+    if not o or user.id not in (o.customer_id, o.driver_id):
+        raise HTTPException(404, "Order not found")
+    return o
+
+
+@router.post("/orders/{order_id}/sos", status_code=201)
+async def raise_sos(order_id: int, body: SosIn, user: User = Depends(approved_user), db: AsyncSession = Depends(get_db)):
+    s = await settings_service.get_all(db)
+    if s["sos_enabled"] != "true":
+        raise HTTPException(409, {"code": "SOS_DISABLED"})
+    o = await _sos_order(db, order_id, user)
+    recent_done = o.order_status == S.COMPLETED and o.completed_at and utcnow() - _aware(o.completed_at) <= timedelta(minutes=10)
+    if o.order_status not in S.DRIVER_BUSY and not recent_done:
+        raise HTTPException(409, {"code": "ORDER_NOT_ACTIVE"})
+    a = (await db.execute(select(SosAlert).where(SosAlert.order_id == o.id, SosAlert.raised_by_user_id == user.id,
+                                                 SosAlert.status != "RESOLVED"))).scalars().first()
+    if a:  # one open alert per user per order: repeat calls just refresh the position
+        if body.lat is not None:
+            a.lat, a.lng = body.lat, body.lng
+        await db.commit()
+        return {"sos_id": a.id, "status": a.status, "admin_phone": s["support_phone"]}
+    a = SosAlert(order_id=o.id, raised_by_user_id=user.id, role=user.role, lat=body.lat, lng=body.lng, note=body.note)
+    db.add(a)
+    await db.flush()
+    await _notify_admins(db, "SOS_ALERT", "تنبيه طوارئ", f"{user.full_name} ({user.role}) رحلة #{o.id}", o.id)
+    await db.commit()
+    publish_raw("admin.sos", {"sos_id": a.id, "order_id": o.id})
+    return {"sos_id": a.id, "status": a.status, "admin_phone": s["support_phone"]}
+
+
+@router.post("/orders/{order_id}/sos/escalate")
+async def escalate_sos(order_id: int, body: LocIn, user: User = Depends(approved_user), db: AsyncSession = Depends(get_db)):
+    s = await settings_service.get_all(db)
+    await _sos_order(db, order_id, user)
+    a = (await db.execute(select(SosAlert).where(SosAlert.order_id == order_id, SosAlert.raised_by_user_id == user.id)
+                          .order_by(SosAlert.id.desc()))).scalars().first()
+    if not a:
+        raise HTTPException(404, {"code": "SOS_NOT_FOUND"})
+    if a.status == "RESOLVED":
+        raise HTTPException(409, {"code": "SOS_RESOLVED"})
+    a.status, a.escalated_at = "ESCALATED", utcnow()
+    if body.lat is not None:
+        a.lat, a.lng = body.lat, body.lng
+    await _notify_admins(db, "SOS_ESCALATED", "تصعيد طوارئ", f"{user.full_name} يتصل بالشرطة - رحلة #{order_id}", order_id)
+    await db.commit()
+    publish_raw("admin.sos", {"sos_id": a.id, "order_id": order_id, "status": a.status})
+    return {"sos_id": a.id, "status": a.status, "emergency_number": s["emergency_number"]}
+
+
+@admin_router.get("/sos")
+async def list_sos(status: str | None = None, limit: int = 50, offset: int = 0, admin: User = Depends(_admin), db: AsyncSession = Depends(get_db)):
+    q = select(SosAlert)
+    if status:
+        q = q.where(SosAlert.status == status)
+    total = (await db.execute(select(func.count()).select_from(q.subquery()))).scalar_one()
+    rows = (await db.execute(q.order_by(SosAlert.id.desc()).limit(min(limit, 200)).offset(offset))).scalars().all()
+    items = []
+    for a in rows:
+        u, o = await db.get(User, a.raised_by_user_id), await db.get(Order, a.order_id)
+        other = await db.get(User, o.driver_id if a.role == "CUSTOMER" else o.customer_id) if o else None
+        res = await db.get(User, a.resolved_by) if a.resolved_by else None
+        items.append({"id": a.id, "order_id": a.order_id, "role": a.role, "user": {"id": u.id, "name": u.full_name, "phone": u.phone},
+                      "other_party": {"name": other.full_name, "phone": other.phone} if other else None,
+                      "lat": a.lat, "lng": a.lng, "note": a.note, "status": a.status, "created_at": _iso(a.created_at),
+                      "escalated_at": _iso(a.escalated_at), "resolved_by_name": res.full_name if res else None, "resolution": a.resolution})
+    return {"total": total, "items": items}
+
+
+@admin_router.post("/sos/{sos_id}/resolve")
+async def resolve_sos(sos_id: int, body: ResolveIn, admin: User = Depends(_admin), db: AsyncSession = Depends(get_db)):
+    a = await db.get(SosAlert, sos_id)
+    if not a:
+        raise HTTPException(404, {"code": "SOS_NOT_FOUND"})
+    a.status, a.resolved_by, a.resolved_at, a.resolution = "RESOLVED", admin.id, utcnow(), body.resolution
+    audit(db, admin.id, "SOS_RESOLVED", "sos", a.id, body.resolution)
+    await notify(db, a.raised_by_user_id, "SOS_RESOLVED", "تم التعامل مع بلاغ الطوارئ", body.resolution, a.order_id)
+    await db.commit()
+    return {"sos_id": a.id, "status": a.status}
+
+
+# ======================= 3) trip share link =======================
+def _share_url(token: str) -> str:
+    from ..config import settings
+    base = getattr(settings, "public_base_url", None) or "https://phoenixsystems.online/wasaly-api"
+    return f"{base.rstrip('/')}/t/{token}"
+
+
+def _share_expires(o: Order) -> datetime:
+    end = _aware(o.completed_at or o.cancelled_at) if (o.completed_at or o.cancelled_at) else None
+    return (end + timedelta(minutes=30)) if end else utcnow() + timedelta(days=1)
+
+
+@router.post("/orders/{order_id}/share")
+async def create_share(order_id: int, user: User = Depends(customer_user), db: AsyncSession = Depends(get_db)):
+    if (await settings_service.get_all(db))["share_trip_enabled"] != "true":
+        raise HTTPException(409, {"code": "SHARE_DISABLED"})
+    o = await load_order(db, order_id)
+    if not o or o.customer_id != user.id:
+        raise HTTPException(404, "Order not found")
+    t = (await db.execute(select(TripShare).where(TripShare.order_id == o.id, TripShare.revoked.is_(False)))).scalars().first()
+    if not t:
+        t = TripShare(order_id=o.id, token=secrets.token_urlsafe(24))
+        db.add(t)
+        await db.commit()
+    return {"url": _share_url(t.token), "token": t.token, "expires_at": _share_expires(o).isoformat()}
+
+
+@router.delete("/orders/{order_id}/share")
+async def revoke_share(order_id: int, user: User = Depends(customer_user), db: AsyncSession = Depends(get_db)):
+    o = await load_order(db, order_id)
+    if not o or o.customer_id != user.id:
+        raise HTTPException(404, "Order not found")
+    for t in (await db.execute(select(TripShare).where(TripShare.order_id == o.id))).scalars().all():
+        t.revoked = True
+    await db.commit()
+    return {"revoked": True}
+
+
+async def _public_trip(db: AsyncSession, token: str) -> dict:
+    t = (await db.execute(select(TripShare).where(TripShare.token == token))).scalars().first()
+    if not t or t.revoked:
+        raise HTTPException(404, {"code": "SHARE_NOT_FOUND"})
+    o = await load_order(db, t.order_id)
+    if utcnow() > _share_expires(o) and o.order_status in S.FINAL:
+        raise HTTPException(410, {"code": "SHARE_EXPIRED"})
+    drv, p = o.driver, (o.driver.driver_profile if o.driver else None)
+    stops = (await db.execute(select(OrderStop).where(OrderStop.order_id == o.id).order_by(OrderStop.seq))).scalars().all()
+    eta = None
+    if p and p.last_lat is not None and o.destination_latitude is not None and o.order_status in S.DRIVER_BUSY:
+        km = _haversine_m(p.last_lat, p.last_lng, o.destination_latitude, o.destination_longitude) / 1000
+        eta = max(1, round(km * 1.3 / 35 * 60))
+    v = drv.vehicle if drv else None
+    return {"status": o.order_status, "ended": o.order_status in S.FINAL,
+            "driver": {"first_name": drv.full_name.split()[0], "vehicle": {"make": v.make, "model": v.model, "color": v.color, "plate_number": v.plate_number} if v else None} if drv else None,
+            "driver_location": {"lat": p.last_lat, "lng": p.last_lng, "at": _iso(p.last_location_at)} if p and p.last_lat is not None and o.order_status not in S.FINAL else None,
+            "pickup": {"lat": o.pickup_latitude, "lng": o.pickup_longitude, "address": o.pickup_address},
+            "destination": {"lat": o.destination_latitude, "lng": o.destination_longitude, "address": o.destination_address},
+            "stops": [{"lat": s.lat, "lng": s.lng, "address": s.address, "status": s.status} for s in stops], "eta_min": eta}
+
+
+@public_router.get("/api/public/trip/{token}")
+async def public_trip(token: str, db: AsyncSession = Depends(get_db)):
+    return await _public_trip(db, token)
+
+
+_PAGE = """<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>تتبع الرحلة</title><link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<style>body{margin:0;font-family:system-ui,sans-serif}#m{height:60vh}#i{padding:12px 16px;line-height:1.7}</style></head><body>
+<div id="m"></div><div id="i">جاري التحميل…</div>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+const T="__TOKEN__",m=L.map('m').setView([26.22,50.58],11);L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(m);
+let car,pk,ds;const ST={ACCEPTED:'السائق قبل الطلب',DRIVER_ON_THE_WAY:'السائق في الطريق',ARRIVED_AT_PICKUP:'السائق وصل',IN_PROGRESS:'الرحلة جارية',ARRIVED_AT_DESTINATION:'وصلت الرحلة',COMPLETED:'انتهت الرحلة',CANCELLED:'انتهت الرحلة'};
+async function tick(){try{const r=await fetch('api/public/trip/'+T);if(r.status>=400){document.getElementById('i').textContent='انتهت الرحلة';return}
+const d=await r.json();if(!pk&&d.pickup.lat){pk=L.marker([d.pickup.lat,d.pickup.lng]).addTo(m).bindPopup('الاستلام');ds=L.marker([d.destination.lat,d.destination.lng]).addTo(m).bindPopup('الوجهة');m.fitBounds([[d.pickup.lat,d.pickup.lng],[d.destination.lat,d.destination.lng]])}
+if(d.driver_location){const p=[d.driver_location.lat,d.driver_location.lng];car?car.setLatLng(p):car=L.circleMarker(p,{radius:9,color:'#1652F0'}).addTo(m)}
+const v=d.driver&&d.driver.vehicle;document.getElementById('i').innerHTML='<b>'+(ST[d.status]||d.status)+'</b>'+(d.eta_min?'<br>الوصول خلال '+d.eta_min+' دقيقة تقريبًا':'')+(d.driver?'<br>السائق: '+d.driver.first_name+(v?' — '+v.make+' '+v.model+' '+v.color+' — '+v.plate_number:''):'')+'<br>من: '+d.pickup.address+'<br>إلى: '+d.destination.address;
+if(d.ended)return}catch(e){}setTimeout(tick,10000)}tick();
+</script></body></html>"""
+
+
+@public_router.get("/t/{token}", response_class=HTMLResponse)
+async def public_trip_page(token: str):
+    safe = "".join(c for c in token if c.isalnum() or c in "-_")
+    return HTMLResponse(_PAGE.replace("__TOKEN__", safe))
+
+
+# ======================= 4) extra stops =======================
+class StopIn(BaseModel):
+    address: str = Field(min_length=2, max_length=300)
+    lat: float = Field(ge=-90, le=90)
+    lng: float = Field(ge=-180, le=180)
+    position: str | int = "BEFORE_DESTINATION"
+    note: str | None = Field(default=None, max_length=300)
+
+
+def stop_out(s: OrderStop) -> dict:
+    return {"id": s.id, "seq": s.seq, "address": s.address, "lat": s.lat, "lng": s.lng, "status": s.status, "note": s.note}
+
+
+async def _order_with_stops(db: AsyncSession, o: Order, user: User) -> dict:
+    from ..routers.orders import _view
+    d = _view(o, user)
+    d["stops"] = [stop_out(s) for s in (await db.execute(select(OrderStop).where(OrderStop.order_id == o.id).order_by(OrderStop.seq))).scalars().all()]
+    return d
+
+
+@router.post("/orders/{order_id}/stops")
+async def add_stop(order_id: int, body: StopIn, user: User = Depends(customer_user), db: AsyncSession = Depends(get_db)):
+    s = await settings_service.get_all(db)
+    o = await load_order(db, order_id, for_update=True)
+    if not o or o.customer_id != user.id:
+        raise HTTPException(404, "Order not found")
+    if s["stops_enabled"] != "true" or o.order_status not in (S.ACCEPTED, S.DRIVER_ON_THE_WAY, S.ARRIVED_AT_PICKUP, S.IN_PROGRESS):
+        raise HTTPException(409, {"code": "ORDER_NOT_ACTIVE"})
+    stops = (await db.execute(select(OrderStop).where(OrderStop.order_id == o.id).order_by(OrderStop.seq))).scalars().all()
+    if len(stops) >= int(s["max_extra_stops"]):
+        raise HTTPException(409, {"code": "MAX_STOPS", "max": int(s["max_extra_stops"])})
+    if not await find_area(db, body.lat, body.lng) and (await settings_service.get_pricing(db)).outside_enabled is not True:
+        raise HTTPException(422, {"code": "OUTSIDE_SERVICE_AREA"})
+    fee = Decimal(s["stop_fee"]).quantize(Decimal(1).scaleb(-o.currency_decimals))
+    idx = len(stops) if body.position == "BEFORE_DESTINATION" else max(0, min(int(body.position), len(stops)))
+    for st in stops[idx:]:
+        st.seq += 1
+    db.add(OrderStop(order_id=o.id, seq=idx, address=body.address, lat=body.lat, lng=body.lng, note=body.note, fee=fee))
+    o.extras_fee = Decimal(o.extras_fee or 0) + fee  # time-based price keeps running, so the extra distance pays for itself
+    o.stops_fee = Decimal(o.stops_fee or 0) + fee
+    if o.driver_id:
+        await notify(db, o.driver_id, "STOP_ADDED", "تمت إضافة محطة", f"أضاف العميل محطة: {body.address}", o.id)
+    await db.commit()
+    publish_raw("order.status", {"order_id": o.id}, user_ids=[u for u in (o.customer_id, o.driver_id) if u])
+    return await _order_with_stops(db, await load_order(db, o.id), user)
+
+
+@router.delete("/orders/{order_id}/stops/{stop_id}")
+async def remove_stop(order_id: int, stop_id: int, user: User = Depends(customer_user), db: AsyncSession = Depends(get_db)):
+    o = await load_order(db, order_id, for_update=True)
+    st = await db.get(OrderStop, stop_id)
+    if not o or o.customer_id != user.id or not st or st.order_id != o.id:
+        raise HTTPException(404, "Stop not found")
+    if st.status != "PENDING":
+        raise HTTPException(409, {"code": "STOP_NOT_PENDING"})
+    o.extras_fee = max(Decimal(0), Decimal(o.extras_fee or 0) - Decimal(st.fee or 0))
+    o.stops_fee = max(Decimal(0), Decimal(o.stops_fee or 0) - Decimal(st.fee or 0))
+    await db.delete(st)
+    await db.commit()
+    return await _order_with_stops(db, await load_order(db, o.id), user)
+
+
+@router.get("/orders/{order_id}/stops")
+async def list_stops(order_id: int, user: User = Depends(approved_user), db: AsyncSession = Depends(get_db)):
+    o = await load_order(db, order_id)
+    if not o or (user.id not in (o.customer_id, o.driver_id) and user.role not in Role.ADMINS):
+        raise HTTPException(404, "Order not found")
+    return {"items": [stop_out(s) for s in (await db.execute(select(OrderStop).where(OrderStop.order_id == o.id).order_by(OrderStop.seq))).scalars().all()]}
+
+
+async def _driver_stop(db: AsyncSession, order_id: int, stop_id: int, user: User, new: str) -> dict:
+    o = await load_order(db, order_id)
+    st = await db.get(OrderStop, stop_id)
+    if not o or o.driver_id != user.id or not st or st.order_id != o.id:
+        raise HTTPException(404, "Stop not found")
+    st.status = new
+    await db.commit()
+    return stop_out(st)
+
+
+@router.post("/driver/orders/{order_id}/stops/{stop_id}/arrived")
+async def stop_arrived(order_id: int, stop_id: int, user: User = Depends(driver_user), db: AsyncSession = Depends(get_db)):
+    return await _driver_stop(db, order_id, stop_id, user, "ARRIVED")
+
+
+@router.post("/driver/orders/{order_id}/stops/{stop_id}/done")
+async def stop_done(order_id: int, stop_id: int, user: User = Depends(driver_user), db: AsyncSession = Depends(get_db)):
+    return await _driver_stop(db, order_id, stop_id, user, "DONE")
+
+
+# ======================= driver cancel preview =======================
+@router.post("/driver/orders/{order_id}/cancel/preview")
+async def driver_cancel_preview(order_id: int, user: User = Depends(driver_user), db: AsyncSession = Depends(get_db)):
+    o = await load_order(db, order_id)
+    if not o or o.driver_id != user.id:
+        raise HTTPException(404, "Order not found")
+    return {"fee": f"{Decimal((await settings_service.get_all(db))['cancel_fee_driver_amount']):.{o.currency_decimals}f}", "currency": o.currency}
+
+
+# ======================= scheduled: reschedule =======================
+class RescheduleIn(BaseModel):
+    scheduled_at: datetime
+
+
+@router.patch("/orders/{order_id}/schedule")
+async def reschedule(order_id: int, body: RescheduleIn, user: User = Depends(customer_user), db: AsyncSession = Depends(get_db)):
+    from ..routers.orders import _check_schedule, order_for_customer
+    o = await load_order(db, order_id, for_update=True)
+    if not o or o.customer_id != user.id:
+        raise HTTPException(404, "Order not found")
+    if o.order_status != S.SCHEDULED:
+        raise HTTPException(409, {"code": "NOT_SCHEDULED"})
+    _check_schedule(await settings_service.get_all(db), body.scheduled_at)
+    o.scheduled_at = _aware(body.scheduled_at)
+    await db.commit()
+    return order_for_customer(await load_order(db, o.id))
+
+
+# ======================= 7) referrals + wallet =======================
+def make_referral_code(name: str) -> str:
+    base = "".join(c for c in name.upper() if c.isascii() and c.isalpha())[:5] or "WSL"
+    return base + secrets.token_hex(2).upper()
+
+
+async def ensure_code(db: AsyncSession, u: User) -> str:
+    if not u.referral_code:
+        u.referral_code = make_referral_code(u.full_name)
+        await db.flush()
+    return u.referral_code
+
+
+async def apply_referral(db: AsyncSession, invitee: User, code: str | None, device_id: str | None) -> None:
+    """Called at registration. Raises 4xx for an invalid / abusive code."""
+    if not code:
+        return
+    s = await settings_service.get_all(db)
+    if s["referral_enabled"] != "true":
+        return
+    inviter = (await db.execute(select(User).where(User.referral_code == code.strip().upper()))).scalars().first()
+    if not inviter or inviter.role != Role.CUSTOMER:
+        raise HTTPException(422, {"code": "REFERRAL_INVALID"})
+    if inviter.id == invitee.id or (device_id and (await db.execute(select(Referral.id).where(Referral.device_id == device_id))).first()):
+        raise HTTPException(422, {"code": "REFERRAL_SELF"})
+    n = (await db.execute(select(func.count()).select_from(Referral).where(Referral.inviter_id == inviter.id, Referral.status != "REVOKED"))).scalar_one()
+    if n >= int(s["referral_max_per_user"]):
+        raise HTTPException(422, {"code": "REFERRAL_LIMIT"})
+    db.add(Referral(inviter_id=inviter.id, invitee_id=invitee.id, device_id=device_id))
+
+
+async def reward_referral(db: AsyncSession, customer_id: int) -> None:
+    """Called when a customer's trip payment is confirmed: pays both sides once, after the configured number of paid trips."""
+    r = (await db.execute(select(Referral).where(Referral.invitee_id == customer_id, Referral.status == "REGISTERED"))).scalars().first()
+    if not r:
+        return
+    s = await settings_service.get_all(db)
+    paid = (await db.execute(select(func.count()).select_from(Order).where(Order.customer_id == customer_id, Order.payment_status == "PAID"))).scalar_one()
+    if paid < int(s["referral_min_trip_to_reward"]):
+        return
+    ri, rv = Decimal(s["referral_reward_inviter"]), Decimal(s["referral_reward_invitee"])
+    for uid, amt, kind in ((r.inviter_id, ri, "REFERRAL_INVITER"), (customer_id, rv, "REFERRAL_INVITEE")):
+        u = await db.get(User, uid)
+        u.wallet_balance = Decimal(u.wallet_balance or 0) + amt
+        db.add(WalletEntry(user_id=uid, amount=amt, kind=kind, ref_id=r.id))
+        await notify(db, uid, "REFERRAL_REWARD", "مكافأة إحالة", f"تمت إضافة {amt} إلى رصيدك.")
+    r.status, r.reward_inviter, r.reward_invitee, r.rewarded_at = "REWARDED", ri, rv, utcnow()
+
+
+@router.get("/referral")
+async def my_referral(user: User = Depends(customer_user), db: AsyncSession = Depends(get_db)):
+    s = await settings_service.get_all(db)
+    code = await ensure_code(db, user)
+    rows = (await db.execute(select(Referral).where(Referral.inviter_id == user.id).order_by(Referral.id.desc()))).scalars().all()
+    pending = []
+    for r in rows:
+        inv = await db.get(User, r.invitee_id)
+        pending.append({"name": (inv.full_name[:1] + "***") if inv else "***", "status": "REWARDED" if r.status == "REWARDED" else "REGISTERED"})
+    await db.commit()
+    amt = s["referral_reward_invitee"]
+    return {"code": code, "share_text": f"استخدم كودي {code} في وصلي واحصل على خصم {amt} BHD",
+            "share_url": _share_url(code).replace("/t/", "/r/"), "invited_count": len(rows),
+            "rewarded_count": len([r for r in rows if r.status == "REWARDED"]),
+            "earned_total": f"{sum((r.reward_inviter for r in rows if r.status == 'REWARDED'), Decimal(0)):.3f}", "pending": pending}
+
+
+@router.get("/wallet")
+async def my_wallet(user: User = Depends(approved_user), db: AsyncSession = Depends(get_db)):
+    rows = (await db.execute(select(WalletEntry).where(WalletEntry.user_id == user.id).order_by(WalletEntry.id.desc()).limit(100))).scalars().all()
+    return {"balance": f"{Decimal(user.wallet_balance or 0):.3f}",
+            "items": [{"id": w.id, "amount": f"{w.amount:.3f}", "kind": w.kind, "created_at": _iso(w.created_at)} for w in rows]}
+
+
+@admin_router.get("/referrals")
+async def admin_referrals(status: str | None = None, limit: int = 50, offset: int = 0, admin: User = Depends(_admin), db: AsyncSession = Depends(get_db)):
+    q = select(Referral)
+    if status:
+        q = q.where(Referral.status == status)
+    total = (await db.execute(select(func.count()).select_from(q.subquery()))).scalar_one()
+    rows = (await db.execute(q.order_by(Referral.id.desc()).limit(min(limit, 200)).offset(offset))).scalars().all()
+    items = []
+    for r in rows:
+        a, b = await db.get(User, r.inviter_id), await db.get(User, r.invitee_id)
+        items.append({"id": r.id, "inviter": {"id": a.id, "name": a.full_name}, "invitee": {"id": b.id, "name": b.full_name}, "status": r.status,
+                      "reward_inviter": str(r.reward_inviter), "reward_invitee": str(r.reward_invitee), "created_at": _iso(r.created_at)})
+    return {"total": total, "items": items}
+
+
+@admin_router.post("/referrals/{rid}/revoke")
+async def revoke_referral(rid: int, admin: User = Depends(_admin), db: AsyncSession = Depends(get_db)):
+    r = await db.get(Referral, rid)
+    if not r:
+        raise HTTPException(404, "Referral not found")
+    if r.status == "REWARDED":  # take the credit back
+        for uid, amt in ((r.inviter_id, r.reward_inviter), (r.invitee_id, r.reward_invitee)):
+            u = await db.get(User, uid)
+            u.wallet_balance = max(Decimal(0), Decimal(u.wallet_balance or 0) - Decimal(amt))
+            db.add(WalletEntry(user_id=uid, amount=-Decimal(amt), kind="REVOKED", ref_id=r.id))
+    r.status = "REVOKED"
+    audit(db, admin.id, "REFERRAL_REVOKED", "referral", r.id)
+    await db.commit()
+    return {"id": r.id, "status": r.status}
+
+
+@public_router.get("/r/{code}", response_class=HTMLResponse)
+async def referral_landing(code: str):
+    safe = "".join(c for c in code if c.isalnum())
+    return HTMLResponse(f'<!doctype html><html lang="ar" dir="rtl"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'
+                        f'<body style="font-family:system-ui;text-align:center;padding:40px"><h2>وصلي</h2><p>حمّل التطبيق واستخدم كود الدعوة:</p>'
+                        f'<h1 style="letter-spacing:3px">{safe}</h1></body></html>')
+
+
+# ======================= 8) driver demand map =======================
+_demand_cache: dict = {"at": None, "data": None}
+
+
+@router.get("/driver/demand")
+async def driver_demand(user: User = Depends(driver_user), db: AsyncSession = Depends(get_db)):
+    now = utcnow()
+    if _demand_cache["at"] and (now - _demand_cache["at"]).total_seconds() < 60:
+        return _demand_cache["data"]
+    since = now - timedelta(minutes=30)
+    pts = (await db.execute(select(Order.pickup_latitude, Order.pickup_longitude).where(
+        Order.pickup_latitude.is_not(None), (Order.created_at >= since) | Order.order_status.in_(list(S.SEARCHING))))).all()
+    free = [p for p in (await db.execute(select(DriverProfile).where(DriverProfile.is_online.is_(True), DriverProfile.last_lat.is_not(None)))).scalars().all()]
+    busy_ids = {o for (o,) in (await db.execute(select(Order.driver_id).where(Order.order_status.in_(list(S.DRIVER_BUSY)), Order.driver_id.is_not(None)))).all()}
+    free = [p for p in free if p.user_id not in busy_ids]
+    step = 0.007  # ~800 m
+    cells: dict[tuple[int, int], int] = {}
+    for la, lo in pts:
+        k = (round(la / step), round(lo / step))
+        cells[k] = cells.get(k, 0) + 1
+    out = []
+    for (i, j), n in sorted(cells.items(), key=lambda x: -x[1]):
+        lat, lng = i * step, j * step
+        nfree = len([p for p in free if _haversine_m(p.last_lat, p.last_lng, lat, lng) <= 800])
+        level = "HIGH" if n >= 5 and nfree < n else "MEDIUM" if n >= 3 else "LOW"
+        out.append({"lat": round(lat, 4), "lng": round(lng, 4), "radius_m": 800, "level": level, "orders_last_30m": n, "drivers_free": nfree})
+    searching: dict[int, int] = {}
+    for (aid,) in (await db.execute(select(Order.service_area_id).where(Order.order_status.in_(list(S.SEARCHING)), Order.service_area_id.is_not(None)))).all():
+        searching[aid] = searching.get(aid, 0) + 1
+    areas = []
+    for a in (await db.execute(select(ServiceArea).where(ServiceArea.is_active.is_(True)))).scalars().all():
+        ids = {r.driver_id for r in (await db.execute(select(DriverServiceArea).where(DriverServiceArea.service_area_id == a.id))).scalars().all()}
+        nfree = len([p for p in free if p.user_id in ids])
+        ns = searching.get(a.id, 0)
+        areas.append({"id": a.id, "name": a.name, "level": "HIGH" if ns > nfree and ns >= 2 else "MEDIUM" if ns > 0 else "LOW",
+                      "orders_searching": ns, "drivers_free": nfree})
+    data = {"generated_at": now.isoformat(), "cells": out[:60], "areas": areas}
+    _demand_cache.update(at=now, data=data)
+    return data
+
+
+# ======================= 9) earnings summary + goal =======================
+class GoalIn(BaseModel):
+    daily_amount: Decimal = Field(ge=0, le=100000)
+
+
+@router.get("/driver/earnings/summary")
+async def earnings_summary(user: User = Depends(driver_user), db: AsyncSession = Depends(get_db)):
+    from zoneinfo import ZoneInfo
+    tz = ZoneInfo("Asia/Bahrain")
+    today = datetime.now(tz).date()
+    start_week = today - timedelta(days=6)
+    start_utc = datetime.combine(start_week, datetime.min.time(), tz).astimezone(UTC)
+    rows = (await db.execute(select(Order).where(Order.driver_id == user.id, Order.order_status == S.COMPLETED,
+                                                 Order.completed_at >= start_utc))).scalars().all()
+    by_day: dict[date, list] = {}
+    for o in rows:
+        by_day.setdefault(_aware(o.completed_at).astimezone(tz).date(), []).append(o)
+    cur, dec = "BHD", 3
+    if rows:
+        cur, dec = rows[0].currency, rows[0].currency_decimals
+
+    def tot(ds):
+        return sum((Decimal(o.driver_earning or 0) for d in ds for o in by_day.get(d, [])), Decimal(0))
+
+    def cnt(ds):
+        return sum(len(by_day.get(d, [])) for d in ds)
+
+    days = [start_week + timedelta(days=i) for i in range(7)]
+
+    async def minutes(since_utc):
+        ws = (await db.execute(select(DriverWorkSession).where(DriverWorkSession.driver_id == user.id,
+                                                               (DriverWorkSession.offline_at.is_(None)) | (DriverWorkSession.offline_at >= since_utc)))).scalars().all()
+        n = utcnow()
+        return round(sum(max(0, ((_aware(w.offline_at) or n) - max(_aware(w.online_at), since_utc)).total_seconds()) for w in ws) / 60)
+
+    day_start = datetime.combine(today, datetime.min.time(), tz).astimezone(UTC)
+    goal = Decimal(user.driver_profile.daily_goal or 0)
+    te = tot([today])
+    return {"currency": cur,
+            "today": {"earnings": f"{te:.{dec}f}", "trips": cnt([today]), "online_minutes": await minutes(day_start)},
+            "week": {"earnings": f"{tot(days):.{dec}f}", "trips": cnt(days), "online_minutes": await minutes(start_utc),
+                     "by_day": [{"date": d.isoformat(), "earnings": f"{tot([d]):.{dec}f}", "trips": cnt([d])} for d in days]},
+            "goal": {"daily_amount": f"{goal:.{dec}f}", "progress_percent": min(100, round(te / goal * 100)) if goal > 0 else 0}}
+
+
+@router.put("/driver/goal")
+async def set_goal(body: GoalIn, user: User = Depends(driver_user), db: AsyncSession = Depends(get_db)):
+    user.driver_profile.daily_goal = body.daily_amount
+    await db.commit()
+    return {"daily_amount": f"{body.daily_amount:.3f}"}

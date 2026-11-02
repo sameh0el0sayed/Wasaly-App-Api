@@ -57,6 +57,8 @@ class RegisterIn(BaseModel):
     profile_photo: str | None = None
     cpr_photo: str | None = None
     driver: DriverRegIn | None = None
+    referral_code: str | None = Field(default=None, max_length=16)
+    device_id: str | None = Field(default=None, max_length=100)
 
     v_phone = field_validator("phone")(lambda cls, v: normalize_phone(v))
     v_cpr = field_validator("cpr")(lambda cls, v: validate_cpr(v))
@@ -181,6 +183,7 @@ class OrderCreateIn(PreferencesIn):
     receiver_phone: str | None = None
     driver_instructions: str | None = Field(default=None, max_length=1000)
     accept_capacity_terms: bool = False
+    scheduled_at: datetime | None = None  # scheduled trip (ISO, UTC or with offset)
     preferred_driver_id: int | None = None  # direct trip with a driver the customer rated 4-5 stars (see GET /api/favorite-drivers)
     choose_driver: bool = True  # default ON: the customer picks among the drivers who respond; send false for "first driver to accept wins"
 
@@ -446,6 +449,30 @@ class SettingsPatch(BaseModel):
     promo_enabled: bool | None = None
     price_increase_enabled: bool | None = None
     driver_choice_enabled: bool | None = None
+    sos_enabled: bool | None = None
+    emergency_number: str | None = None
+    sos_taps_to_activate: int | None = None
+    sos_tap_window_seconds: int | None = None
+    share_trip_enabled: bool | None = None
+    cancel_fee_customer_amount: str | None = None
+    cancel_fee_customer_free_seconds: int | None = None
+    cancel_fee_driver_amount: str | None = None
+    cancel_fee_driver_to: str | None = None
+    cancel_fee_customer_to_driver_percent: int | None = None
+    scheduled_enabled: bool | None = None
+    scheduled_fee_percent: int | None = None
+    scheduled_min_minutes_ahead: int | None = None
+    scheduled_max_days_ahead: int | None = None
+    scheduled_dispatch_minutes_before: int | None = None
+    stops_enabled: bool | None = None
+    max_extra_stops: int | None = None
+    stop_fee: str | None = None
+    referral_enabled: bool | None = None
+    referral_reward_inviter: str | None = None
+    referral_reward_invitee: str | None = None
+    referral_reward_type: str | None = None
+    referral_max_per_user: int | None = None
+    referral_min_trip_to_reward: int | None = None
     max_price_increase_percent: int | None = Field(default=None, ge=1, le=300)
     price_increase_steps: str | None = Field(default=None, pattern=r"^\d{1,3}(,\d{1,3}){0,7}$")
     counter_offer_ttl_seconds: int | None = Field(default=None, ge=10, le=600)
@@ -587,6 +614,7 @@ class BroadcastIn(BaseModel):
 
 
 class EstimateIn(PreferencesIn):
+    scheduled_at: datetime | None = None
     promo_code: str | None = Field(default=None, max_length=40)
     pickup_latitude: float = Field(ge=-90, le=90)
     pickup_longitude: float = Field(ge=-180, le=180)

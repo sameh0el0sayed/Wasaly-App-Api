@@ -34,6 +34,7 @@ from .routers import (
     ratings,
     stream,
     subscriptions,
+    v11,
 )
 from .security import hash_password, normalize_phone
 from .services.activity import sweep as activity_sweep
@@ -128,5 +129,5 @@ async def health():
 
 for r in (auth.router, app_errors.router, app_errors.admin_router, profile.router, corrections.router, orders.router, driver.router, payments.webhook_router, payments.router,
           payments.admin_router, subscriptions.router, subscriptions.admin_router, subscriptions.driver_router,
-          airports.router, promo.router, stream.router, banners.router, places.router, account_deletion.router, account_deletion.admin_router, activity.router, activity.admin_router, ratings.router, admin.router):
+          airports.router, promo.router, stream.router, banners.router, places.router, account_deletion.router, account_deletion.admin_router, activity.router, activity.admin_router, ratings.router, v11.router, v11.admin_router, v11.public_router, admin.router):
     app.include_router(r)

@@ -1,4 +1,5 @@
 import json
+from decimal import Decimal
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import func, select, update
@@ -10,7 +11,7 @@ from ..constants import OrderStatus as S
 from ..database import get_db
 from ..deps import approved_user, customer_user, paging, request_lang
 from ..i18n import localize
-from ..models import Complaint, CounterOffer, Order, OrderOffer, OrderStatusHistory, User, utcnow
+from ..models import Complaint, CounterOffer, Order, OrderOffer, OrderStatusHistory, Payment, User, utcnow
 from ..schemas import EstimateIn, OptionalReasonIn, OrderCreateIn, PriceRaiseIn, ReasonIn
 from ..serializers import driver_card, history_out, order_for_admin, order_for_customer, order_for_driver
 from ..services import favorites as fav
@@ -62,6 +63,15 @@ async def app_config(db: AsyncSession = Depends(get_db)):
             "service_categories": _categories(s["service_categories"]),
             "online_window_minutes": int(s["online_window_minutes"]),
             "driver_choice_enabled": s["driver_choice_enabled"] == "true",
+            "sos_enabled": s["sos_enabled"] == "true", "emergency_number": s["emergency_number"],
+            "sos_taps_to_activate": int(s["sos_taps_to_activate"]), "sos_tap_window_seconds": int(s["sos_tap_window_seconds"]),
+            "share_trip_enabled": s["share_trip_enabled"] == "true",
+            "scheduled": {"enabled": s["scheduled_enabled"] == "true", "fee_percent": int(s["scheduled_fee_percent"]),
+                          "min_minutes_ahead": int(s["scheduled_min_minutes_ahead"]), "max_days_ahead": int(s["scheduled_max_days_ahead"])},
+            "stops": {"enabled": s["stops_enabled"] == "true", "max": int(s["max_extra_stops"]), "fee": s["stop_fee"]},
+            "referral": {"enabled": s["referral_enabled"] == "true", "reward_invitee": s["referral_reward_invitee"], "reward_inviter": s["referral_reward_inviter"]},
+            "cancel_fees": {"customer_amount": s["cancel_fee_customer_amount"], "free_seconds": int(s["cancel_fee_customer_free_seconds"]),
+                            "driver_amount": s["cancel_fee_driver_amount"]},
             "price_increase": {"enabled": pi.config(s)["enabled"], "max_percent": pi.config(s)["max_percent"],
                                "steps": pi.config(s)["steps"], "counter_ttl_seconds": pi.config(s)["counter_ttl_seconds"]},
             "currency": p.currency, "currency_decimals": p.decimals, "upload_max_mb": int(s["upload_max_mb"]),
@@ -104,10 +114,25 @@ def _view(o: Order, user: User) -> dict:
 
 async def _with_my_rating(db: AsyncSession, o: Order, user: User) -> dict:
     d = _view(o, user)
+    from ..models import OrderStop
+    from .v11 import stop_out
+    d["stops"] = [stop_out(s) for s in (await db.execute(select(OrderStop).where(OrderStop.order_id == o.id).order_by(OrderStop.seq))).scalars().all()]
     if user.role not in Role.ADMINS:
         from .ratings import my_rating
         d["my_rating"] = await my_rating(db, o.id, user.id)
     return d
+
+
+def _check_schedule(s: dict, at) -> None:
+    from datetime import UTC, timedelta
+    if s["scheduled_enabled"] != "true":
+        raise HTTPException(422, {"code": "SCHEDULED_DISABLED"})
+    at = at if at.tzinfo else at.replace(tzinfo=UTC)
+    now = utcnow()
+    if at < now + timedelta(minutes=int(s["scheduled_min_minutes_ahead"])):
+        raise HTTPException(422, {"code": "SCHEDULE_TOO_SOON", "min_minutes_ahead": int(s["scheduled_min_minutes_ahead"])})
+    if at > now + timedelta(days=int(s["scheduled_max_days_ahead"])):
+        raise HTTPException(422, {"code": "SCHEDULE_TOO_FAR", "max_days_ahead": int(s["scheduled_max_days_ahead"])})
 
 
 @router.post("/orders/estimate")
@@ -135,14 +160,18 @@ async def estimate(body: EstimateIn, user: User = Depends(customer_user), db: As
                            outside=outside, outside_percent=p.outside_driver_percent, extras=extras, promo_percent=promo.percent)
     d = p.decimals
     area = await find_area(db, body.pickup_latitude, body.pickup_longitude)
-    return {"is_estimate": True, "currency": p.currency, "currency_decimals": d, "distance_km": km, "duration_min": minutes,
+    sched_fee = Decimal(0)
+    if body.scheduled_at:
+        _check_schedule(s, body.scheduled_at)
+        sched_fee = (e["price"] * Decimal(s["scheduled_fee_percent"]) / 100).quantize(Decimal(1).scaleb(-d))
+    return {"scheduled_fee": f"{sched_fee:.{d}f}", "is_estimate": True, "currency": p.currency, "currency_decimals": d, "distance_km": km, "duration_min": minutes,
             "estimated_trip_price": f"{e['price']:.{d}f}", "night_applied": e["night_applied"],
             "night_surcharge": f"{e['night_surcharge']:.{d}f}", "extras_fee": f"{extras:.{d}f}", "extras": breakdown,
             "airport_applied": any(x["key"] == "AIRPORT" for x in breakdown),
             "promo_code": promo.code if promo else None, "promo_percent": promo.percent if promo else None,
             "discount_amount": f"{e['discount']:.{d}f}",
             "service_fee": f"{e['customer_total'] + e['discount'] - e['price']:.{d}f}" if p.commission_mode == "ADD" else None,
-            "estimated_total": f"{e['customer_total']:.{d}f}", "is_outside_bahrain": outside, "pickup_in_service_area": area is not None,
+            "estimated_total": f"{e['customer_total'] + sched_fee:.{d}f}", "is_outside_bahrain": outside, "pickup_in_service_area": area is not None,
             "note": localize("تقديري: السعر النهائي يُحسب من وقت الرحلة الفعلي من بدء الرحلة حتى الوصول.", lang)}
 
 
@@ -154,7 +183,7 @@ async def create_order(body: OrderCreateIn, user: User = Depends(customer_user),
         if ex:
             return order_for_customer(await load_order(db, ex))
     open_order = (await db.execute(select(Order.id).where(Order.customer_id == user.id,
-                                                          Order.order_status.not_in(S.FINAL)).limit(1))).first()
+                                                          Order.order_status.not_in(S.FINAL | {S.SCHEDULED})).limit(1))).first()
     if open_order:
         raise HTTPException(409, {"code": "OPEN_ORDER_EXISTS", "order_id": open_order[0]})
     s_cfg = await settings_service.get_all(db)
@@ -163,6 +192,10 @@ async def create_order(body: OrderCreateIn, user: User = Depends(customer_user),
     if s_cfg["block_new_order_if_unpaid"] == "true":
         unpaid = (await db.execute(select(Order.id, Order.payment_id).where(
             Order.customer_id == user.id, Order.order_status == S.COMPLETED, Order.payment_status != "PAID").limit(1))).first()
+        if not unpaid:
+            unpaid = (await db.execute(select(Payment.order_id, Payment.id).where(
+                Payment.customer_id == user.id, Payment.kind == "CANCEL_FEE",
+                Payment.payment_status.in_(["UNPAID", "PENDING_PAYMENT", "PENDING_VERIFICATION", "REJECTED", "FAILED"])).limit(1))).first()
         if unpaid:
             raise HTTPException(402, {"code": "UNPAID_ORDER_EXISTS", "order_id": unpaid[0], "payment_id": unpaid[1],
                                       "message": "يرجى سداد الرحلة السابقة أولًا"})
@@ -175,7 +208,7 @@ async def create_order(body: OrderCreateIn, user: User = Depends(customer_user),
         if not area:
             raise HTTPException(422, {"code": "OUTSIDE_SERVICE_AREA", "message": "نقطة الالتقاء خارج مناطق الخدمة"})
     p = await settings_service.get_pricing(db)  # currency + price snapshot (new orders only)
-    data = body.model_dump(exclude={"accept_capacity_terms", "service_area_id", "promo_code"})
+    data = body.model_dump(exclude={"accept_capacity_terms", "service_area_id", "promo_code", "scheduled_at"})
     data["choose_driver"] = bool(body.choose_driver and s_cfg["driver_choice_enabled"] == "true")
     if body.preferred_driver_id:
         if not await fav.is_favorite(db, user.id, body.preferred_driver_id):
@@ -192,6 +225,18 @@ async def create_order(body: OrderCreateIn, user: User = Depends(customer_user),
         db, s_all, p.decimals, ac=pf["pref_ac"], smoking=pf["pref_smoking"], gender=pf["pref_driver_gender"], large_car=pf["pref_large_car"],
         pickup=(body.pickup_latitude, body.pickup_longitude) if body.pickup_latitude is not None else None,
         destination=(body.destination_latitude, body.destination_longitude))
+    sched_at = None
+    if body.scheduled_at:
+        _check_schedule(s_all, body.scheduled_at)
+        from datetime import UTC
+        sched_at = body.scheduled_at if body.scheduled_at.tzinfo else body.scheduled_at.replace(tzinfo=UTC)
+        base_est = money_estimate(minutes=est_min, now=sched_at, unit_seconds=p.unit_seconds, unit_price=p.unit_price, min_price=p.min_price,
+                                  decimals=p.decimals, night_enabled=p.night_enabled, night_percent=p.night_percent, night_start=p.night_start,
+                                  night_end=p.night_end, ctype=p.commission_type, cvalue=p.commission_value, mode=p.commission_mode,
+                                  outside=outside, outside_percent=p.outside_driver_percent, extras=extras)
+        sched_fee = (base_est["price"] * Decimal(s_all["scheduled_fee_percent"]) / 100).quantize(Decimal(1).scaleb(-p.decimals))
+        extras = extras + sched_fee  # part of the trip price, so commission rules apply as usual
+        breakdown = [*breakdown, {"key": "SCHEDULED", "amount": f"{sched_fee:.{p.decimals}f}"}]
     promo = None
     if body.promo_code and body.promo_code.strip():
         est = money_estimate(minutes=est_min, now=utcnow(), unit_seconds=p.unit_seconds, unit_price=p.unit_price, min_price=p.min_price,
@@ -205,6 +250,7 @@ async def create_order(body: OrderCreateIn, user: User = Depends(customer_user),
                   commission_type=p.commission_type, commission_value=p.commission_value,
                   commission_mode=p.commission_mode, night_enabled=p.night_enabled,
                   night_percent=p.night_percent, night_start=p.night_start, night_end=p.night_end,
+                  scheduled_at=sched_at, scheduled_fee=sched_fee if sched_at else 0,
                   is_outside_bahrain=outside, outside_driver_percent=p.outside_driver_percent if outside else 0, **data)
     db.add(order)
     try:
@@ -212,10 +258,15 @@ async def create_order(body: OrderCreateIn, user: User = Depends(customer_user),
     except IntegrityError:
         await db.rollback()
         raise HTTPException(409, "Duplicate request")
-    db.add(OrderStatusHistory(order_id=order.id, old_status=None, new_status=S.PENDING, changed_by=user.id,
+    data_status = S.SCHEDULED if sched_at else S.PENDING
+    order.order_status = data_status
+    db.add(OrderStatusHistory(order_id=order.id, old_status=None, new_status=data_status, changed_by=user.id,
                               changed_by_role=user.role, notes="Order created"))
-    await notify(db, user.id, "ORDER_RECEIVED", "تم استلام طلبك", "نبحث لك عن سائق.", order.id)
-    await dispatch_order(db, order)
+    if sched_at:
+        await notify(db, user.id, "SCHEDULED_CONFIRMED", "تم تأكيد رحلتك المجدولة", "سنبحث لك عن سائق قبل الموعد.", order.id)
+    else:
+        await notify(db, user.id, "ORDER_RECEIVED", "تم استلام طلبك", "نبحث لك عن سائق.", order.id)
+        await dispatch_order(db, order)
     await db.commit()
     return order_for_customer(await load_order(db, order.id))
 
@@ -261,6 +312,31 @@ async def status_history(order_id: int, user: User = Depends(approved_user), db:
     return [history_out(h) for h in rows]
 
 
+def customer_cancel_fee(o: Order, s: dict) -> dict:
+    """Free while searching / scheduled / inside the free window after ACCEPTED; a fee once the driver is on the way."""
+    from datetime import UTC
+    dec = o.currency_decimals
+    amount = Decimal(s["cancel_fee_customer_amount"]).quantize(Decimal(1).scaleb(-dec))
+    reason = None
+    if o.order_status in (S.DRIVER_ON_THE_WAY, S.ARRIVED_AT_PICKUP):
+        reason = "DRIVER_ON_THE_WAY"
+    elif o.order_status == S.ACCEPTED and o.accepted_at:
+        at = o.accepted_at if o.accepted_at.tzinfo else o.accepted_at.replace(tzinfo=UTC)
+        if (utcnow() - at).total_seconds() > int(s["cancel_fee_customer_free_seconds"]):
+            reason = "AFTER_FREE_WINDOW"
+    fee = amount if reason and amount > 0 else Decimal(0)
+    return {"fee": fee, "reason": reason if fee > 0 else None, "free": fee <= 0}
+
+
+@router.post("/orders/{order_id}/cancel/preview")
+async def cancel_preview(order_id: int, user: User = Depends(customer_user), db: AsyncSession = Depends(get_db)):
+    o = await load_order(db, order_id)
+    if not o or o.customer_id != user.id:
+        raise HTTPException(404, "Order not found")
+    info = customer_cancel_fee(o, await settings_service.get_all(db))
+    return {"fee": f"{info['fee']:.{o.currency_decimals}f}", "currency": o.currency, "reason": info["reason"], "free": info["free"]}
+
+
 @router.post("/orders/{order_id}/cancel")
 async def cancel_order(order_id: int, body: OptionalReasonIn, user: User = Depends(customer_user),
                        db: AsyncSession = Depends(get_db)):
@@ -274,14 +350,30 @@ async def cancel_order(order_id: int, body: OptionalReasonIn, user: User = Depen
     if o.order_status in S.DRIVER_BUSY and (await settings_service.get_all(db))["cancel_after_accept_allowed"] != "true":
         raise HTTPException(409, {"code": "CANCEL_NOT_ALLOWED"})
     had_driver = o.driver_id
+    s_cfg = await settings_service.get_all(db)
+    fee_info = customer_cancel_fee(o, s_cfg)
     await close_pending_offers(db, o.id)
     o.cancelled_at, o.cancelled_by, o.cancelled_by_role = utcnow(), user.id, user.role
     o.cancellation_reason = body.reason
     await transition(db, o, S.CANCELLED, user.id, user.role, body.reason)
     if had_driver:
         await notify(db, had_driver, "ORDER_CANCELLED", "تم إلغاء الطلب", "ألغى العميل الطلب.", o.id)
+    fee_out = None
+    if had_driver and fee_info["fee"] > 0:
+        from ..services.payments import create_payment
+        dec = o.currency_decimals
+        fee = fee_info["fee"]
+        to_driver = (fee * Decimal(s_cfg["cancel_fee_customer_to_driver_percent"]) / 100).quantize(Decimal(1).scaleb(-dec))
+        pay = await create_payment(db, kind="CANCEL_FEE", customer_id=o.customer_id, driver_id=had_driver, amount=fee,
+                                   driver_amount=to_driver, company_amount=fee - to_driver, currency=o.currency, decimals=dec, order_id=o.id)
+        o.cancel_fee, o.cancel_fee_payer = fee, "CUSTOMER"
+        fee_out = {"amount": f"{fee:.{dec}f}", "payment_id": pay.id}
+        await notify(db, o.customer_id, "CANCEL_FEE_CHARGED", "رسوم إلغاء", f"تم احتساب رسوم إلغاء {fee:.{dec}f} {o.currency}.", o.id)
+        await notify(db, had_driver, "CANCEL_FEE_CHARGED", "تعويض إلغاء", "تم احتساب تعويض لك عن إلغاء العميل.", o.id)
     await db.commit()
-    return order_for_customer(await load_order(db, o.id))
+    out = order_for_customer(await load_order(db, o.id))
+    out["cancel_fee_info"] = fee_out
+    return out
 
 
 @router.post("/orders/{order_id}/retry")

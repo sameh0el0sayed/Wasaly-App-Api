@@ -64,6 +64,30 @@ DEFAULTS = {
     "default_pref_ac": "false", "default_pref_smoking": "ANY", "default_pref_driver_gender": "ANY", "default_pref_large_car": "false",  # when the app sends no value
     "require_pickup_photo": "true", "require_delivery_photo": "true",  # driver proof photos
     "proof_photos_apply_to": "DELIVERY",  # DELIVERY = parcel orders only (no photos of passengers) | ALL = every order
+    "sos_enabled": "true",
+    "emergency_number": "999",
+    "sos_taps_to_activate": "3",
+    "sos_tap_window_seconds": "3",
+    "share_trip_enabled": "true",
+    "cancel_fee_customer_amount": "0.500",
+    "cancel_fee_customer_free_seconds": "120",
+    "cancel_fee_driver_amount": "0.500",
+    "cancel_fee_driver_to": "COMPANY",
+    "cancel_fee_customer_to_driver_percent": "100",
+    "scheduled_enabled": "true",
+    "scheduled_fee_percent": "25",
+    "scheduled_min_minutes_ahead": "30",
+    "scheduled_max_days_ahead": "7",
+    "scheduled_dispatch_minutes_before": "20",
+    "stops_enabled": "true",
+    "max_extra_stops": "3",
+    "stop_fee": "0.200",
+    "referral_enabled": "true",
+    "referral_reward_inviter": "0.500",
+    "referral_reward_invitee": "0.500",
+    "referral_reward_type": "CREDIT",
+    "referral_max_per_user": "50",
+    "referral_min_trip_to_reward": "1",
     "driver_choice_enabled": "true",  # customers may choose their driver among those who respond (order.choose_driver)
     "price_increase_enabled": "true",  # customer raise + driver counter-offers (inDrive style)
     "max_price_increase_percent": "50",  # max total increase over the ORIGINAL estimate
