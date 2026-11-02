@@ -21,6 +21,7 @@ from .routers import (
     activity,
     admin,
     airports,
+    app_errors,
     auth,
     banners,
     corrections,
@@ -125,7 +126,7 @@ async def health():
     return {"status": "ok", "server_time": utcnow().isoformat()}
 
 
-for r in (auth.router, profile.router, corrections.router, orders.router, driver.router, payments.webhook_router, payments.router,
+for r in (auth.router, app_errors.router, app_errors.admin_router, profile.router, corrections.router, orders.router, driver.router, payments.webhook_router, payments.router,
           payments.admin_router, subscriptions.router, subscriptions.admin_router, subscriptions.driver_router,
           airports.router, promo.router, stream.router, banners.router, places.router, account_deletion.router, account_deletion.admin_router, activity.router, activity.admin_router, ratings.router, admin.router):
     app.include_router(r)

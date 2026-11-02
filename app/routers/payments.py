@@ -11,9 +11,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from ..config import settings
 from ..database import get_db
 from ..deps import admin_user, customer_user, paging
-from ..models import DriverPayout, Payment, User, utcnow
+from ..models import DriverPayout, Order, Payment, Subscription, User, utcnow
 from ..schemas import BenefitPayIn, MarkTransferredIn, ReasonIn
-from ..serializers import payment_out, payout_out
+from ..security import create_file_token, decrypt
+from ..serializers import dt, money, payment_out, payout_out
 from ..services import settings_service, tap
 from ..services.audit import audit
 from ..services.files import assert_owned
@@ -166,6 +167,55 @@ async def tap_return(tap_id: str | None = None, db: AsyncSession = Depends(get_d
 
 # ---------------- admin ----------------
 
+def _file_url(key):
+    return f"/api/files/download/{create_file_token(key)}" if key else None
+
+
+def _person(u: User | None) -> dict | None:
+    return {"id": u.id, "full_name": u.full_name, "phone": u.phone, "role": u.role} if u else None
+
+
+async def admin_payment_view(db: AsyncSession, p: Payment, s: dict | None = None) -> dict:
+    """What an admin needs to confirm money: the proof image, who paid, for which order/subscription, and the company account to compare with."""
+    s = s if s is not None else await settings_service.get_all(db)
+    out = payment_out(p, admin=True)
+    out["proof_url"] = _file_url(p.proof_file)
+    out["customer"] = _person(await db.get(User, p.customer_id))
+    out["driver"] = _person(await db.get(User, p.driver_id)) if p.driver_id else None
+    out["verified_by_name"] = (await db.get(User, p.verified_by)).full_name if p.verified_by else None
+    out["expected_amount"] = money(p.amount, p.currency_decimals)
+    out["company_account"] = {"name": s.get("benefitpay_account_name"), "number": s.get("benefitpay_account_number")}
+    out["order"] = None
+    if p.order_id:
+        o = await db.get(Order, p.order_id)
+        if o:
+            out["order"] = {"id": o.id, "service_type": o.service_type, "order_status": o.order_status,
+                            "pickup_address": o.pickup_address, "destination_address": o.destination_address,
+                            "final_price": money(o.final_price, o.currency_decimals),
+                            "customer_total": money(o.customer_total, o.currency_decimals) if o.customer_total is not None else None,
+                            "completed_at": dt(o.completed_at), "created_at": dt(o.created_at)}
+    out["subscription"] = None
+    if p.subscription_id:
+        sub = await db.get(Subscription, p.subscription_id)
+        if sub:
+            out["subscription"] = {"id": sub.id, "category": sub.category, "status": sub.status, "passenger_name": sub.passenger_name,
+                                   "pickup_address": sub.pickup_address, "destination_address": sub.destination_address}
+    return out
+
+
+async def admin_payout_view(db: AsyncSession, r: DriverPayout) -> dict:
+    out = payout_out(r)
+    drv = await db.get(User, r.driver_id)
+    out["driver"] = _person(drv)
+    prof = drv.driver_profile if drv else None
+    acc = decrypt(prof.payout_account_encrypted) if prof and prof.payout_account_encrypted else None
+    out["payout_account"] = {"method": prof.payout_method if prof else None, "account": ("****" + acc[-4:]) if acc else None,
+                             "holder_name": prof.payout_holder_name if prof else None}
+    pay = await db.get(Payment, r.payment_id)
+    out["payment"] = {"id": pay.id, "kind": pay.kind, "order_id": pay.order_id, "amount": money(pay.amount, pay.currency_decimals),
+                      "payment_method": pay.payment_method, "paid_at": dt(pay.paid_at)} if pay else None
+    return out
+
 @admin_router.get("/payments")
 async def admin_payments(status: str | None = None, method: str | None = None, kind: str | None = None,
                          page=Depends(paging), admin: User = Depends(admin_user), db: AsyncSession = Depends(get_db)):
@@ -175,7 +225,16 @@ async def admin_payments(status: str | None = None, method: str | None = None, k
         if val:
             q = q.where(col == val)
     rows = (await db.execute(q.order_by(Payment.id.desc()).limit(limit).offset(offset))).scalars().all()
-    return [payment_out(p, admin=True) for p in rows]
+    s = await settings_service.get_all(db)
+    return [await admin_payment_view(db, p, s) for p in rows]
+
+
+@admin_router.get("/payments/{payment_id}")
+async def admin_payment_detail(payment_id: int, admin: User = Depends(admin_user), db: AsyncSession = Depends(get_db)):
+    p = await db.get(Payment, payment_id)
+    if not p:
+        raise HTTPException(404, "Payment not found")
+    return await admin_payment_view(db, p)
 
 
 @admin_router.post("/payments/{payment_id}/confirm")
@@ -190,7 +249,7 @@ async def confirm_payment(payment_id: int, admin: User = Depends(admin_user), db
         raise HTTPException(409, "Already paid")
     audit(db, admin.id, "PAYMENT_CONFIRMED", "payment", p.id)
     await db.commit()
-    return payment_out(p, admin=True)
+    return await admin_payment_view(db, p)
 
 
 @admin_router.post("/payments/{payment_id}/reject")
@@ -205,7 +264,7 @@ async def reject_payment(payment_id: int, body: ReasonIn, admin: User = Depends(
     audit(db, admin.id, "PAYMENT_REJECTED", "payment", p.id, body.reason)
     await notify(db, p.customer_id, "PAYMENT_REJECTED", "تم رفض إيصال الدفع", body.reason, p.order_id)
     await db.commit()
-    return payment_out(p, admin=True)
+    return await admin_payment_view(db, p)
 
 
 @admin_router.get("/payouts")
@@ -218,7 +277,7 @@ async def admin_payouts(status: str | None = None, driver_id: int | None = None,
     if driver_id:
         q = q.where(DriverPayout.driver_id == driver_id)
     rows = (await db.execute(q.order_by(DriverPayout.id.desc()).limit(limit).offset(offset))).scalars().all()
-    return [payout_out(r) for r in rows]
+    return [await admin_payout_view(db, r) for r in rows]
 
 
 async def _payout(db, payout_id) -> DriverPayout:
@@ -236,7 +295,7 @@ async def retry_payout(payout_id: int, admin: User = Depends(admin_user), db: As
     await attempt_payout(db, r)
     audit(db, admin.id, "PAYOUT_RETRY", "payout", r.id)
     await db.commit()
-    return payout_out(r)
+    return await admin_payout_view(db, r)
 
 
 @admin_router.post("/payouts/{payout_id}/mark-transferred")
@@ -249,4 +308,4 @@ async def mark_transferred(payout_id: int, body: MarkTransferredIn, admin: User 
     audit(db, admin.id, "PAYOUT_MARKED_TRANSFERRED", "payout", r.id, details={"reference": body.reference})
     await notify(db, r.driver_id, "PAYOUT_SENT", "تم تحويل أرباحك", f"{r.amount:.{r.currency_decimals}f} {r.currency}")
     await db.commit()
-    return payout_out(r)
+    return await admin_payout_view(db, r)

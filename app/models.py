@@ -580,6 +580,31 @@ class Rating(Base):
     created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
 
 
+class AppErrorLog(Base):
+    """Errors reported by the mobile apps (crashes, failed API calls, push/Firebase problems). Kept 30 days."""
+    __tablename__ = "app_error_logs"
+    __table_args__ = (Index("ix_app_error_level_created", "level", "created_at"),
+                      Index("ix_app_error_user_created", "user_id", "created_at"))
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    user_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True)
+    device_id: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    platform: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    model: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    os_name: Mapped[str | None] = mapped_column(String(40), nullable=True)
+    os_version: Mapped[str | None] = mapped_column(String(40), nullable=True)
+    app_version: Mapped[str | None] = mapped_column(String(30), nullable=True)
+    locale: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    level: Mapped[str] = mapped_column(String(10))  # fatal | error | warning
+    source: Mapped[str] = mapped_column(String(40), index=True)
+    error_type: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    message: Mapped[str] = mapped_column(Text)
+    stack: Mapped[str | None] = mapped_column(Text, nullable=True)
+    context: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    occurred_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow, index=True)
+    ip: Mapped[str | None] = mapped_column(String(64), nullable=True)
+
+
 class AppOpenEvent(Base):
     __tablename__ = "app_open_events"
     id: Mapped[int] = mapped_column(Integer, primary_key=True)

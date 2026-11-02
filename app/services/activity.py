@@ -42,6 +42,8 @@ async def sweep(db: AsyncSession) -> None:
         _last_day = t
         from .account_deletion import anonymize_due
         await anonymize_due(db)
+        from ..routers.app_errors import purge_old
+        await purge_old(db)
     if t - _last_hour >= 3600:
         _last_hour = t
         old = utcnow() - timedelta(days=int(s["activity_retention_days"]))

@@ -53,6 +53,14 @@ async def test_benefitpay_proof_admin_confirm_then_driver_payout(client):
     r = await client.post(f"/api/payments/{pid}/benefitpay", headers=auth(ctoken),
                           json={"proof_file_key": up.json()["file_key"], "reference": "BP123"})
     assert r.status_code == 200 and r.json()["payment_status"] == "PENDING_VERIFICATION"
+    # the admin sees everything needed to confirm: the screenshot, who paid, the order, the company account
+    det = (await client.get(f"/api/admin/payments/{pid}", headers=auth(admin))).json()
+    assert det["proof_url"].startswith("/api/files/download/") and det["reference"] == "BP123"
+    assert (await client.get(det["proof_url"])).content == PNG
+    assert det["customer"]["id"] == cid and det["customer"]["phone"] and det["driver"]["id"] == did
+    assert det["order"]["id"] == oid and det["order"]["pickup_address"] and det["expected_amount"] == "2.000"
+    assert "company_account" in det
+    assert (await client.get("/api/admin/payments?status=PENDING_VERIFICATION", headers=auth(admin))).json()[0]["proof_url"]
     # no payout before confirmation
     assert (await client.get("/api/admin/payouts", headers=auth(admin))).json() == []
     # only admins confirm
@@ -63,6 +71,7 @@ async def test_benefitpay_proof_admin_confirm_then_driver_payout(client):
     assert (await client.post(f"/api/admin/payments/{pid}/confirm", headers=auth(admin))).status_code == 409
     po = (await client.get("/api/admin/payouts", headers=auth(admin))).json()
     assert len(po) == 1 and po[0]["amount"] == "1.600" and po[0]["status"] == "TRANSFERRED" and po[0]["simulated"] is True
+    assert po[0]["driver"]["id"] == did and po[0]["payment"]["order_id"] == oid and "payout_account" in po[0]
     mine = (await client.get("/api/driver/payouts", headers=auth(dtoken))).json()
     assert len(mine) == 1
     assert (await client.get(f"/api/orders/{oid}", headers=auth(ctoken))).json()["payment_status"] == "PAID"
