@@ -363,7 +363,10 @@ async def cancel_order(order_id: int, body: OptionalReasonIn, user: User = Depen
         from ..services.payments import create_payment
         dec = o.currency_decimals
         fee = fee_info["fee"]
-        to_driver = (fee * Decimal(s_cfg["cancel_fee_customer_to_driver_percent"]) / 100).quantize(Decimal(1).scaleb(-dec))
+        # same split as trips: the company keeps its commission (order snapshot), the driver gets the rest
+        cv = Decimal(o.commission_value or 0)
+        company = min(fee, fee * cv / 100 if o.commission_type == "PERCENT" else cv).quantize(Decimal(1).scaleb(-dec))
+        to_driver = fee - company
         pay = await create_payment(db, kind="CANCEL_FEE", customer_id=o.customer_id, driver_id=had_driver, amount=fee,
                                    driver_amount=to_driver, company_amount=fee - to_driver, currency=o.currency, decimals=dec, order_id=o.id)
         o.cancel_fee, o.cancel_fee_payer = fee, "CUSTOMER"
