@@ -101,6 +101,8 @@ async def lifespan(app: FastAPI):
     yield
     if task:
         task.cancel()
+    from .services import cache
+    await cache.close()
 
 
 app = FastAPI(title="Bahrain Transport & Delivery API", version="1.0.0", lifespan=lifespan, root_path="/wasaly-api",
@@ -124,7 +126,22 @@ async def validation_handler(request: Request, exc: RequestValidationError):
 
 @app.get("/health", tags=["system"])
 async def health():
-    return {"status": "ok", "server_time": utcnow().isoformat()}
+    from .services import cache
+    return {"status": "ok", "server_time": utcnow().isoformat(), "redis": await cache.ping()}
+
+
+@app.middleware("http")
+async def request_id_middleware(request: Request, call_next):
+    """Correlation id on every response (X-Request-ID); no bodies, tokens or coordinates are logged."""
+    import uuid
+    rid = request.headers.get("x-request-id") or uuid.uuid4().hex[:12]
+    t0 = time.time()
+    response = await call_next(request)
+    response.headers["X-Request-ID"] = rid
+    ms = round((time.time() - t0) * 1000)
+    if ms > 1000 or response.status_code >= 500:
+        log.warning("slow/error request id=%s %s %s -> %s in %d ms", rid, request.method, request.url.path, response.status_code, ms)
+    return response
 
 
 for r in (auth.router, app_errors.router, app_errors.admin_router, profile.router, corrections.router, orders.router, driver.router, payments.webhook_router, payments.router,

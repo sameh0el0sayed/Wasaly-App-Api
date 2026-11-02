@@ -36,8 +36,8 @@ from ..schemas import (
 )
 from ..security import decrypt, encrypt
 from ..serializers import dt, money, offer_out, order_for_driver, payout_out, vehicle_full
+from ..services import cache, settings_service
 from ..services import price_increase as pi
-from ..services import settings_service
 from ..services.audit import audit
 from ..services.dispatch import dispatch_order, expire_offers_and_orders, has_active_order, work_blockers
 from ..services.files import assert_owned
@@ -120,6 +120,7 @@ async def availability(body: AvailabilityIn, user: User = Depends(driver_user), 
         # going offline never cancels or changes a trip already in progress; it only stops new offers
         profile.is_online, profile.mode = False, "OFF"
         _clear_location(profile)
+        await cache.clear_location(user.id)
         await db.execute(update(DriverWorkSession).where(DriverWorkSession.driver_id == user.id,
                                                          DriverWorkSession.offline_at.is_(None)).values(offline_at=utcnow()))
         await db.execute(update(OrderOffer).where(OrderOffer.driver_id == user.id, OrderOffer.offer_status == OfferStatus.PENDING)
@@ -128,15 +129,37 @@ async def availability(body: AvailabilityIn, user: User = Depends(driver_user), 
     return {"online": profile.is_online, "mode": profile.mode}
 
 
+_last_push: dict[int, float] = {}
+
+
+def _push_location(driver_id: int, lat: float, lng: float, heading) -> None:
+    """Admin dashboards get the position over the SSE stream (admin.driver_location, at most one per driver every 3 s)."""
+    import time
+
+    from ..services.realtime import hub
+    t = time.time()
+    if t - _last_push.get(driver_id, 0) < 3:
+        return
+    _last_push[driver_id] = t
+    hub.publish({"type": "admin.driver_location", "driver_id": driver_id, "lat": lat, "lng": lng, "heading": heading,
+                 "at": utcnow().isoformat()}, set())
+
+
 @router.post("/location")
 async def driver_location(body: DriverLocationIn, user: User = Depends(driver_user), db: AsyncSession = Depends(get_db)):
     """Only while mode = LIVE. Keeps the LATEST position only (no route history); used for nearest-first dispatch."""
     p = user.driver_profile
     if not p.is_online or p.mode != "LIVE":
         raise HTTPException(409, {"code": "NOT_LIVE"})
-    p.last_lat, p.last_lng, p.last_location_at = body.latitude, body.longitude, utcnow()
-    p.last_speed_kmh, p.last_heading = body.speed_kmh, body.heading
-    await db.commit()
+    now = utcnow()
+    _push_location(user.id, body.latitude, body.longitude, body.heading)
+    in_redis = await cache.set_location(user.id, body.latitude, body.longitude, body.speed_kmh, body.heading)
+    # with Redis up PostgreSQL only gets the latest position every location_db_flush_seconds (it still serves dispatch / recovery)
+    last = p.last_location_at
+    if not in_redis or not last or (now - (last if last.tzinfo else last.replace(tzinfo=now.tzinfo))).total_seconds() >= settings.location_db_flush_seconds:
+        p.last_lat, p.last_lng, p.last_location_at = body.latitude, body.longitude, now
+        p.last_speed_kmh, p.last_heading = body.speed_kmh, body.heading
+        await db.commit()
     return {"ok": True}
 
 

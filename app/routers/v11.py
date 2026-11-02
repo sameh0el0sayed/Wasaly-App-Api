@@ -27,7 +27,7 @@ from ..models import (
     WalletEntry,
     utcnow,
 )
-from ..services import settings_service
+from ..services import cache, settings_service
 from ..services.audit import audit
 from ..services.geo import _haversine_m, find_area
 from ..services.notifications import notify
@@ -73,6 +73,7 @@ async def live_map(service_area_id: int | None = None, include_offline_minutes: 
     for r in (await db.execute(select(DriverServiceArea))).scalars().all():
         areas_of.setdefault(r.driver_id, []).append(r.service_area_id)
     drivers = []
+    fresh_locs = await cache.get_locations([d for (d,) in (await db.execute(select(DriverProfile.user_id).where(DriverProfile.is_online.is_(True)))).all()])
     q = select(User).join(DriverProfile, DriverProfile.user_id == User.id).where(User.role == Role.DRIVER, User.account_status == "APPROVED")
     for u in (await db.execute(q)).scalars().unique().all():
         p = u.driver_profile
@@ -81,9 +82,14 @@ async def live_map(service_area_id: int | None = None, include_offline_minutes: 
                 continue
         if service_area_id and service_area_id not in areas_of.get(u.id, []):
             continue
-        age = round((now - _aware(p.last_location_at)).total_seconds()) if p.last_location_at else None
+        f = fresh_locs.get(u.id)
+        if f:  # newest position from Redis, otherwise the last one PostgreSQL has
+            lat, lng, at = f["lat"], f["lng"], datetime.fromtimestamp(f["ts"], UTC)
+        else:
+            lat, lng, at = p.last_lat, p.last_lng, _aware(p.last_location_at)
+        age = round((now - at).total_seconds()) if at else None
         drivers.append({"id": u.id, "name": u.full_name, "phone": u.phone, "mode": p.mode, "busy": u.id in busy, "order_id": busy.get(u.id),
-                        "lat": p.last_lat, "lng": p.last_lng, "location_at": _iso(p.last_location_at), "location_age_s": age,
+                        "lat": lat, "lng": lng, "location_at": _iso(at), "location_age_s": age,
                         "service_area_ids": areas_of.get(u.id, []),
                         "vehicle": {"plate_number": u.vehicle.plate_number, "vehicle_type": u.vehicle.vehicle_type} if u.vehicle else None})
     open_sos = {a.order_id for a in (await db.execute(select(SosAlert).where(SosAlert.status != "RESOLVED"))).scalars().all()}
@@ -484,8 +490,9 @@ async def my_referral(user: User = Depends(customer_user), db: AsyncSession = De
 
 
 @router.get("/wallet")
-async def my_wallet(user: User = Depends(approved_user), db: AsyncSession = Depends(get_db)):
-    rows = (await db.execute(select(WalletEntry).where(WalletEntry.user_id == user.id).order_by(WalletEntry.id.desc()).limit(100))).scalars().all()
+async def my_wallet(limit: int = 20, offset: int = 0, user: User = Depends(approved_user), db: AsyncSession = Depends(get_db)):
+    rows = (await db.execute(select(WalletEntry).where(WalletEntry.user_id == user.id).order_by(WalletEntry.id.desc())
+                             .limit(max(1, min(limit, 100))).offset(max(0, offset)))).scalars().all()
     return {"balance": f"{Decimal(user.wallet_balance or 0):.3f}",
             "items": [{"id": w.id, "amount": f"{w.amount:.3f}", "kind": w.kind, "created_at": _iso(w.created_at)} for w in rows]}
 

@@ -134,10 +134,19 @@ class Pricing(NamedTuple):
     country_boundary: dict | None = None
 
 
+SETTINGS_CACHE_KEY = "wasaly:settings:v1"
+
+
 async def get_all(db: AsyncSession) -> dict[str, str]:
+    """All settings (defaults + overrides). Read through Redis (300 s, invalidated by every admin change) when it is configured."""
+    from . import cache
+    hit = await cache.get_json(SETTINGS_CACHE_KEY)
+    if hit is not None:
+        return hit
     rows = (await db.execute(select(AppSetting))).scalars().all()
     data = dict(DEFAULTS)
     data.update({r.key: r.value for r in rows})
+    await cache.set_json(SETTINGS_CACHE_KEY, data, 300)
     return data
 
 
@@ -151,6 +160,8 @@ async def get_pricing(db: AsyncSession) -> Pricing:
 
 
 async def set_value(db: AsyncSession, key: str, value: str, user_id: int | None):
+    from . import cache
+    await cache.delete(SETTINGS_CACHE_KEY)  # admin change -> next read reloads (the caller commits right after)
     row = await db.get(AppSetting, key)
     if row:
         row.value, row.updated_by = value, user_id

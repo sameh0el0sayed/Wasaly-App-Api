@@ -498,14 +498,23 @@ async def driver_location(order_id: int, user: User = Depends(customer_user), db
         return {"available": False, "reason": "DRIVER_NOT_LIVE"}
     if not o.driver.location_consent:
         return {"available": False, "reason": "NO_CONSENT"}
-    if p.last_lat is None or p.last_lng is None or not p.last_location_at or \
-            (utcnow() - p.last_location_at).total_seconds() > int(s["live_location_max_age_seconds"]):
+    from datetime import UTC, datetime
+
+    from ..services import cache
+    fresh = (await cache.get_locations([o.driver_id])).get(o.driver_id)
+    if fresh:  # newest position comes from Redis
+        lat, lng, at, heading = fresh["lat"], fresh["lng"], datetime.fromtimestamp(fresh["ts"], UTC), fresh["heading"]
+    elif p.last_lat is not None and p.last_lng is not None and p.last_location_at:
+        lat, lng, at, heading = p.last_lat, p.last_lng, p.last_location_at, p.last_heading
+    else:
+        return {"available": False, "reason": "STALE"}
+    if (utcnow() - (at if at.tzinfo else at.replace(tzinfo=UTC))).total_seconds() > int(s["live_location_max_age_seconds"]):
         return {"available": False, "reason": "STALE"}
     to_dest = o.order_status == S.IN_PROGRESS
     tlat, tlng = (o.destination_latitude, o.destination_longitude) if to_dest else (o.pickup_latitude, o.pickup_longitude)
     eta = None
     if tlat is not None and tlng is not None:
         speed = max(float(s["estimate_avg_speed_kmh"]), 1.0)
-        eta = max(1, round(_haversine_m(p.last_lat, p.last_lng, tlat, tlng) / 1000 / speed * 60))
-    return {"available": True, "lat": p.last_lat, "lng": p.last_lng, "heading": p.last_heading,
-            "updated_at": p.last_location_at.isoformat(), "eta_min": eta, "eta_target": "DESTINATION" if to_dest else "PICKUP"}
+        eta = max(1, round(_haversine_m(lat, lng, tlat, tlng) / 1000 / speed * 60))
+    return {"available": True, "lat": lat, "lng": lng, "heading": heading,
+            "updated_at": at.isoformat(), "eta_min": eta, "eta_target": "DESTINATION" if to_dest else "PICKUP"}

@@ -5,6 +5,12 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
     database_url: str = "sqlite+aiosqlite:///./dev.db"
+    redis_url: str = ""  # e.g. redis://redis:6379/0 ; empty = no Redis (everything works from PostgreSQL)
+    location_ttl_seconds: int = 120  # latest driver location in Redis
+    location_db_flush_seconds: int = 15  # PostgreSQL gets the latest location at most this often per driver (when Redis is up)
+    db_pool_size: int = 5  # per process: keep (workers x (pool_size + max_overflow)) within the PostgreSQL budget
+    db_max_overflow: int = 3
+    db_statement_timeout_ms: int = 30000
     secret_key: str = "dev-secret-change-me"
     fernet_key: str = ""  # empty -> derived from secret_key (dev only)
     access_token_minutes: int = 720
