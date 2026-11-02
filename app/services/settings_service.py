@@ -88,6 +88,7 @@ DEFAULTS = {
     "referral_reward_type": "CREDIT",
     "referral_max_per_user": "50",
     "referral_min_trip_to_reward": "1",
+    "nearby_drivers_enabled": "true",  # customers see free LIVE drivers around them (GET /api/nearby-drivers)
     "driver_choice_enabled": "true",  # customers may choose their driver among those who respond (order.choose_driver)
     "price_increase_enabled": "true",  # customer raise + driver counter-offers (inDrive style)
     "max_price_increase_percent": "50",  # max total increase over the ORIGINAL estimate

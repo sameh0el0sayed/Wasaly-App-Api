@@ -536,6 +536,51 @@ async def referral_landing(code: str):
                         f'<h1 style="letter-spacing:3px">{safe}</h1></body></html>')
 
 
+# ======================= nearby drivers (customer map) =======================
+@router.get("/nearby-drivers")
+async def nearby_drivers(lat: float, lng: float, radius_km: float = 5, user: User = Depends(customer_user), db: AsyncSession = Depends(get_db)):
+    """Free, online LIVE drivers with a fresh position around a point. No phone / plate / full name; positions rounded to ~10 m."""
+    from ..routers.ratings import stats_for
+    from ..security import create_file_token
+    s = await settings_service.get_all(db)
+    if s["nearby_drivers_enabled"] != "true":
+        return {"items": []}
+    radius_km = max(0.5, min(radius_km, 10))
+    now = utcnow()
+    max_age = int(s["live_location_max_age_seconds"])
+    profs = (await db.execute(select(DriverProfile).where(DriverProfile.is_online.is_(True), DriverProfile.mode == "LIVE"))).scalars().all()
+    if not profs:
+        return {"items": []}
+    busy = {d for (d,) in (await db.execute(select(Order.driver_id).where(Order.order_status.in_(list(S.DRIVER_BUSY)), Order.driver_id.is_not(None)))).all()}
+    fresh = await cache.get_locations([p.user_id for p in profs])
+    cands = []
+    for p in profs:
+        if p.user_id in busy:
+            continue
+        f = fresh.get(p.user_id)
+        if f:
+            la, lo, age, hd = f["lat"], f["lng"], now.timestamp() - f["ts"], f["heading"]
+        elif p.last_lat is not None and p.last_location_at:
+            la, lo, age, hd = p.last_lat, p.last_lng, (now - _aware(p.last_location_at)).total_seconds(), p.last_heading
+        else:
+            continue
+        if age > max_age:
+            continue
+        km = _haversine_m(lat, lng, la, lo) / 1000
+        if km <= radius_km:
+            cands.append((km, p.user_id, la, lo, hd))
+    items = []
+    for _km, uid, la, lo, hd in sorted(cands)[:20]:
+        u = await db.get(User, uid)
+        if not u or u.account_status != "APPROVED" or u.deleted_at or not u.vehicle:
+            continue
+        st = await stats_for(db, u)
+        items.append({"id": u.id, "first_name": u.full_name.split()[0],
+                      "photo_url": f"/api/files/download/{create_file_token(u.profile_photo)}" if u.profile_photo else None,
+                      "lat": round(la, 4), "lng": round(lo, 4), "heading": hd, "vehicle_type": u.vehicle.vehicle_type, "rating": st["rating_avg"]})
+    return {"items": items}
+
+
 # ======================= 8) driver demand map =======================
 _demand_cache: dict = {"at": None, "data": None}
 

@@ -449,6 +449,7 @@ class SettingsPatch(BaseModel):
     promo_enabled: bool | None = None
     price_increase_enabled: bool | None = None
     driver_choice_enabled: bool | None = None
+    nearby_drivers_enabled: bool | None = None
     sos_enabled: bool | None = None
     emergency_number: str | None = None
     sos_taps_to_activate: int | None = None

@@ -62,7 +62,7 @@ async def app_config(db: AsyncSession = Depends(get_db)):
             "customer_live_tracking_enabled": s["customer_live_tracking_enabled"] == "true",
             "service_categories": _categories(s["service_categories"]),
             "online_window_minutes": int(s["online_window_minutes"]),
-            "driver_choice_enabled": s["driver_choice_enabled"] == "true",
+            "driver_choice_enabled": s["driver_choice_enabled"] == "true", "nearby_drivers_enabled": s["nearby_drivers_enabled"] == "true",
             "sos_enabled": s["sos_enabled"] == "true", "emergency_number": s["emergency_number"],
             "sos_taps_to_activate": int(s["sos_taps_to_activate"]), "sos_tap_window_seconds": int(s["sos_tap_window_seconds"]),
             "share_trip_enabled": s["share_trip_enabled"] == "true",
