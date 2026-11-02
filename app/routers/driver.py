@@ -23,6 +23,7 @@ from ..models import (
 from ..schemas import (
     ArrivedIn,
     AvailabilityIn,
+    DriverAreasIn,
     DriverLocationIn,
     DriverPrefsIn,
     PayoutAccountIn,
@@ -33,6 +34,7 @@ from ..schemas import (
 from ..security import decrypt, encrypt
 from ..serializers import dt, money, offer_out, order_for_driver, payout_out, vehicle_full
 from ..services import settings_service
+from ..services.audit import audit
 from ..services.dispatch import expire_offers_and_orders, force_offline, has_active_order, work_blockers
 from ..services.files import assert_owned
 from ..services.notifications import notify
@@ -353,6 +355,44 @@ async def set_payout_account(body: PayoutAccountIn, user: User = Depends(driver_
                                                 DriverPayout.failure_reason == "NO_PAYOUT_ACCOUNT").values(status="PENDING"))
     await db.commit()
     return {"method": p.payout_method, "account": "****" + body.account[-4:], "holder_name": p.payout_holder_name}
+
+
+@router.get("/service-areas")
+async def my_service_areas(user: User = Depends(driver_user), db: AsyncSession = Depends(get_db)):
+    """The areas the admin assigned to this driver (offers only come from these)."""
+    from ..models import ServiceArea
+    rows = (await db.execute(select(ServiceArea).join(DriverServiceArea, DriverServiceArea.service_area_id == ServiceArea.id)
+                             .where(DriverServiceArea.driver_id == user.id).order_by(ServiceArea.name))).scalars().all()
+    return {"items": [{"id": a.id, "name": a.name, "boundary": a.boundary, "is_active": a.is_active} for a in rows]}
+
+
+@router.get("/service-areas/available")
+async def available_service_areas(user: User = Depends(driver_user), db: AsyncSession = Depends(get_db)):
+    """Every active area the driver can pick from; `selected` marks the ones he works in now."""
+    from ..models import ServiceArea
+    mine = set((await db.execute(select(DriverServiceArea.service_area_id).where(DriverServiceArea.driver_id == user.id))).scalars())
+    rows = (await db.execute(select(ServiceArea).where(ServiceArea.is_active.is_(True)).order_by(ServiceArea.name))).scalars().all()
+    return {"items": [{"id": a.id, "name": a.name, "boundary": a.boundary, "selected": a.id in mine} for a in rows]}
+
+
+@router.put("/service-areas")
+async def set_my_service_areas(body: DriverAreasIn, user: User = Depends(driver_user), db: AsyncSession = Depends(get_db)):
+    """The driver chooses the areas he works in (offers only come from these). At least one active area is required."""
+    from sqlalchemy import delete
+
+    from ..models import ServiceArea
+    ids = set(body.service_area_ids)
+    if not ids:
+        raise HTTPException(422, {"code": "AREAS_REQUIRED"})
+    ok = set((await db.execute(select(ServiceArea.id).where(ServiceArea.id.in_(ids), ServiceArea.is_active.is_(True)))).scalars())
+    if ids - ok:
+        raise HTTPException(422, {"code": "UNKNOWN_AREA", "ids": sorted(ids - ok)})
+    await db.execute(delete(DriverServiceArea).where(DriverServiceArea.driver_id == user.id))
+    for i in ids:
+        db.add(DriverServiceArea(driver_id=user.id, service_area_id=i))
+    audit(db, user.id, "DRIVER_AREAS_SELF_SET", "user", user.id, details={"areas": sorted(ids)})
+    await db.commit()
+    return await my_service_areas(user, db)
 
 
 @router.get("/payout-account")

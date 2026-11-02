@@ -93,3 +93,35 @@ async def test_text_correction_and_phone_change_need_admin_approval(client):
     pid2 = (await client.get("/api/admin/pending-changes?status=PENDING_REVIEW", headers=h)).json()["items"][0]["id"]
     r = await client.post(f"/api/admin/pending-changes/{pid2}/review", headers=h, json={"status": "REJECTED", "reason": "not verified"})
     assert r.status_code == 200 and r.json()["status"] == "REJECTED"
+
+
+async def test_driver_areas_and_full_driver_view(client):
+    admin, area, (cid, ct), [(did, dt)] = await setup_world(client)
+    h = auth(admin)
+    mine = (await client.get("/api/driver/service-areas", headers=auth(dt))).json()["items"]
+    assert [a["id"] for a in mine] == [area] and mine[0]["boundary"]["type"] == "polygon"
+    assert (await client.get("/api/driver/service-areas", headers=auth(ct))).status_code == 403
+    r = (await client.get(f"/api/admin/drivers/{did}/service-areas", headers=h)).json()
+    assert r["service_area_ids"] == [area] and r["items"][0]["name"] == "Seef"
+    full = (await client.get(f"/api/admin/drivers/{did}", headers=h)).json()
+    assert full["service_areas"][0]["id"] == area and full["driver"]["vehicle"]["plate_number"]
+    assert "payout" in full and full["stats"]["total_orders"] == 0 and "debt_balance" in full
+    assert (await client.get(f"/api/admin/drivers/{cid}", headers=h)).status_code == 404
+    assert (await client.get(f"/api/admin/drivers/{did}/service-areas", headers=auth(ct))).status_code == 403
+
+
+async def test_driver_edits_own_areas(client):
+    from .conftest import make_area
+    admin, area, (cid, ct), [(did, dt)] = await setup_world(client)
+    other = await make_area(client, admin, "Juffair")
+    av = (await client.get("/api/driver/service-areas/available", headers=auth(dt))).json()["items"]
+    assert {a["id"]: a["selected"] for a in av} == {area: True, other: False}
+    r = await client.put("/api/driver/service-areas", headers=auth(dt), json={"service_area_ids": [other]})
+    assert r.status_code == 200 and [a["id"] for a in r.json()["items"]] == [other]
+    assert (await client.put("/api/driver/service-areas", headers=auth(dt), json={"service_area_ids": []})).status_code == 422
+    r = await client.put("/api/driver/service-areas", headers=auth(dt), json={"service_area_ids": [999]})
+    assert r.status_code == 422 and r.json()["detail"]["code"] == "UNKNOWN_AREA"
+    await client.patch(f"/api/admin/service-areas/{other}", headers=auth(admin), json={"is_active": False})
+    assert other not in [a["id"] for a in (await client.get("/api/driver/service-areas/available", headers=auth(dt))).json()["items"]]
+    assert (await client.put("/api/driver/service-areas", headers=auth(ct), json={"service_area_ids": [area]})).status_code == 403
+    assert (await client.get(f"/api/admin/drivers/{did}/service-areas", headers=auth(admin))).json()["service_area_ids"] == [other]
