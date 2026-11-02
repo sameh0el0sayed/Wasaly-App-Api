@@ -4,9 +4,9 @@ from fastapi import HTTPException
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..constants import OfferStatus
+from ..constants import CounterStatus, OfferStatus
 from ..constants import OrderStatus as S
-from ..models import Order, OrderOffer, OrderStatusHistory, utcnow
+from ..models import CounterOffer, Order, OrderOffer, OrderStatusHistory, utcnow
 from . import events
 
 ALLOWED: dict[str, set[str]] = {
@@ -52,11 +52,38 @@ async def load_order(db: AsyncSession, order_id: int, for_update: bool = False) 
 async def close_pending_offers(db: AsyncSession, order_id: int, except_offer_id: int | None = None,
                                status: str = OfferStatus.CLOSED) -> None:
     stmt = (update(OrderOffer).where(OrderOffer.order_id == order_id,
-                                     OrderOffer.offer_status == OfferStatus.PENDING)
+                                     OrderOffer.offer_status.in_([OfferStatus.PENDING, OfferStatus.COUNTERED]))
             .values(offer_status=status, responded_at=utcnow()))
     if except_offer_id:
         stmt = stmt.where(OrderOffer.id != except_offer_id)
     await db.execute(stmt)
+    await close_pending_counters(db, order_id, CounterStatus.REJECTED, except_offer_id=except_offer_id)
+
+
+COUNTER_TEXT = {
+    CounterStatus.REJECTED: ("COUNTER_REJECTED", "تم رفض طلب السعر", "لم يوافق العميل على السعر الأعلى."),
+    CounterStatus.EXPIRED: ("COUNTER_EXPIRED", "انتهت مهلة طلب السعر", "لم يرد العميل على طلب السعر في الوقت المحدد."),
+}
+
+
+async def close_pending_counters(db: AsyncSession, order_id: int, status: str, except_offer_id: int | None = None,
+                                 only_ids: list[int] | None = None) -> None:
+    """PENDING counter-offers of an order -> REJECTED / EXPIRED; their drivers are told. Their offers are closed too."""
+    from .notifications import notify
+    q = select(CounterOffer).where(CounterOffer.order_id == order_id, CounterOffer.status == CounterStatus.PENDING)
+    if except_offer_id:
+        q = q.where(CounterOffer.offer_id != except_offer_id)
+    if only_ids is not None:
+        q = q.where(CounterOffer.id.in_(only_ids))
+    ntype, title, msg = COUNTER_TEXT[status]
+    now = utcnow()
+    for c in (await db.execute(q.with_for_update())).scalars().all():
+        c.status, c.responded_at = status, now
+        offer = await db.get(OrderOffer, c.offer_id)
+        if offer and offer.offer_status == OfferStatus.COUNTERED:
+            offer.offer_status = OfferStatus.EXPIRED if status == CounterStatus.EXPIRED else OfferStatus.CLOSED
+            offer.responded_at = now
+        await notify(db, c.driver_id, ntype, title, msg, order_id)
 
 
 def aware(dt: datetime | None) -> datetime | None:

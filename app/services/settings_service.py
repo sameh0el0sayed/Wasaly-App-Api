@@ -64,6 +64,11 @@ DEFAULTS = {
     "default_pref_ac": "false", "default_pref_smoking": "ANY", "default_pref_driver_gender": "ANY", "default_pref_large_car": "false",  # when the app sends no value
     "require_pickup_photo": "true", "require_delivery_photo": "true",  # driver proof photos
     "proof_photos_apply_to": "DELIVERY",  # DELIVERY = parcel orders only (no photos of passengers) | ALL = every order
+    "driver_choice_enabled": "true",  # customers may choose their driver among those who respond (order.choose_driver)
+    "price_increase_enabled": "true",  # customer raise + driver counter-offers (inDrive style)
+    "max_price_increase_percent": "50",  # max total increase over the ORIGINAL estimate
+    "price_increase_steps": "10,25,50",  # quick buttons in the app
+    "counter_offer_ttl_seconds": "60",  # how long the customer has to answer a driver's price request
     "promo_enabled": "true",  # master switch for promo codes
     "customer_live_tracking_enabled": "true",  # customers can see their driver's live position during an active order
     "service_categories": '[{"key": "DOCUMENTS", "title_ar": "مستندات", "title_en": "Documents", "icon": "description", "color": "#1652F0", "prefill": {"cargo_description": "مستندات", "pref_large_car": false}, "is_active": true}, {"key": "PARCEL", "title_ar": "طرد", "title_en": "Parcel", "icon": "inventory_2", "color": "#6D4AFF", "prefill": {}, "is_active": true}, {"key": "SHOP", "title_ar": "طلب محل", "title_en": "Shop order", "icon": "shopping_bag", "color": "#16A36A", "prefill": {}, "is_active": true}, {"key": "LARGE", "title_ar": "أغراض كبيرة", "title_en": "Large items", "icon": "airport_shuttle", "color": "#E59A0B", "prefill": {"pref_large_car": true}, "is_active": true}, {"key": "AIRPORT", "title_ar": "مطار وسفر", "title_en": "Airport & travel", "icon": "flight", "color": "#4FA3FF", "prefill": {"pref_large_car": true}, "is_active": true}]',  # JSON list shown by the customer app (reorder / hide / rename)

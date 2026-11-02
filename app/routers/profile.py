@@ -8,8 +8,18 @@ from ..constants import AccountStatus, Role
 from ..database import get_db
 from ..deps import approved_user, current_user, paging, request_lang
 from ..i18n import localize
-from ..models import Banner, Complaint, DeviceToken, Notification, Order, UploadedFile, User, VehicleDocument
-from ..schemas import ComplaintIn, DeviceIn, DocumentIn, LicenseRenewIn, ProfilePatch, ReasonIn, SignIn
+from ..models import (
+    Banner,
+    Complaint,
+    DeviceToken,
+    Notification,
+    Order,
+    UploadedFile,
+    User,
+    VehicleDocument,
+    utcnow,
+)
+from ..schemas import ComplaintIn, CprChangeIn, DeviceIn, DocumentIn, LicenseRenewIn, ProfilePatch, ReasonIn, SignIn
 from ..security import create_file_token, decode_file_token
 from ..serializers import driver_block, dt, user_public
 from ..services.dispatch import force_offline
@@ -38,17 +48,51 @@ async def get_profile(user: User = Depends(current_user), db: AsyncSession = Dep
 async def patch_profile(body: ProfilePatch, user: User = Depends(current_user), db: AsyncSession = Depends(get_db)):
     """Only non-sensitive fields. CPR / phone changes require admin review (see /profile/sensitive-change-request)."""
     data = body.model_dump(exclude_unset=True)
-    for k in ("profile_photo", "cpr_photo"):
-        if data.get(k):
-            await assert_owned(db, user.id, data[k])
+    cpr_photo = data.pop("cpr_photo", None)
+    if data.get("profile_photo"):
+        await assert_owned(db, user.id, data["profile_photo"])
     if data.get("language") is None:
         data.pop("language", None)
-    for k, v in data.items():
+    if data.get("full_name") is None:
+        data.pop("full_name", None)
+    for k, v in data.items():  # everything except phone and CPR is edited directly
         setattr(user, k, v)
-    if "cpr_photo" in data and user.account_status == AccountStatus.NEEDS_CORRECTION:
-        user.account_status, user.status_reason = AccountStatus.PENDING_APPROVAL, None
+    if cpr_photo:  # the CPR card goes to admin review; the old one stays until accepted
+        await _queue_change(db, user, "cpr_photo", cpr_photo)
     await db.commit()
     return user_public(user)
+
+
+async def _queue_change(db: AsyncSession, user: User, field: str, value: str) -> None:
+    from ..models import ProfileChange
+    from ..services import corrections as C
+    from ..services.payments import notify_admins
+    if field in ("cpr_photo",):
+        await assert_owned(db, user.id, value)
+    old = (await db.execute(select(ProfileChange).where(ProfileChange.user_id == user.id, ProfileChange.field == field,
+                                                        ProfileChange.status == C.PENDING))).scalars().all()
+    for o in old:  # one pending request per field: the new one replaces it
+        await db.delete(o)
+    db.add(ProfileChange(user_id=user.id, kind=C.CHANGE, field=field, status=C.PENDING, new_value=value,
+                         requested_by=user.id, submitted_at=utcnow()))
+    await notify_admins(db, "PROFILE_CHANGE_SUBMITTED", "طلب تغيير بيانات", "طلب مستخدم تغيير بياناته.")
+
+
+@router.post("/profile/cpr/request", status_code=202)
+async def request_cpr_change(body: CprChangeIn, user: User = Depends(current_user), db: AsyncSession = Depends(get_db),
+                             lang: str = Depends(request_lang)):
+    """CPR number / CPR card changes need admin approval. The current values keep working until an admin accepts."""
+    if not body.cpr_number and not body.cpr_photo:
+        raise HTTPException(422, {"code": "NOTHING_TO_CHANGE"})
+    if body.cpr_number:
+        from ..security import cpr_hash
+        if (await db.execute(select(User.id).where(User.cpr_hash == cpr_hash(body.cpr_number), User.id != user.id))).first():
+            raise HTTPException(409, {"code": "CPR_EXISTS"})
+        await _queue_change(db, user, "cpr_number", body.cpr_number)
+    if body.cpr_photo:
+        await _queue_change(db, user, "cpr_photo", body.cpr_photo)
+    await db.commit()
+    return {"message": localize("تم إرسال الطلب للمراجعة", lang)}
 
 
 @router.post("/profile/sensitive-change-request", status_code=202)

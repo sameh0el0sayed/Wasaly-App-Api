@@ -45,6 +45,7 @@ class OfferStatus:
     DECLINED = "DECLINED"
     EXPIRED = "EXPIRED"  # shows in the driver's "unaccepted" list
     CLOSED = "CLOSED"  # order taken by someone else / cancelled
+    COUNTERED = "COUNTERED"  # the driver asked for a higher price; waiting for the customer
 
 
 class ReviewStatus:
@@ -57,3 +58,10 @@ class ReviewStatus:
 CURRENCIES = {"BHD": 3, "KWD": 3, "OMR": 3, "JOD": 3, "SAR": 2, "AED": 2, "QAR": 2, "EGP": 2,
               "USD": 2, "EUR": 2, "GBP": 2, "JPY": 0}
 DEFAULT_CURRENCY = "BHD"
+
+
+class CounterStatus:
+    PENDING = "PENDING"
+    ACCEPTED = "ACCEPTED"
+    REJECTED = "REJECTED"
+    EXPIRED = "EXPIRED"

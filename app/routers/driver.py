@@ -5,7 +5,7 @@ from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..config import settings
-from ..constants import AccountStatus, OfferStatus
+from ..constants import OfferStatus
 from ..constants import OrderStatus as S
 from ..database import get_db
 from ..deps import driver_user, paging
@@ -27,20 +27,31 @@ from ..schemas import (
     DriverLocationIn,
     DriverPrefsIn,
     PayoutAccountIn,
+    PriceRaiseIn,
     ReasonIn,
     StartTripIn,
     VehiclePatch,
 )
 from ..security import decrypt, encrypt
 from ..serializers import dt, money, offer_out, order_for_driver, payout_out, vehicle_full
+from ..services import price_increase as pi
 from ..services import settings_service
 from ..services.audit import audit
-from ..services.dispatch import expire_offers_and_orders, force_offline, has_active_order, work_blockers
+from ..services.dispatch import expire_offers_and_orders, has_active_order, work_blockers
 from ..services.files import assert_owned
 from ..services.notifications import notify
 from ..services.orders import close_pending_offers, load_order, transition
 from ..services.payments import create_payment
-from ..services.pricing import apply_discount, calc_price, duration_seconds, is_night_start, night_surcharge, promo_discount, split_order
+from ..services.pricing import (
+    apply_discount,
+    calc_price,
+    duration_seconds,
+    increase_amount,
+    is_night_start,
+    night_surcharge,
+    promo_discount,
+    split_order,
+)
 
 router = APIRouter(prefix="/api/driver", tags=["driver"])
 
@@ -138,10 +149,23 @@ async def offers(list: str = "new", page=Depends(paging), user: User = Depends(d
     limit, offset = page
     await expire_offers_and_orders(db)
     await db.commit()
-    status = OfferStatus.PENDING if list == "new" else OfferStatus.EXPIRED
-    rows = (await db.execute(select(OrderOffer).where(OrderOffer.driver_id == user.id, OrderOffer.offer_status == status)
+    statuses = [OfferStatus.PENDING, OfferStatus.COUNTERED] if list == "new" else [OfferStatus.EXPIRED]  # COUNTERED = waiting for the customer
+    rows = (await db.execute(select(OrderOffer).where(OrderOffer.driver_id == user.id, OrderOffer.offer_status.in_(statuses))
                              .order_by(OrderOffer.id.desc()).limit(limit).offset(offset))).scalars().all()
-    return [offer_out(o, user.driver_profile) for o in rows]
+    enabled = pi.config(await settings_service.get_all(db))["enabled"]
+    return [offer_out(o, user.driver_profile, enabled) for o in rows]
+
+
+@router.post("/offers/{offer_id}/counter")
+async def counter_offer(offer_id: int, body: PriceRaiseIn, user: User = Depends(driver_user), db: AsyncSession = Depends(get_db)):
+    """The driver asks for a higher price on an offer (percent over the ORIGINAL estimate); the customer accepts or rejects."""
+    offer = (await db.execute(select(OrderOffer).where(OrderOffer.id == offer_id, OrderOffer.driver_id == user.id)
+                              .with_for_update())).scalar_one_or_none()
+    if not offer:
+        raise HTTPException(404, "Offer not found")
+    c = await pi.create_counter(db, offer, user, body.percent, pi.config(await settings_service.get_all(db)))
+    await db.commit()
+    return {"counter_offer": await pi.counter_view(db, c)}
 
 
 @router.post("/offers/{offer_id}/accept")
@@ -164,6 +188,12 @@ async def accept_offer(offer_id: int, user: User = Depends(driver_user), db: Asy
         raise HTTPException(403, {"code": "CANNOT_WORK", "reasons": work_blockers(user)})
     if await has_active_order(db, user.id):
         raise HTTPException(409, {"code": "ACTIVE_ORDER_EXISTS"})
+    cfg_all = await settings_service.get_all(db)
+    if offer.order.choose_driver and not offer.order.preferred_driver_id and cfg_all["driver_choice_enabled"] == "true" and not offer.counter:
+        # the customer picks the driver: this acceptance waits in his list (kind ACCEPT, current price)
+        c = await pi.create_counter(db, offer, user, offer.order.price_increase_percent or 0, pi.config(cfg_all), kind="ACCEPT")
+        await db.commit()
+        return {"status": "WAITING_CUSTOMER", "counter_offer": await pi.counter_view(db, c)}
     res = await db.execute(update(Order).where(Order.id == offer.order_id, Order.driver_id.is_(None),
                                                Order.order_status.in_([S.PENDING, S.OFFERED, S.NO_DRIVER_AVAILABLE]))
                            .values(driver_id=user.id, accepted_at=now))
@@ -259,11 +289,12 @@ async def arrived_at_destination(order_id: int, body: ArrivedIn = ArrivedIn(), u
     units, base = calc_price(secs, o.unit_duration_seconds, o.price_per_unit, o.min_price, o.currency_decimals)
     night = bool(o.night_enabled) and is_night_start(o.trip_started_at, ZoneInfo(settings.timezone), o.night_start, o.night_end)
     surcharge = night_surcharge(base, o.night_percent, o.currency_decimals) if night else base - base
-    price = base + surcharge + (o.extras_fee or 0)  # trip price incl. night surcharge and fixed extras (airport/preferences); commission is calculated on this
-    o.base_price, o.night_applied, o.night_surcharge = base, night, surcharge
+    increase = increase_amount(base + surcharge, o.price_increase_percent, o.currency_decimals)  # accepted raise / counter-offer
+    price = base + surcharge + increase + (o.extras_fee or 0)  # trip price incl. night surcharge, price increase and fixed extras (airport/preferences); commission is calculated on this
+    o.base_price, o.night_applied, o.night_surcharge, o.price_increase_amount = base, night, surcharge, increase
     o.actual_duration_seconds, o.final_price = secs, price
     o.commission, o.customer_total, o.driver_earning, cut = split_order(o, price)
-    o.discount_amount = promo_discount(base + surcharge, o.promo_percent, o.currency_decimals)  # platform pays it; driver untouched
+    o.discount_amount = promo_discount(base + surcharge + increase, o.promo_percent, o.currency_decimals)  # platform pays it; driver untouched
     o.commission, o.customer_total = apply_discount(o.commission, o.customer_total, o.discount_amount)
     o.outside_driver_cut = cut if o.is_outside_bahrain else None
     pay = await create_payment(db, kind="ORDER", order_id=o.id, customer_id=o.customer_id, driver_id=o.driver_id,
@@ -428,14 +459,22 @@ async def my_payouts(page=Depends(paging), user: User = Depends(driver_user), db
 
 @router.patch("/vehicle")
 async def patch_vehicle(body: VehiclePatch, user: User = Depends(driver_user), db: AsyncSession = Depends(get_db)):
-    """Any vehicle change sends the vehicle back to admin review and takes the driver offline."""
+    """Non-essential data (photos, colour, capacities, A/C, comfort) is edited directly: no review, the driver stays online.
+    Photos are merged by key (front/back/left/right/interior/trunk/main); send "" to remove one.
+    Essential data (make, model, year, plate, vehicle type) goes through the corrections / admin flow."""
+    if not user.vehicle:
+        raise HTTPException(404, {"code": "VEHICLE_NOT_FOUND"})
     data = body.model_dump(exclude_unset=True)
-    for key in (data.get("photos") or {}).values():
-        await assert_owned(db, user.id, key)
+    photos = data.pop("photos", None)
+    if photos is not None:
+        for key in photos.values():
+            if key:
+                await assert_owned(db, user.id, key)
+        merged = {**(user.vehicle.photos or {}), **photos}
+        user.vehicle.photos = {k: v for k, v in merged.items() if v}
     for k, v in data.items():
-        setattr(user.vehicle, k, v)
-    user.vehicle.vehicle_status = AccountStatus.PENDING_APPROVAL
-    await force_offline(db, user.id)
+        if v is not None:
+            setattr(user.vehicle, k, v)
     await db.commit()
     return vehicle_full(user.vehicle)
 

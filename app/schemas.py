@@ -181,6 +181,8 @@ class OrderCreateIn(PreferencesIn):
     receiver_phone: str | None = None
     driver_instructions: str | None = Field(default=None, max_length=1000)
     accept_capacity_terms: bool = False
+    preferred_driver_id: int | None = None  # direct trip with a driver the customer rated 4-5 stars (see GET /api/favorite-drivers)
+    choose_driver: bool = True  # default ON: the customer picks among the drivers who respond; send false for "first driver to accept wins"
 
     v_phones = field_validator("contact_phone", "receiver_phone")(lambda cls, v: _phone(v))
 
@@ -330,9 +332,23 @@ class ChangeReviewIn(BaseModel):
     reason: str | None = Field(default=None, max_length=500)
 
 
+class CprChangeIn(BaseModel):
+    cpr_number: str | None = None
+    cpr_photo: str | None = None
+
+    @field_validator("cpr_number")
+    @classmethod
+    def _cpr(cls, v):
+        return validate_cpr(v) if v else v
+
+
 class PhoneChangeIn(BaseModel):
     phone: str
     v_phone = field_validator("phone")(lambda cls, v: normalize_phone(v))
+
+
+class PriceRaiseIn(BaseModel):
+    percent: int = Field(ge=1, le=300)
 
 
 class AreaBulkIn(BaseModel):
@@ -428,6 +444,11 @@ class SettingsPatch(BaseModel):
     default_pref_large_car: bool | None = None
     customer_live_tracking_enabled: bool | None = None
     promo_enabled: bool | None = None
+    price_increase_enabled: bool | None = None
+    driver_choice_enabled: bool | None = None
+    max_price_increase_percent: int | None = Field(default=None, ge=1, le=300)
+    price_increase_steps: str | None = Field(default=None, pattern=r"^\d{1,3}(,\d{1,3}){0,7}$")
+    counter_offer_ttl_seconds: int | None = Field(default=None, ge=10, le=600)
     service_categories: list[ServiceCategory] | None = Field(default=None, max_length=12)
     require_pickup_photo: bool | None = None
     require_delivery_photo: bool | None = None

@@ -86,6 +86,16 @@ def split_rules(price: Decimal, ctype: str, cvalue: Decimal, mode: str, outside:
     return commission, customer_total, driver, cut
 
 
+def increase_amount(trip_price: Decimal, percent, decimals: int = 3) -> Decimal:
+    """Price increase (customer raise / accepted counter-offer): percent of the trip price (base + night surcharge),
+    never of the fixed extras. Commission and driver earning are then computed on the increased price."""
+    q = quantum(decimals)
+    pct = Decimal(str(percent or 0))
+    if pct <= 0:
+        return Decimal(0).quantize(q)
+    return (trip_price * pct / Decimal(100)).quantize(q, ROUND_HALF_UP)
+
+
 def promo_discount(trip_price: Decimal, percent, decimals: int = 3) -> Decimal:
     """Percentage promo on the trip price only (base + night surcharge; never on airport/preference extras)."""
     q = quantum(decimals)

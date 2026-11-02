@@ -19,6 +19,47 @@ def vehicle_public(v):
             "plate_number": v.plate_number, "has_ac": v.has_ac}
 
 
+def _file_url(key):
+    from .security import create_file_token
+    return f"/api/files/download/{create_file_token(key)}" if key else None
+
+
+def driver_card(u: User, extra: dict | None = None) -> dict:
+    """What a customer may see about a driver: name, photo, car (plate...) and a 'details' block. NEVER CPR / licence images or numbers."""
+    p, v = u.driver_profile, u.vehicle
+    photos = (v.photos or {}) if v else {}
+    main = photos.get("main") or photos.get("front") or next(iter(photos.values()), None)
+    veh = None
+    if v:
+        veh = {**vehicle_public(v), "vehicle_type": v.vehicle_type, "passenger_capacity": v.passenger_capacity,
+               "luggage_capacity": v.luggage_capacity, "is_comfortable": v.is_comfortable, "photo_url": _file_url(main)}
+    card = {"id": u.id, "name": u.full_name, "photo_url": _file_url(u.profile_photo),
+            "gender": p.gender if p else None, "smoking_allowed": bool(p.smoking_allowed) if p else False, "vehicle": veh}
+    card["details"] = {"driver": {"name": u.full_name, "photo_url": _file_url(u.profile_photo), "gender": card["gender"],
+                                  "smoking_allowed": card["smoking_allowed"], "member_since": dt(u.created_at)},
+                       "vehicle": ({**veh, "photos": {k: _file_url(val) for k, val in photos.items()}} if veh else None)}
+    if extra:
+        card.update(extra)
+        card["details"]["driver"].update({k: extra[k] for k in ("rating", "ratings_count", "trips") if k in extra})
+    return card
+
+
+def _estimates(o: Order) -> dict:
+    """original_estimate = what the customer would pay before any increase; estimate = now (after the increase)."""
+    from .services.estimate import order_estimate
+    now = utcnow()
+    cur, orig = order_estimate(o, now), order_estimate(o, now, 0)
+    d = o.currency_decimals if o.currency_decimals is not None else 3
+    return {"original_estimate": money(orig["customer_total"], d) if orig else None,
+            "estimate": money(cur["customer_total"], d) if cur else None}
+
+
+def _driver_estimate(o: Order) -> str | None:
+    from .services.estimate import order_estimate
+    est = order_estimate(o, utcnow())
+    return money(est["driver_earning"], o.currency_decimals) if est else None
+
+
 def order_base(o: Order) -> dict:
     d = o.currency_decimals if o.currency_decimals is not None else 3
     return {
@@ -39,6 +80,8 @@ def order_base(o: Order) -> dict:
         "final_price": money(o.final_price, d), "base_price": money(o.base_price, d),
         "night_surcharge": money(o.night_surcharge, d),
         "preferences": {"ac": o.pref_ac, "smoking": o.pref_smoking, "driver_gender": o.pref_driver_gender, "large_car": o.pref_large_car},
+        "choose_driver": bool(o.choose_driver), "preferred_driver_id": o.preferred_driver_id, "price_increase_percent": o.price_increase_percent or 0, "price_increase_amount": money(o.price_increase_amount, d) if o.price_increase_amount is not None else None,
+        **_estimates(o),
         "promo_code": o.promo_code, "promo_percent": o.promo_percent, "discount_amount": money(o.discount_amount, d) if o.discount_amount is not None else None,
         "extras_fee": money(o.extras_fee, d), "extras": o.extras_breakdown or [],
         "pickup_photo": o.pickup_photo, "pickup_photo_at": dt(o.pickup_photo_at),
@@ -59,7 +102,7 @@ def order_for_customer(o: Order) -> dict:
     d["receiver_name"], d["receiver_phone"] = o.receiver_name, o.receiver_phone
     d["driver"] = None
     if o.driver:  # never exposes CPR / license / documents
-        d["driver"] = {"name": o.driver.full_name, "phone": o.driver.phone, "vehicle": vehicle_public(o.driver.vehicle)}
+        d["driver"] = {**driver_card(o.driver), "phone": o.driver.phone}
     d["driver_live"] = bool(o.driver and o.driver.driver_profile and o.driver.driver_profile.is_online
                             and o.driver.driver_profile.mode == "LIVE")
     return d
@@ -69,6 +112,7 @@ def order_for_driver(o: Order) -> dict:
     d = order_base(o)
     dec = o.currency_decimals
     d["driver_earning"] = money(o.driver_earning, dec)  # what the driver receives
+    d["estimated_driver_earning"] = _driver_estimate(o)
     d["outside_fee"] = money(o.outside_driver_cut, dec) if o.is_outside_bahrain else None  # company cut on outside-Bahrain trips
     d["platform_fee"] = money(o.commission + (o.discount_amount or 0) - (o.outside_driver_cut or 0), dec) if o.commission_mode == "DEDUCT" and o.commission is not None else None  # deducted from the trip price
     d["customer"] = {"name": o.customer.full_name, "phone": o.contact_phone or o.customer.phone}
@@ -87,6 +131,7 @@ def order_for_admin(o: Order) -> dict:
         "driver_earning": money(o.driver_earning, o.currency_decimals), "commission_mode": o.commission_mode,
         "commission_type": o.commission_type, "commission_value": str(o.commission_value),
         "service_area_id": o.service_area_id, "receiver_name": o.receiver_name, "receiver_phone": o.receiver_phone,
+        "estimated_driver_earning": _driver_estimate(o),
         "price_adjusted": o.price_adjusted, "original_price": money(o.original_price, o.currency_decimals),
     })
     return d
@@ -100,7 +145,7 @@ def _pickup_km(p, o):
     return round(_haversine_m(p.last_lat, p.last_lng, o.pickup_latitude, o.pickup_longitude) / 1000, 1)
 
 
-def offer_out(of: OrderOffer, driver_profile=None) -> dict:
+def offer_out(of: OrderOffer, driver_profile=None, price_increase_enabled: bool = True) -> dict:
     from .services.estimate import order_estimate
     o = of.order
     est = order_estimate(o, utcnow())
@@ -113,6 +158,10 @@ def offer_out(of: OrderOffer, driver_profile=None) -> dict:
         "pickup_distance_km": _pickup_km(driver_profile, o),
         "estimated_driver_earning": money(est["driver_earning"], o.currency_decimals) if est else None,
         "is_outside_bahrain": o.is_outside_bahrain,
+        "price_increase_percent": o.price_increase_percent or 0,
+        "counter": ({"id": of.counter.id, "percent": of.counter.percent, "status": of.counter.status,
+                     "seconds_left": round(max(0.0, (of.counter.expires_at - utcnow()).total_seconds()), 1)} if of.counter else None),
+        "can_counter": bool(price_increase_enabled and of.offer_status == "PENDING" and of.expires_at > utcnow() and not of.counter),
         "order": {  # no customer personal data before acceptance
             "service_type": o.service_type, "pickup_address": o.pickup_address,
             "pickup_latitude": o.pickup_latitude, "pickup_longitude": o.pickup_longitude,

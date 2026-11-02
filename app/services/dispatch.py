@@ -5,12 +5,12 @@ from datetime import date, timedelta
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..constants import AccountStatus, OfferStatus, ReviewStatus, Role
+from ..constants import AccountStatus, CounterStatus, OfferStatus, ReviewStatus, Role
 from ..constants import OrderStatus as S
-from ..models import DriverProfile, DriverServiceArea, DriverWorkSession, Notification, Order, OrderOffer, User, utcnow
+from ..models import CounterOffer, DriverProfile, DriverServiceArea, DriverWorkSession, Notification, Order, OrderOffer, User, utcnow
 from . import settings_service
 from .notifications import notify
-from .orders import close_pending_offers, transition
+from .orders import close_pending_counters, close_pending_offers, transition
 
 log = logging.getLogger("dispatch")
 
@@ -50,7 +50,7 @@ async def has_active_order(db: AsyncSession, driver_id: int) -> bool:
 async def eligible_drivers(db: AsyncSession, order: Order) -> list[User]:
     busy = select(Order.driver_id).where(Order.driver_id.is_not(None), Order.order_status.in_(S.DRIVER_BUSY))
     pending = select(OrderOffer.driver_id).where(OrderOffer.order_id == order.id,
-                                                 OrderOffer.offer_status == OfferStatus.PENDING)
+                                                 OrderOffer.offer_status.in_([OfferStatus.PENDING, OfferStatus.COUNTERED]))
     stmt = (select(User)
             .join(DriverProfile, DriverProfile.user_id == User.id)
             .join(DriverServiceArea, DriverServiceArea.driver_id == User.id)
@@ -58,6 +58,8 @@ async def eligible_drivers(db: AsyncSession, order: Order) -> list[User]:
                    User.role == Role.DRIVER, User.account_status == AccountStatus.APPROVED,
                    DriverProfile.is_online.is_(True),
                    User.id.not_in(busy), User.id.not_in(pending)))
+    if order.preferred_driver_id:  # direct trip: only the driver the customer picked
+        stmt = stmt.where(User.id == order.preferred_driver_id)
     out = []
     cfg = await settings_service.get_all(db)
     default_gender = cfg["default_driver_gender"]
@@ -141,9 +143,15 @@ async def expire_offers_and_orders(db: AsyncSession) -> None:
         o.offer_status, o.responded_at = OfferStatus.EXPIRED, now
         ttl_text = round((o.expires_at - o.offered_at).total_seconds())
         await notify(db, o.driver_id, "OFFER_EXPIRED", "انتهت مهلة العرض", f"لم يتم قبول الطلب خلال {ttl_text} ثوانٍ.", o.order_id)
+    # 1b) counter-offers the customer did not answer in time -> EXPIRED (the driver is told)
+    late = (await db.execute(select(CounterOffer).where(CounterOffer.status == CounterStatus.PENDING,
+                                                        CounterOffer.expires_at <= now))).scalars().all()
+    for order_id in {c.order_id for c in late}:
+        await close_pending_counters(db, order_id, CounterStatus.EXPIRED, only_ids=[c.id for c in late if c.order_id == order_id])
     await db.flush()
     # 2) orders still OFFERED with no live offer -> NO_DRIVER_AVAILABLE (customer may retry; order itself NOT cancelled)
-    live = select(OrderOffer.id).where(OrderOffer.order_id == Order.id, OrderOffer.offer_status == OfferStatus.PENDING).exists()
+    live = select(OrderOffer.id).where(OrderOffer.order_id == Order.id,
+                                       OrderOffer.offer_status.in_([OfferStatus.PENDING, OfferStatus.COUNTERED])).exists()
     orphans = (await db.execute(select(Order).where(Order.order_status == S.OFFERED, ~live).with_for_update())).scalars().all()
     for order in orphans:
         await transition(db, order, S.NO_DRIVER_AVAILABLE, None, "SYSTEM", "All offers expired")
@@ -168,8 +176,10 @@ async def force_offline(db: AsyncSession, driver_id: int) -> None:
                                                      DriverWorkSession.offline_at.is_(None))
                      .values(offline_at=utcnow()))
     await db.execute(update(OrderOffer).where(OrderOffer.driver_id == driver_id,
-                                              OrderOffer.offer_status == OfferStatus.PENDING)
+                                              OrderOffer.offer_status.in_([OfferStatus.PENDING, OfferStatus.COUNTERED]))
                      .values(offer_status=OfferStatus.CLOSED, responded_at=utcnow()))
+    await db.execute(update(CounterOffer).where(CounterOffer.driver_id == driver_id, CounterOffer.status == CounterStatus.PENDING)
+                     .values(status=CounterStatus.EXPIRED, responded_at=utcnow()))
 
 
 async def enforce_driver_documents(db: AsyncSession, warn: bool = False) -> None:

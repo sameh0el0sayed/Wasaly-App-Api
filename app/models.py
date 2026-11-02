@@ -291,6 +291,10 @@ class Order(Base):
     pref_smoking: Mapped[str] = mapped_column(String(12), default="ANY")  # ANY | ALLOWED | NOT_ALLOWED
     pref_driver_gender: Mapped[str] = mapped_column(String(8), default="ANY")  # ANY | FEMALE | MALE
     pref_large_car: Mapped[bool] = mapped_column(Boolean, default=False)
+    preferred_driver_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True, index=True)  # direct trip with a favourite driver
+    choose_driver: Mapped[bool] = mapped_column(Boolean, default=True, server_default=false())  # customer picks among the drivers who respond
+    price_increase_percent: Mapped[int] = mapped_column(Integer, default=0, server_default="0")  # 0..max over the ORIGINAL estimate (raise / accepted counter-offer)
+    price_increase_amount: Mapped[Decimal | None] = mapped_column(Numeric(12, 3), nullable=True)  # set at trip end
     promo_code: Mapped[str | None] = mapped_column(String(40), nullable=True)  # snapshot: later edits never change old orders
     promo_percent: Mapped[int | None] = mapped_column(Integer, nullable=True)
     discount_amount: Mapped[Decimal | None] = mapped_column(Numeric(12, 3), nullable=True)
@@ -331,6 +335,23 @@ class OrderOffer(Base):
     offer_status: Mapped[str] = mapped_column(String(20), default=OfferStatus.PENDING)
     responded_at: Mapped[datetime | None] = mapped_column(UTCDateTime, nullable=True)
     order: Mapped[Order] = relationship(lazy="selectin")
+    counter: Mapped["CounterOffer | None"] = relationship(lazy="selectin", uselist=False)
+
+
+class CounterOffer(Base):
+    """A driver asks for a higher price on an offer (percent over the ORIGINAL estimate); the customer accepts or rejects."""
+    __tablename__ = "counter_offers"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    order_id: Mapped[int] = mapped_column(ForeignKey("orders.id"), index=True)
+    offer_id: Mapped[int] = mapped_column(ForeignKey("order_offers.id"), unique=True)
+    driver_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
+    customer_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
+    percent: Mapped[int] = mapped_column(Integer)
+    kind: Mapped[str] = mapped_column(String(8), default="COUNTER", server_default="COUNTER")  # COUNTER = asks a higher price | ACCEPT = takes the request at the current price
+    status: Mapped[str] = mapped_column(String(10), default="PENDING", index=True)  # PENDING | ACCEPTED | REJECTED | EXPIRED
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
+    expires_at: Mapped[datetime] = mapped_column(UTCDateTime)
+    responded_at: Mapped[datetime | None] = mapped_column(UTCDateTime, nullable=True)
 
 
 class OrderStatusHistory(Base):

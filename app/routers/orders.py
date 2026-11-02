@@ -1,26 +1,28 @@
 import json
 
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy import func, select
+from sqlalchemy import func, select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..constants import CURRENCIES, Role
+from ..constants import CURRENCIES, CounterStatus, OfferStatus, Role
 from ..constants import OrderStatus as S
 from ..database import get_db
 from ..deps import approved_user, customer_user, paging, request_lang
 from ..i18n import localize
-from ..models import Complaint, Order, OrderStatusHistory, User, utcnow
-from ..schemas import EstimateIn, OptionalReasonIn, OrderCreateIn, ReasonIn
-from ..serializers import history_out, order_for_admin, order_for_customer, order_for_driver
+from ..models import Complaint, CounterOffer, Order, OrderOffer, OrderStatusHistory, User, utcnow
+from ..schemas import EstimateIn, OptionalReasonIn, OrderCreateIn, PriceRaiseIn, ReasonIn
+from ..serializers import driver_card, history_out, order_for_admin, order_for_customer, order_for_driver
+from ..services import favorites as fav
+from ..services import price_increase as pi
 from ..services import settings_service
-from ..services.dispatch import dispatch_order
+from ..services.dispatch import dispatch_order, has_active_order, work_blockers
 from ..services.estimate import money_estimate, route_guess
 from ..services.extras import compute_extras, resolve_prefs
 from ..services.files import assert_owned
 from ..services.geo import _haversine_m, find_area, point_in_boundary
 from ..services.notifications import notify
-from ..services.orders import close_pending_offers, load_order, transition
+from ..services.orders import close_pending_counters, close_pending_offers, load_order, transition
 from ..services.promo import validate_promo
 
 router = APIRouter(prefix="/api", tags=["orders"])
@@ -59,6 +61,9 @@ async def app_config(db: AsyncSession = Depends(get_db)):
             "customer_live_tracking_enabled": s["customer_live_tracking_enabled"] == "true",
             "service_categories": _categories(s["service_categories"]),
             "online_window_minutes": int(s["online_window_minutes"]),
+            "driver_choice_enabled": s["driver_choice_enabled"] == "true",
+            "price_increase": {"enabled": pi.config(s)["enabled"], "max_percent": pi.config(s)["max_percent"],
+                               "steps": pi.config(s)["steps"], "counter_ttl_seconds": pi.config(s)["counter_ttl_seconds"]},
             "currency": p.currency, "currency_decimals": p.decimals, "upload_max_mb": int(s["upload_max_mb"]),
             "payment_methods": [m for m, k in (("TAP", "tap_enabled"), ("BENEFITPAY", "benefitpay_enabled")) if s[k] == "true"],
             "cancel_after_accept_allowed": s["cancel_after_accept_allowed"] == "true",
@@ -171,6 +176,11 @@ async def create_order(body: OrderCreateIn, user: User = Depends(customer_user),
             raise HTTPException(422, {"code": "OUTSIDE_SERVICE_AREA", "message": "نقطة الالتقاء خارج مناطق الخدمة"})
     p = await settings_service.get_pricing(db)  # currency + price snapshot (new orders only)
     data = body.model_dump(exclude={"accept_capacity_terms", "service_area_id", "promo_code"})
+    data["choose_driver"] = bool(body.choose_driver and s_cfg["driver_choice_enabled"] == "true")
+    if body.preferred_driver_id:
+        if not await fav.is_favorite(db, user.id, body.preferred_driver_id):
+            raise HTTPException(422, {"code": "NOT_FAVORITE_DRIVER"})
+        data["choose_driver"] = False  # a direct trip: the driver's acceptance assigns the order
     outside = bool(p.outside_enabled) and not point_in_boundary(body.destination_latitude, body.destination_longitude, p.country_boundary)
     s_all = await settings_service.get_all(db)
     est_km, est_min = route_guess(body.pickup_latitude or body.destination_latitude, body.pickup_longitude or body.destination_longitude,
@@ -208,6 +218,20 @@ async def create_order(body: OrderCreateIn, user: User = Depends(customer_user),
     await dispatch_order(db, order)
     await db.commit()
     return order_for_customer(await load_order(db, order.id))
+
+
+@router.get("/favorite-drivers")
+async def favorite_drivers(limit: int = 10, available_only: bool = True, user: User = Depends(customer_user), db: AsyncSession = Depends(get_db)):
+    """Home-screen list: drivers this customer rated 4-5 stars (newest first, online ones flagged; ?limit=10). Only drivers online and free now; ?available_only=false lists all favourites. Use an id as `preferred_driver_id` in POST /api/orders for a direct trip."""
+    items = []
+    for d, stars, trips in await fav.favorite_rows(db, user.id):
+        free = fav.online(d) and not work_blockers(d) and not await has_active_order(db, d.id)
+        if available_only and not free:
+            continue  # home list: only drivers who are online and free right now
+        items.append({**driver_card(d), "my_stars": stars, "trips_together": trips, "is_online": fav.online(d), "is_available": free})
+        if len(items) >= max(1, min(limit, 50)):
+            break
+    return {"items": items}
 
 
 @router.get("/orders/my-orders")
@@ -274,6 +298,82 @@ async def retry_order(order_id: int, user: User = Depends(customer_user), db: As
     await dispatch_order(db, o)
     await db.commit()
     return order_for_customer(await load_order(db, o.id))
+
+
+@router.post("/orders/{order_id}/raise")
+async def raise_order_price(order_id: int, body: PriceRaiseIn, user: User = Depends(customer_user), db: AsyncSession = Depends(get_db)):
+    """The customer raises the price while the order is still searching (percent over the ORIGINAL estimate)."""
+    o = await load_order(db, order_id, for_update=True)
+    if not o or o.customer_id != user.id:
+        raise HTTPException(404, "Order not found")
+    await pi.raise_price(db, o, body.percent, pi.config(await settings_service.get_all(db)))
+    await db.commit()
+    return order_for_customer(await load_order(db, o.id))
+
+
+async def _my_counter(db, user, order_id: int, counter_id: int) -> tuple[Order, CounterOffer]:
+    o = await load_order(db, order_id, for_update=True)
+    if not o or o.customer_id != user.id:
+        raise HTTPException(404, "Order not found")
+    c = (await db.execute(select(CounterOffer).where(CounterOffer.id == counter_id).with_for_update())).scalar_one_or_none()
+    if not c or c.order_id != o.id:
+        raise HTTPException(404, "Counter-offer not found")
+    return o, c
+
+
+@router.get("/orders/{order_id}/counter-offers")
+async def list_counter_offers(order_id: int, all: int = 0, user: User = Depends(customer_user), db: AsyncSession = Depends(get_db)):
+    o = await load_order(db, order_id)
+    if not o or o.customer_id != user.id:
+        raise HTTPException(404, "Order not found")
+    q = select(CounterOffer).where(CounterOffer.order_id == o.id)
+    if not all:
+        q = q.where(CounterOffer.status == CounterStatus.PENDING, CounterOffer.expires_at > utcnow())
+    rows = (await db.execute(q.order_by(CounterOffer.id.desc()))).scalars().all()
+    return {"items": [await pi.counter_view(db, c) for c in rows]}
+
+
+@router.post("/orders/{order_id}/counter-offers/{counter_id}/accept")
+async def accept_counter_offer(order_id: int, counter_id: int, user: User = Depends(customer_user), db: AsyncSession = Depends(get_db)):
+    from ..models import DriverProfile
+    from ..services.dispatch import has_active_order, work_blockers
+    o, c = await _my_counter(db, user, order_id, counter_id)
+    now = utcnow()
+    if c.status == CounterStatus.EXPIRED or (c.status == CounterStatus.PENDING and c.expires_at <= now):
+        raise HTTPException(409, {"code": "COUNTER_EXPIRED"})
+    if c.status != CounterStatus.PENDING:
+        raise HTTPException(409, {"code": "COUNTER_NOT_PENDING", "status": c.status})
+    if o.order_status not in S.SEARCHING:
+        raise HTTPException(409, {"code": "ORDER_NOT_SEARCHING", "status": o.order_status})
+    driver = await db.get(User, c.driver_id)
+    await db.execute(select(DriverProfile.id).where(DriverProfile.user_id == driver.id).with_for_update())
+    if work_blockers(driver) or not driver.driver_profile.is_online or await has_active_order(db, driver.id):
+        await close_pending_counters(db, o.id, CounterStatus.EXPIRED, only_ids=[c.id])
+        await db.commit()
+        raise HTTPException(409, {"code": "DRIVER_BUSY"})
+    res = await db.execute(update(Order).where(Order.id == o.id, Order.driver_id.is_(None), Order.order_status.in_(list(S.SEARCHING)))
+                           .values(driver_id=driver.id, accepted_at=now, price_increase_percent=c.percent))
+    if res.rowcount != 1:
+        raise HTTPException(409, {"code": "ORDER_NOT_SEARCHING"})
+    order = await load_order(db, o.id)
+    await transition(db, order, S.ACCEPTED, user.id, "CUSTOMER", f"Counter-offer +{c.percent}% accepted")
+    c.status, c.responded_at = CounterStatus.ACCEPTED, now
+    offer = await db.get(OrderOffer, c.offer_id)
+    offer.offer_status, offer.responded_at = OfferStatus.ACCEPTED, now
+    await close_pending_offers(db, order.id, except_offer_id=offer.id)  # other drivers' offers closed, their counters REJECTED
+    await notify(db, driver.id, "COUNTER_ACCEPTED", "تم قبول السعر الجديد", "وافق العميل على السعر الجديد، توجّه للعميل.", order.id)
+    await db.commit()
+    return order_for_customer(await load_order(db, order.id))
+
+
+@router.post("/orders/{order_id}/counter-offers/{counter_id}/reject")
+async def reject_counter_offer(order_id: int, counter_id: int, user: User = Depends(customer_user), db: AsyncSession = Depends(get_db)):
+    o, c = await _my_counter(db, user, order_id, counter_id)
+    if c.status != CounterStatus.PENDING:
+        raise HTTPException(409, {"code": "COUNTER_NOT_PENDING", "status": c.status})
+    await close_pending_counters(db, o.id, CounterStatus.REJECTED, only_ids=[c.id])
+    await db.commit()
+    return {"ok": True}
 
 
 @router.post("/orders/{order_id}/dispute", status_code=201)

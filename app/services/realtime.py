@@ -12,7 +12,7 @@ from dataclasses import dataclass, field
 from sqlalchemy import event, inspect
 from sqlalchemy.orm import Session
 
-from ..models import Order, Subscription, utcnow
+from ..models import CounterOffer, Order, Subscription, utcnow
 
 log = logging.getLogger("realtime")
 QUEUE_SIZE = 100
@@ -67,6 +67,9 @@ def _collect(session: Session, _ctx) -> None:
             if isinstance(o, Order):
                 _queue(session, {"type": "order.created", "order_id": o.id, "status": o.order_status, "customer_id": o.customer_id, "at": now},
                        {o.customer_id})
+            elif isinstance(o, CounterOffer):
+                _queue(session, {"type": "order.counter_offer", "order_id": o.order_id, "counter_id": o.id, "customer_id": o.customer_id, "at": now},
+                       {o.customer_id})
             elif isinstance(o, Subscription):
                 _queue(session, {"type": "subscription.created", "subscription_id": o.id, "status": o.status, "customer_id": o.customer_id, "at": now},
                        {o.customer_id, o.driver_id})
@@ -75,6 +78,9 @@ def _collect(session: Session, _ctx) -> None:
                 h = inspect(o).attrs.order_status.history
                 if h.has_changes() and h.deleted:
                     _queue(session, {"type": "order.status", "order_id": o.id, "old_status": h.deleted[0], "new_status": o.order_status,
+                                     "customer_id": o.customer_id, "driver_id": o.driver_id, "at": now}, {o.customer_id, o.driver_id})
+                elif inspect(o).attrs.price_increase_percent.history.has_changes():  # price raised while still searching
+                    _queue(session, {"type": "order.status", "order_id": o.id, "old_status": o.order_status, "new_status": o.order_status,
                                      "customer_id": o.customer_id, "driver_id": o.driver_id, "at": now}, {o.customer_id, o.driver_id})
             elif isinstance(o, Subscription):
                 h = inspect(o).attrs.status.history
