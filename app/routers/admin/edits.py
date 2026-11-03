@@ -3,7 +3,6 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ...constants import Role
 from ...database import get_db
 from ...deps import admin_user
 from ...models import UploadedFile, User, Vehicle
@@ -51,7 +50,7 @@ async def edit_user(user_id: int, body: AdminUserEditIn, admin: User = Depends(a
 
 async def _driver(db, user_id) -> User:
     u = await _target(db, user_id)
-    if u.role != Role.DRIVER or not u.driver_profile:
+    if not u.driver_profile:
         raise HTTPException(404, "Driver not found")
     return u
 

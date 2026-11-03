@@ -12,6 +12,15 @@ DEFAULT_LANGUAGE = "ar"
 
 # (arabic, english). Placeholders: {name}. Order does not matter: every entry is anchored (^...$).
 PAIRS: list[tuple[str, str]] = [
+    # v15 role switch
+    ("طلب انضمام سائق", "Driver application"),
+    ("قدّم {name} طلبًا ليصبح سائقًا.", "{name} applied to become a driver."),
+    ("تم اعتماد طلبك", "Your application was approved"),
+    ("تم اعتماد حسابك كسائق. يمكنك التبديل إلى وضع السائق من الإعدادات.", "Your driver account is approved. You can switch to driver mode in Settings."),
+    ("تم رفض طلب الانضمام كسائق", "Your driver application was rejected"),
+    ("لم يتم اعتماد طلبك. السبب: {r}", "Your application was not approved. Reason: {r}"),
+    ("مطلوب تعديل على طلب السائق", "Your driver application needs changes"),
+    ("يرجى تعديل بيانات الطلب وإعادة إرساله. السبب: {r}", "Please update your application and resubmit it. Reason: {r}"),
     # v14 licence
     ("تنتهي رخصة القيادة بعد {n} يوم. حدّثها لتستمر في استقبال الطلبات.", "Your driving licence expires in {n} days. Renew it to keep receiving orders."),
     ("لم يتم اعتماد طلب تجديد الرخصة. السبب: {r}", "Your licence renewal was not approved. Reason: {r}"),

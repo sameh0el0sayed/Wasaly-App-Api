@@ -188,13 +188,26 @@ def mask_cpr(u: User) -> str:
     return f"******{u.cpr_last3}" if u.cpr_last3 else ""
 
 
+def roles_of(u: User) -> list[str]:
+    """Roles the account holds (the active one is `u.role`). A driver profile means DRIVER; every non-admin may act as CUSTOMER."""
+    if u.role not in ("CUSTOMER", "DRIVER"):
+        return [u.role]
+    r = set(u.roles or []) | {u.role}
+    if u.driver_profile and u.driver_profile.driver_status == "APPROVED":
+        r |= {"DRIVER", "CUSTOMER"}
+    return sorted(r)
+
+
 def user_public(u: User) -> dict:
     from .services.license import verification
     return {"id": u.id, "full_name": u.full_name, "phone": u.phone, "role": u.role,
             "account_status": u.account_status, "status_reason": u.status_reason,
             "profile_photo": u.profile_photo, "must_change_password": u.must_change_password,
             "cpr_masked": mask_cpr(u), "language": u.language or "ar",
-            "verification": verification(u)}
+            "verification": verification(u),
+            "roles": roles_of(u), "active_role": u.role,
+            "driver_application": ({"id": u.driver_application.id, "status": u.driver_application.status, "reason": u.driver_application.reason,
+                                    "created_at": dt(u.driver_application.created_at)} if u.driver_application else None)}
 
 
 def vehicle_full(v) -> dict | None:

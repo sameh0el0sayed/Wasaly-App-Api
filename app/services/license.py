@@ -6,7 +6,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..config import settings
-from ..constants import AccountStatus, Role
+from ..constants import AccountStatus
 from ..models import AppSetting, DriverProfile, User, utcnow
 from . import settings_service
 from .notifications import notify
@@ -60,7 +60,7 @@ async def daily_job(db: AsyncSession, force: bool = False) -> None:
     days = warn_days(s["license_expiry_warn_days"])
     today = now.date()
     drivers = (await db.execute(select(User).join(DriverProfile, DriverProfile.user_id == User.id)
-                                .where(User.role == Role.DRIVER, User.account_status == AccountStatus.APPROVED))).scalars().unique().all()
+                                .where(User.account_status == AccountStatus.APPROVED))).scalars().unique().all()
     for u in drivers:
         p = u.driver_profile
         left = (p.license_expiry_date - today).days

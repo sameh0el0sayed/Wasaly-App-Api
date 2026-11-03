@@ -59,6 +59,7 @@ async def app_config(db: AsyncSession = Depends(get_db)):
             "location_snapshots_enabled": s["location_snapshots_enabled"] == "true",
             "languages": ["ar", "en"], "default_language": "ar",
             "i18n": {"version": int(s["i18n_version"] or 0), "languages": ["ar", "en"], "default": "ar"},
+            "role_switch": {"enabled": s["role_switch_enabled"] == "true", "customer_to_driver": s["customer_to_driver_enabled"] == "true"},
             "analytics": {"enabled": s["analytics_enabled"] == "true", "batch_size": 20, "flush_seconds": 30},
             "promo_enabled": s["promo_enabled"] == "true",
             "customer_live_tracking_enabled": s["customer_live_tracking_enabled"] == "true",

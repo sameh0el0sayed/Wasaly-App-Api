@@ -78,6 +78,8 @@ class User(Base):
         back_populates="user", uselist=False, lazy="selectin")
     vehicle: Mapped["Vehicle | None"] = relationship(
         back_populates="driver", uselist=False, lazy="selectin")
+    roles: Mapped[list | None] = mapped_column(JSON, nullable=True)  # roles granted to the account; `role` is the ACTIVE one
+    driver_application: Mapped["DriverApplication | None"] = relationship(uselist=False, lazy="selectin")
 
 
 class DriverProfile(Base):
@@ -737,3 +739,16 @@ class AppEvent(Base):
     platform: Mapped[str | None] = mapped_column(String(10), nullable=True)
     client_ts: Mapped[datetime | None] = mapped_column(UTCDateTime, nullable=True)
     created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
+
+
+class DriverApplication(Base):
+    """A customer applying to also drive. One row per user (resubmitting updates it)."""
+    __tablename__ = "driver_applications"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), unique=True)
+    status: Mapped[str] = mapped_column(String(20), index=True, default="PENDING_REVIEW")  # PENDING_REVIEW | APPROVED | REJECTED | NEEDS_CORRECTION
+    reason: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    payload: Mapped[dict] = mapped_column(JSON, default=dict)
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
+    decided_at: Mapped[datetime | None] = mapped_column(UTCDateTime, nullable=True)
+    decided_by: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True)

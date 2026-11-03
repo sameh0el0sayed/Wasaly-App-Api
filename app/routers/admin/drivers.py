@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ...constants import OrderStatus, Role
+from ...constants import OrderStatus
 from ...database import get_db
 from ...deps import admin_user, paging
 from ...models import DriverProfile, DriverServiceArea, Order, ProfileChange, ServiceArea, User, Vehicle, VehicleDocument, utcnow
@@ -23,7 +23,7 @@ router = APIRouter(prefix="/api/admin", tags=["admin"])
 async def list_drivers(online: bool | None = None, status: str | None = None, page=Depends(paging),
                        admin: User = Depends(admin_user), db: AsyncSession = Depends(get_db)):
     limit, offset = page
-    stmt = select(User).join(DriverProfile, DriverProfile.user_id == User.id).where(User.role == Role.DRIVER)
+    stmt = select(User).join(DriverProfile, DriverProfile.user_id == User.id)
     if online is not None:
         stmt = stmt.where(DriverProfile.is_online.is_(online))
     if status:
@@ -41,7 +41,7 @@ async def _driver_areas(db, driver_id: int) -> list[dict]:
 
 async def _driver(db, driver_id: int) -> User:
     u = await _target(db, driver_id)
-    if u.role != Role.DRIVER:
+    if not u.driver_profile:
         raise HTTPException(404, "Driver not found")
     return u
 
@@ -77,7 +77,7 @@ async def get_driver_full(driver_id: int, reveal_cpr: bool = False, admin: User 
 @router.put("/drivers/{driver_id}/service-areas")
 async def set_driver_areas(driver_id: int, body: DriverAreasIn, admin: User = Depends(admin_user), db: AsyncSession = Depends(get_db)):
     u = await _target(db, driver_id)
-    if u.role != Role.DRIVER:
+    if not u.driver_profile:
         raise HTTPException(422, "Not a driver")
     ids = set(body.service_area_ids)
     found = set((await db.execute(select(ServiceArea.id).where(ServiceArea.id.in_(ids)))).scalars())

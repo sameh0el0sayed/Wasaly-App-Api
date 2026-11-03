@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..constants import AccountStatus, Role
+from ..constants import AccountStatus
 from ..database import get_db
 from ..deps import admin_user, customer_user, driver_user, paging
 from ..models import Subscription, SubscriptionTrip, User, utcnow
@@ -120,7 +120,7 @@ async def admin_get(sub_id: int, admin: User = Depends(admin_user), db: AsyncSes
 
 async def _driver(db, driver_id) -> User:
     d = await db.get(User, driver_id)
-    if not d or d.role != Role.DRIVER or d.account_status != AccountStatus.APPROVED:
+    if not d or not d.driver_profile or d.account_status != AccountStatus.APPROVED:
         raise HTTPException(422, "driver_id must be an approved driver")
     return d
 

@@ -30,7 +30,9 @@ async def list_users(role: str | None = None, status: str | None = None, q: str 
                      page=Depends(paging), admin: User = Depends(admin_user), db: AsyncSession = Depends(get_db)):
     limit, offset = page
     stmt = select(User).where(User.role.in_([Role.CUSTOMER, Role.DRIVER]))
-    if role:
+    if role == Role.DRIVER:  # everyone who HAS the driver role
+        stmt = stmt.where(User.id.in_(select(DriverProfile.user_id)))
+    elif role:
         stmt = stmt.where(User.role == role)
     if status:
         stmt = stmt.where(User.account_status == status)

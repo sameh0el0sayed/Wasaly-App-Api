@@ -74,7 +74,7 @@ async def live_map(service_area_id: int | None = None, include_offline_minutes: 
         areas_of.setdefault(r.driver_id, []).append(r.service_area_id)
     drivers = []
     fresh_locs = await cache.get_locations([d for (d,) in (await db.execute(select(DriverProfile.user_id).where(DriverProfile.is_online.is_(True)))).all()])
-    q = select(User).join(DriverProfile, DriverProfile.user_id == User.id).where(User.role == Role.DRIVER, User.account_status == "APPROVED")
+    q = select(User).join(DriverProfile, DriverProfile.user_id == User.id).where(User.account_status == "APPROVED")
     for u in (await db.execute(q)).scalars().unique().all():
         p = u.driver_profile
         if not p.is_online:

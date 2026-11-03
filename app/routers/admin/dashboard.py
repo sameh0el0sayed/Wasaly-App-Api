@@ -10,7 +10,7 @@ from ...constants import AccountStatus, Role
 from ...constants import OrderStatus as S
 from ...database import get_db
 from ...deps import admin_user
-from ...models import Complaint, DriverProfile, Order, User, utcnow
+from ...models import Complaint, DriverApplication, DriverProfile, Order, User, utcnow
 from ...serializers import money
 from ...services import settings_service
 from ...services.license import warn_days
@@ -28,8 +28,8 @@ async def dashboard(admin: User = Depends(admin_user), db: AsyncSession = Depend
     return {
         "customers_total": await count(select(func.count()).select_from(U).where(U.role == Role.CUSTOMER)),
         "customers_pending": await count(select(func.count()).select_from(U).where(U.role == Role.CUSTOMER, U.account_status == AccountStatus.PENDING_APPROVAL)),
-        "drivers_approved": await count(select(func.count()).select_from(U).where(U.role == Role.DRIVER, U.account_status == AccountStatus.APPROVED)),
-        "drivers_pending": await count(select(func.count()).select_from(U).where(U.role == Role.DRIVER, U.account_status == AccountStatus.PENDING_APPROVAL)),
+        "drivers_approved": await count(select(func.count()).select_from(U).where(U.id.in_(select(DriverProfile.user_id)), U.account_status == AccountStatus.APPROVED)),
+        "drivers_pending": await count(select(func.count()).select_from(U).where(U.id.in_(select(DriverProfile.user_id)), U.account_status == AccountStatus.PENDING_APPROVAL)),
         "users_online_now": await count(select(func.count()).select_from(U).where(U.role.in_([Role.CUSTOMER, Role.DRIVER]), U.last_seen_at >= utcnow() - timedelta(minutes=int((await settings_service.get_all(db))["online_window_minutes"])))),
         "drivers_online": await count(select(func.count()).select_from(DriverProfile).where(DriverProfile.is_online.is_(True))),
         "orders_new": await count(select(func.count()).select_from(O).where(O.order_status.in_(S.SEARCHING))),
@@ -48,5 +48,6 @@ async def dashboard(admin: User = Depends(admin_user), db: AsyncSession = Depend
         "licenses_expiring": await count(select(func.count()).select_from(DriverProfile).where(
             DriverProfile.license_expiry_date >= date.today(),
             DriverProfile.license_expiry_date <= date.today() + timedelta(days=max(warn_days((await settings_service.get_all(db))["license_expiry_warn_days"]) or [30])))),
+        "driver_applications_pending": await count(select(func.count()).select_from(DriverApplication).where(DriverApplication.status == "PENDING_REVIEW")),
         "open_complaints": await count(select(func.count()).select_from(Complaint).where(Complaint.status == "OPEN")),
     }

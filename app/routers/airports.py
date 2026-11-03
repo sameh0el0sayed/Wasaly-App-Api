@@ -4,7 +4,6 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..constants import Role
 from ..database import get_db
 from ..deps import admin_user, super_admin_user
 from ..models import AirportZone, User
@@ -64,7 +63,7 @@ async def delete_airport(zone_id: int, admin: User = Depends(super_admin_user), 
 async def set_driver_gender(user_id: int, body: DriverGenderIn, admin: User = Depends(admin_user), db: AsyncSession = Depends(get_db)):
     """Only an admin changes a driver's gender (it decides which customers can request him), always with a reason."""
     u = await db.get(User, user_id)
-    if not u or u.role != Role.DRIVER or not u.driver_profile:
+    if not u or not u.driver_profile:
         raise HTTPException(404, "Driver not found")
     audit(db, admin.id, "DRIVER_GENDER_SET", "user", u.id, body.reason, details={"from": u.driver_profile.gender, "to": body.gender})
     u.driver_profile.gender = body.gender

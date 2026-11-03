@@ -27,9 +27,10 @@ def rating_out(r: Rating | None) -> dict | None:
 
 
 async def stats_for(db: AsyncSession, u: User) -> dict:
-    """rating_avg / ratings_count / one_star_count (1-star count restarts after an admin reactivation)."""
-    row = (await db.execute(select(func.count(), func.avg(Rating.stars)).where(Rating.ratee_id == u.id))).one()
-    q = select(func.count()).where(Rating.ratee_id == u.id, Rating.stars == 1)
+    """rating_avg / ratings_count / one_star_count (1-star count restarts after an admin reactivation). Counts only ratings received in the ACTIVE role."""
+    other = Role.CUSTOMER if u.role == Role.DRIVER else Role.DRIVER
+    row = (await db.execute(select(func.count(), func.avg(Rating.stars)).where(Rating.ratee_id == u.id, Rating.rater_role == other))).one()
+    q = select(func.count()).where(Rating.ratee_id == u.id, Rating.rater_role == other, Rating.stars == 1)
     if u.rating_reset_at:
         q = q.where(Rating.created_at > u.rating_reset_at)
     return {"rating_avg": round(float(row[1]), 2) if row[1] is not None else None, "ratings_count": row[0],

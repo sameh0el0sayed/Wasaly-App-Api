@@ -5,7 +5,6 @@ from fastapi import HTTPException
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..constants import Role
 from ..models import ProfileChange, User, Vehicle, utcnow
 from ..security import cpr_hash, decrypt, encrypt, normalize_phone, validate_cpr
 from .files import assert_owned
@@ -44,7 +43,7 @@ def is_file(field: str) -> bool:
 
 
 def check_field(u: User, field: str) -> None:
-    if field not in FIELDS or (FIELDS[field][2] and u.role != Role.DRIVER):
+    if field not in FIELDS or (FIELDS[field][2] and not u.driver_profile):
         raise HTTPException(422, {"code": "INVALID_FIELD", "field": field})
 
 

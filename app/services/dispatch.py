@@ -5,7 +5,7 @@ from datetime import date, timedelta
 from sqlalchemy import and_, or_, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..constants import AccountStatus, CounterStatus, OfferStatus, ReviewStatus, Role
+from ..constants import AccountStatus, CounterStatus, OfferStatus, ReviewStatus
 from ..constants import OrderStatus as S
 from ..models import CounterOffer, DriverProfile, DriverServiceArea, DriverWorkSession, Notification, Order, OrderOffer, User, utcnow
 from . import settings_service
@@ -55,7 +55,7 @@ async def eligible_drivers(db: AsyncSession, order: Order) -> list[User]:
             .join(DriverProfile, DriverProfile.user_id == User.id)
             .join(DriverServiceArea, DriverServiceArea.driver_id == User.id)
             .where(DriverServiceArea.service_area_id == order.service_area_id,
-                   User.role == Role.DRIVER, User.account_status == AccountStatus.APPROVED,
+                   User.account_status == AccountStatus.APPROVED,
                    DriverProfile.is_online.is_(True),
                    User.id.not_in(busy), User.id.not_in(pending),
                    User.id.not_in(select(OrderOffer.driver_id).where(OrderOffer.order_id == order.id, OrderOffer.offer_status == OfferStatus.ACCEPTED))))  # a driver who cancelled is not re-offered
@@ -200,7 +200,7 @@ async def force_offline(db: AsyncSession, driver_id: int) -> None:
 async def enforce_driver_documents(db: AsyncSession, warn: bool = False) -> None:
     """Takes drivers with expired license/docs offline; optionally sends expiry warnings (once per day)."""
     drivers = (await db.execute(select(User).join(DriverProfile, DriverProfile.user_id == User.id)
-                                .where(User.role == Role.DRIVER, User.account_status == AccountStatus.APPROVED))
+                                .where(User.account_status == AccountStatus.APPROVED))
                ).scalars().unique().all()
     warn_days = int((await settings_service.get_all(db))["doc_expiry_warning_days"])
     today = date.today()

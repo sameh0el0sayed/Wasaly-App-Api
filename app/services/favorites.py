@@ -21,7 +21,7 @@ async def favorite_rows(db: AsyncSession, customer_id: int) -> list[tuple[User, 
         if stars < 4:
             continue
         d = await db.get(User, driver_id)
-        if not d or d.role != Role.DRIVER or d.account_status != AccountStatus.APPROVED or d.deleted_at or not d.vehicle \
+        if not d or not d.driver_profile or d.account_status != AccountStatus.APPROVED or d.deleted_at or not d.vehicle \
                 or (d.driver_profile and d.driver_profile.license_expiry_date < date.today()):
             continue
         trips = (await db.execute(select(func.count()).select_from(Order).where(

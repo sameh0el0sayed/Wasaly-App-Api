@@ -9,6 +9,8 @@ from ..constants import CURRENCIES
 from ..models import AppSetting
 
 DEFAULTS = {
+    "role_switch_enabled": "true",
+    "customer_to_driver_enabled": "true",
     "i18n_version": "0",
     "license_expiry_warn_days": "30,7,1",
     "license_expiry_block_offers": "true",
