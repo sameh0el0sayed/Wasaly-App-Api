@@ -105,6 +105,15 @@ def promo_discount(trip_price: Decimal, percent, decimals: int = 3) -> Decimal:
     return min((trip_price * pct / Decimal(100)).quantize(q, ROUND_HALF_UP), trip_price)
 
 
+def fixed_discount(trip_price: Decimal, amount, decimals: int = 3) -> Decimal:
+    """Fixed-amount discount (referral code) on the trip price only; never more than the trip price."""
+    q = quantum(decimals)
+    amt = Decimal(str(amount or 0))
+    if amt <= 0:
+        return Decimal(0).quantize(q)
+    return min(amt.quantize(q, ROUND_HALF_UP), trip_price)
+
+
 def apply_discount(commission: Decimal, customer_total: Decimal, discount: Decimal) -> tuple[Decimal, Decimal]:
     """The platform pays for the promo: the customer pays less, the driver is untouched, the company keeps less."""
     return commission - discount, customer_total - discount

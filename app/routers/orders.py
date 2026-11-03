@@ -12,7 +12,7 @@ from ..constants import OrderStatus as S
 from ..database import get_db
 from ..deps import approved_user, customer_user, paging, request_lang
 from ..i18n import localize
-from ..models import Complaint, CounterOffer, Order, OrderOffer, OrderStatusHistory, Payment, User, utcnow
+from ..models import Complaint, CounterOffer, Order, OrderOffer, OrderStatusHistory, Payment, Referral, User, utcnow
 from ..schemas import EstimateIn, OptionalReasonIn, OrderCreateIn, PriceRaiseIn, ReasonIn
 from ..serializers import driver_card, history_out, order_for_admin, order_for_customer, order_for_driver
 from ..services import favorites as fav
@@ -25,7 +25,7 @@ from ..services.files import assert_owned
 from ..services.geo import _haversine_m, find_area, point_in_boundary
 from ..services.notifications import notify
 from ..services.orders import close_pending_counters, close_pending_offers, load_order, transition
-from ..services.promo import validate_promo
+from ..services.promo import resolve_code
 
 router = APIRouter(prefix="/api", tags=["orders"])
 
@@ -60,10 +60,11 @@ async def app_config(db: AsyncSession = Depends(get_db)):
             "location_snapshots_enabled": s["location_snapshots_enabled"] == "true",
             "languages": ["ar", "en"], "default_language": "ar",
             "i18n": {"version": int(s["i18n_version"] or 0), "languages": ["ar", "en"], "default": "ar"},
+            "deep_link": {"scheme": "wasaly", "host": "phoenixsystems.online", "path_prefix": "/wasaly-api/r/", "android_package": "com.phoenixsystems.wasaly"},
             "role_switch": {"enabled": s["role_switch_enabled"] == "true", "customer_to_driver": s["customer_to_driver_enabled"] == "true"},
             "passkeys": {"enabled": s["passkeys_enabled"] == "true", "rp_id": app_cfg.passkey_rp_id},
             "analytics": {"enabled": s["analytics_enabled"] == "true", "batch_size": 20, "flush_seconds": 30},
-            "promo_enabled": s["promo_enabled"] == "true",
+            "promo_enabled": s["promo_enabled"] == "true" or s["referral_enabled"] == "true",
             "customer_live_tracking_enabled": s["customer_live_tracking_enabled"] == "true",
             "service_categories": _categories(s["service_categories"]),
             "online_window_minutes": int(s["online_window_minutes"]),
@@ -157,12 +158,13 @@ async def estimate(body: EstimateIn, user: User = Depends(customer_user), db: As
                        decimals=p.decimals, night_enabled=p.night_enabled, night_percent=p.night_percent, night_start=p.night_start,
                        night_end=p.night_end, ctype=p.commission_type, cvalue=p.commission_value, mode=p.commission_mode,
                        outside=outside, outside_percent=p.outside_driver_percent, extras=extras)
-    promo = await validate_promo(db, s, body.promo_code, e["trip_price"])
-    if promo:  # recompute with the percentage (validation needed the undiscounted trip price)
+    promo, ref = await resolve_code(db, s, body.promo_code, e["trip_price"], user.id)
+    if promo or ref:  # recompute with the discount (validation needed the undiscounted trip price)
         e = money_estimate(minutes=minutes, now=utcnow(), unit_seconds=p.unit_seconds, unit_price=p.unit_price, min_price=p.min_price,
                            decimals=p.decimals, night_enabled=p.night_enabled, night_percent=p.night_percent, night_start=p.night_start,
                            night_end=p.night_end, ctype=p.commission_type, cvalue=p.commission_value, mode=p.commission_mode,
-                           outside=outside, outside_percent=p.outside_driver_percent, extras=extras, promo_percent=promo.percent)
+                           outside=outside, outside_percent=p.outside_driver_percent, extras=extras,
+                           promo_percent=promo.percent if promo else 0, promo_fixed=ref.amount if ref else 0)
     d = p.decimals
     area = await find_area(db, body.pickup_latitude, body.pickup_longitude)
     sched_fee = Decimal(0)
@@ -173,7 +175,8 @@ async def estimate(body: EstimateIn, user: User = Depends(customer_user), db: As
             "estimated_trip_price": f"{e['price']:.{d}f}", "night_applied": e["night_applied"],
             "night_surcharge": f"{e['night_surcharge']:.{d}f}", "extras_fee": f"{extras:.{d}f}", "extras": breakdown,
             "airport_applied": any(x["key"] == "AIRPORT" for x in breakdown),
-            "promo_code": promo.code if promo else None, "promo_percent": promo.percent if promo else None,
+            "promo_code": promo.code if promo else (ref.code if ref else None), "promo_percent": promo.percent if promo else None,
+            "promo_fixed": f"{ref.amount:.{d}f}" if ref else None, "is_referral_code": bool(ref),
             "discount_amount": f"{e['discount']:.{d}f}",
             "service_fee": f"{e['customer_total'] + e['discount'] - e['price']:.{d}f}" if p.commission_mode == "ADD" else None,
             "estimated_total": f"{e['customer_total'] + sched_fee:.{d}f}", "is_outside_bahrain": outside, "pickup_in_service_area": area is not None,
@@ -242,14 +245,23 @@ async def create_order(body: OrderCreateIn, user: User = Depends(customer_user),
         sched_fee = (base_est["price"] * Decimal(s_all["scheduled_fee_percent"]) / 100).quantize(Decimal(1).scaleb(-p.decimals))
         extras = extras + sched_fee  # part of the trip price, so commission rules apply as usual
         breakdown = [*breakdown, {"key": "SCHEDULED", "amount": f"{sched_fee:.{p.decimals}f}"}]
-    promo = None
+    promo, ref = None, None
     if body.promo_code and body.promo_code.strip():
         est = money_estimate(minutes=est_min, now=utcnow(), unit_seconds=p.unit_seconds, unit_price=p.unit_price, min_price=p.min_price,
                              decimals=p.decimals, night_enabled=p.night_enabled, night_percent=p.night_percent, night_start=p.night_start,
                              night_end=p.night_end, ctype=p.commission_type, cvalue=p.commission_value, mode=p.commission_mode,
                              outside=outside, outside_percent=p.outside_driver_percent, extras=extras)
-        promo = await validate_promo(db, s_all, body.promo_code, est["trip_price"])
-    order = Order(promo_code=promo.code if promo else None, promo_percent=promo.percent if promo else None,
+        promo, ref = await resolve_code(db, s_all, body.promo_code, est["trip_price"], user.id)
+    referral_id = None
+    if ref:
+        row = ref.row
+        if not row:
+            row = Referral(inviter_id=ref.inviter_id, invitee_id=user.id)
+            db.add(row)
+            await db.flush()
+        referral_id = row.id
+    order = Order(promo_code=promo.code if promo else (ref.code if ref else None), promo_percent=promo.percent if promo else None,
+                  promo_fixed=ref.amount if ref else None, referral_id=referral_id,
                   extras_fee=extras, extras_breakdown=breakdown, est_distance_km=est_km, est_duration_min=est_min, customer_id=user.id, service_area_id=area_id, currency=p.currency, currency_decimals=p.decimals,
                   price_per_unit=p.unit_price, unit_duration_seconds=p.unit_seconds, min_price=p.min_price,
                   commission_type=p.commission_type, commission_value=p.commission_value,

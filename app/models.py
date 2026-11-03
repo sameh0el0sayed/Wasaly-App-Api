@@ -328,6 +328,8 @@ class Order(Base):
     promo_code: Mapped[str | None] = mapped_column(String(40), nullable=True)  # snapshot: later edits never change old orders
     promo_percent: Mapped[int | None] = mapped_column(Integer, nullable=True)
     discount_amount: Mapped[Decimal | None] = mapped_column(Numeric(12, 3), nullable=True)
+    promo_fixed: Mapped[Decimal | None] = mapped_column(Numeric(12, 3), nullable=True)  # fixed discount (referral code)
+    referral_id: Mapped[int | None] = mapped_column(Integer, nullable=True)  # referral whose code was used on this order
     extras_fee: Mapped[Decimal] = mapped_column(Numeric(12, 3), default=0)  # airport + preference fees, part of the trip price
     extras_breakdown: Mapped[list] = mapped_column(JSON, default=list)
     is_outside_bahrain: Mapped[bool] = mapped_column(Boolean, default=False)  # destination outside the country boundary
@@ -440,6 +442,7 @@ class Payment(Base):
     currency_decimals: Mapped[int] = mapped_column(Integer, default=3)
     driver_amount: Mapped[Decimal] = mapped_column(Numeric(12, 3), default=0)  # driver share, paid out after confirmation
     company_amount: Mapped[Decimal] = mapped_column(Numeric(12, 3), default=0)  # company keeps (commission)
+    wallet_amount: Mapped[Decimal] = mapped_column(Numeric(12, 3), default=0, server_default="0")  # paid from the customer wallet
     gateway_fee: Mapped[Decimal] = mapped_column(Numeric(12, 3), default=0)  # Tap fee, paid by the customer
     charged_amount: Mapped[Decimal | None] = mapped_column(Numeric(12, 3), nullable=True)  # amount + gateway_fee (Tap)
     payment_method: Mapped[str | None] = mapped_column(String(20), nullable=True)  # TAP | BENEFITPAY

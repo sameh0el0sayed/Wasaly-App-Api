@@ -454,7 +454,7 @@ async def apply_referral(db: AsyncSession, invitee: User, code: str | None, devi
     db.add(Referral(inviter_id=inviter.id, invitee_id=invitee.id, device_id=device_id))
 
 
-async def reward_referral(db: AsyncSession, customer_id: int) -> None:
+async def reward_referral(db: AsyncSession, customer_id: int, order: Order | None = None) -> None:
     """Called when a customer's trip payment is confirmed: pays both sides once, after the configured number of paid trips."""
     r = (await db.execute(select(Referral).where(Referral.invitee_id == customer_id, Referral.status == "REGISTERED"))).scalars().first()
     if not r:
@@ -464,7 +464,11 @@ async def reward_referral(db: AsyncSession, customer_id: int) -> None:
     if paid < int(s["referral_min_trip_to_reward"]):
         return
     ri, rv = Decimal(s["referral_reward_inviter"]), Decimal(s["referral_reward_invitee"])
+    if order is not None and order.referral_id == r.id:
+        rv = Decimal(0)  # the invitee already got his reward as a discount on this trip
     for uid, amt, kind in ((r.inviter_id, ri, "REFERRAL_INVITER"), (customer_id, rv, "REFERRAL_INVITEE")):
+        if amt <= 0:
+            continue
         u = await db.get(User, uid)
         u.wallet_balance = Decimal(u.wallet_balance or 0) + amt
         db.add(WalletEntry(user_id=uid, amount=amt, kind=kind, ref_id=r.id))
@@ -529,11 +533,24 @@ async def revoke_referral(rid: int, admin: User = Depends(_admin), db: AsyncSess
 
 
 @public_router.get("/r/{code}", response_class=HTMLResponse)
-async def referral_landing(code: str):
-    safe = "".join(c for c in code if c.isalnum())
-    return HTMLResponse(f'<!doctype html><html lang="ar" dir="rtl"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'
-                        f'<body style="font-family:system-ui;text-align:center;padding:40px"><h2>وصلي</h2><p>حمّل التطبيق واستخدم كود الدعوة:</p>'
-                        f'<h1 style="letter-spacing:3px">{safe}</h1></body></html>')
+async def referral_landing(code: str, db: AsyncSession = Depends(get_db)):
+    """Invite link: tries to open the app straight away (Android intent / iOS scheme) with the code; the page shows the code and buttons as a fallback."""
+    from urllib.parse import quote
+    safe = "".join(c for c in code if c.isalnum())[:20]
+    s = await settings_service.get_all(db)
+    scheme_url = f"wasaly://invite?code={safe}"
+    store = s.get("android_store_url") or ""
+    fallback = quote(store, safe="") if store else ""
+    intent = (f"intent://invite?code={safe}#Intent;scheme=wasaly;package=com.phoenixsystems.wasaly;"
+              + (f"S.browser_fallback_url={fallback};" if fallback else "") + "end")
+    stores = "".join(f'<p><a href="{u}" style="color:#0a7">{t}</a></p>' for u, t in ((s.get("android_store_url"), "تحميل تطبيق Android"), (s.get("ios_store_url"), "تحميل تطبيق iPhone")) if u)
+    html = (f'<!doctype html><html lang="ar" dir="rtl"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'
+            f'<title>وصلي</title><body style="font-family:system-ui;text-align:center;padding:40px"><h2>وصلي</h2>'
+            f'<p>حمّل التطبيق واستخدم كود الدعوة:</p><h1 style="letter-spacing:3px">{safe}</h1>'
+            f'<p><a id="open" href="{scheme_url}" style="display:inline-block;padding:12px 28px;background:#0a7;color:#fff;border-radius:10px;text-decoration:none">فتح التطبيق</a></p>{stores}'
+            f'<script>(function(){{var ua=navigator.userAgent||"";var a=document.getElementById("open");'
+            f'if(/android/i.test(ua)){{a.href="{intent}";}}try{{window.location.href=a.href;}}catch(e){{}}}})();</script></body></html>')
+    return HTMLResponse(html)
 
 
 # ======================= nearby drivers (customer map) =======================

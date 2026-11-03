@@ -9,6 +9,9 @@ from ..constants import CURRENCIES
 from ..models import AppSetting
 
 DEFAULTS = {
+    "wallet_auto_apply": "true",
+    "android_store_url": "",
+    "ios_store_url": "",
     "passkeys_enabled": "true",
     "role_switch_enabled": "true",
     "customer_to_driver_enabled": "true",

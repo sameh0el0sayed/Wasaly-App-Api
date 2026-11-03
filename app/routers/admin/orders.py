@@ -1,4 +1,5 @@
 from datetime import date, timedelta
+from decimal import Decimal
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import func, select
@@ -89,6 +90,14 @@ async def adjust_price(order_id: int, body: PriceAdjustIn, admin: User = Depends
     pay = (await db.execute(select(Payment).where(Payment.order_id == o.id))).scalars().first()
     if pay:
         pay.amount, pay.driver_amount, pay.company_amount = o.customer_total, o.driver_earning, o.commission
+        if pay.wallet_amount and pay.wallet_amount > pay.amount:  # price went down below what the wallet already covered: give it back
+            from ...models import User as _U
+            from ...models import WalletEntry
+            back = pay.wallet_amount - pay.amount
+            cu = (await db.execute(select(_U).where(_U.id == pay.customer_id).with_for_update())).scalar_one()
+            cu.wallet_balance = Decimal(cu.wallet_balance or 0) + back
+            db.add(WalletEntry(user_id=cu.id, amount=back, kind="REFUND", ref_id=pay.id))
+            pay.wallet_amount = pay.amount
     db.add(OrderStatusHistory(order_id=o.id, old_status=o.order_status, new_status=o.order_status, changed_by=admin.id,
                               changed_by_role=admin.role, notes=f"Price adjusted {old} -> {o.final_price}: {body.reason}"))
     audit(db, admin.id, "PRICE_ADJUSTED", "order", o.id, body.reason, {"old": str(old), "new": str(o.final_price)})

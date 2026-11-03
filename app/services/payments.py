@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from ..constants import Role
 from ..models import DriverPayout, DriverProfile, Order, Payment, User, utcnow
 from ..security import decrypt
-from . import payouts
+from . import payouts, settings_service
 from .notifications import notify
 from .pricing import quantum
 
@@ -39,6 +39,26 @@ async def create_payment(db: AsyncSession, *, kind: str, customer_id: int, drive
     return p
 
 
+async def apply_wallet(db: AsyncSession, pay: Payment) -> None:
+    """Uses the customer's wallet balance first. A fully covered payment is settled at once (method WALLET)."""
+    if pay.kind != "ORDER":
+        return
+    if (await settings_service.get_all(db))["wallet_auto_apply"] != "true":
+        return
+    from ..models import WalletEntry
+    u = (await db.execute(select(User).where(User.id == pay.customer_id).with_for_update())).scalar_one_or_none()
+    bal = Decimal(u.wallet_balance or 0) if u else Decimal(0)
+    use = min(bal, Decimal(pay.amount)).quantize(quantum(pay.currency_decimals), ROUND_HALF_UP)
+    if use <= 0:
+        return
+    u.wallet_balance = bal - use
+    db.add(WalletEntry(user_id=u.id, amount=-use, kind="SPEND", ref_id=pay.id))
+    pay.wallet_amount = use
+    await db.flush()
+    if use >= Decimal(pay.amount):
+        await finalize_paid(db, pay, None, method="WALLET")
+
+
 async def finalize_paid(db: AsyncSession, payment: Payment, verified_by: int | None, method: str | None = None) -> bool:
     """Marks the payment PAID exactly once (webhook / return page / admin confirm may race), then pays the driver."""
     now = utcnow()
@@ -53,7 +73,7 @@ async def finalize_paid(db: AsyncSession, payment: Payment, verified_by: int | N
         order = await db.get(Order, payment.order_id)
         order.payment_status, order.payment_method = "PAID", payment.payment_method
         from ..routers.v11 import reward_referral
-        await reward_referral(db, payment.customer_id)
+        await reward_referral(db, payment.customer_id, order)
     elif payment.kind == "SUBSCRIPTION":
         from .subscriptions import on_paid
         await on_paid(db, payment)

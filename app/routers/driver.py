@@ -43,11 +43,12 @@ from ..services.dispatch import dispatch_order, expire_offers_and_orders, has_ac
 from ..services.files import assert_owned
 from ..services.notifications import notify
 from ..services.orders import close_pending_offers, load_order, transition
-from ..services.payments import create_payment
+from ..services.payments import apply_wallet, create_payment
 from ..services.pricing import (
     apply_discount,
     calc_price,
     duration_seconds,
+    fixed_discount,
     increase_amount,
     is_night_start,
     night_surcharge,
@@ -321,13 +322,15 @@ async def arrived_at_destination(order_id: int, body: ArrivedIn = ArrivedIn(), u
     o.base_price, o.night_applied, o.night_surcharge, o.price_increase_amount = base, night, surcharge, increase
     o.actual_duration_seconds, o.final_price = secs, price
     o.commission, o.customer_total, o.driver_earning, cut = split_order(o, price)
-    o.discount_amount = promo_discount(base + surcharge + increase, o.promo_percent, o.currency_decimals)  # platform pays it; driver untouched
+    o.discount_amount = (fixed_discount(base + surcharge + increase, o.promo_fixed, o.currency_decimals) if o.promo_fixed
+                         else promo_discount(base + surcharge + increase, o.promo_percent, o.currency_decimals))  # platform pays it; driver untouched
     o.commission, o.customer_total = apply_discount(o.commission, o.customer_total, o.discount_amount)
     o.outside_driver_cut = cut if o.is_outside_bahrain else None
     pay = await create_payment(db, kind="ORDER", order_id=o.id, customer_id=o.customer_id, driver_id=o.driver_id,
                                amount=o.customer_total, driver_amount=o.driver_earning, company_amount=o.commission,
                                currency=o.currency, decimals=o.currency_decimals)
     o.payment_id = pay.id
+    await apply_wallet(db, pay)  # customer wallet balance is used first
     shown = f"{money(o.customer_total, o.currency_decimals)} {o.currency}"
     earned = f"{money(o.driver_earning, o.currency_decimals)} {o.currency}"
     await transition(db, o, S.COMPLETED, user.id, "DRIVER",

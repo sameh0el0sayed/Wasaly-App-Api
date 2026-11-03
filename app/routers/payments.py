@@ -71,8 +71,9 @@ async def pay_with_tap(payment_id: int, user: User = Depends(customer_user), db:
     s = await settings_service.get_all(db)
     if s["tap_enabled"] != "true":
         raise HTTPException(409, {"code": "METHOD_DISABLED", "method": "TAP"})
-    fee = tap_fee(p.amount, s, p.currency_decimals)
-    charged = p.amount + fee
+    due = p.amount - (p.wallet_amount or 0)  # the wallet already covered part of it
+    fee = tap_fee(due, s, p.currency_decimals)
+    charged = due + fee
     base = settings.public_base_url.rstrip("/")
     ref = f"PAY-{p.id}"
     charge = await tap.create_charge({
@@ -104,7 +105,7 @@ async def pay_with_benefitpay(payment_id: int, body: BenefitPayIn, user: User = 
     await assert_owned(db, user.id, body.proof_file_key)
     p.payment_method, p.payment_status = "BENEFITPAY", "PENDING_VERIFICATION"
     p.proof_file, p.transaction_reference, p.reject_reason = body.proof_file_key, body.reference, None
-    p.gateway_fee, p.charged_amount = Decimal(0), p.amount
+    p.gateway_fee, p.charged_amount = Decimal(0), p.amount - (p.wallet_amount or 0)
     await notify_admins(db, "PAYMENT_PROOF", "إيصال BenefitPay جديد", f"دفعة #{p.id} بانتظار التأكيد")
     await db.commit()
     return payment_out(p)
@@ -183,7 +184,7 @@ async def admin_payment_view(db: AsyncSession, p: Payment, s: dict | None = None
     out["customer"] = _person(await db.get(User, p.customer_id))
     out["driver"] = _person(await db.get(User, p.driver_id)) if p.driver_id else None
     out["verified_by_name"] = (await db.get(User, p.verified_by)).full_name if p.verified_by else None
-    out["expected_amount"] = money(p.amount, p.currency_decimals)
+    out["expected_amount"] = money(p.amount - (p.wallet_amount or 0), p.currency_decimals)
     out["company_account"] = {"name": s.get("benefitpay_account_name"), "number": s.get("benefitpay_account_number")}
     out["order"] = None
     if p.order_id:
