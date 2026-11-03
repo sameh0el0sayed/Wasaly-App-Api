@@ -7293,5 +7293,250 @@
   "key": "v19.admin",
   "ar": "الإدارة",
   "en": "Admin"
+ },
+ {
+  "key": "v15.mode_title",
+  "ar": "وضع الحساب",
+  "en": "Account mode"
+ },
+ {
+  "key": "v15.customer",
+  "ar": "عميل",
+  "en": "Customer"
+ },
+ {
+  "key": "v15.driver",
+  "ar": "سائق",
+  "en": "Driver"
+ },
+ {
+  "key": "v15.switching",
+  "ar": "جارٍ التبديل…",
+  "en": "Switching…"
+ },
+ {
+  "key": "v15.become_driver",
+  "ar": "سجّل كسائق",
+  "en": "Become a driver"
+ },
+ {
+  "key": "v15.become_driver_sub",
+  "ar": "اربح من رحلات التوصيل بنفس حسابك",
+  "en": "Earn from deliveries with the same account"
+ },
+ {
+  "key": "v15.app_pending",
+  "ar": "طلبك للعمل كسائق قيد المراجعة",
+  "en": "Your driver application is under review"
+ },
+ {
+  "key": "v15.app_rejected",
+  "ar": "رُفض طلبك للعمل كسائق: {0}",
+  "en": "Your driver application was rejected: {0}"
+ },
+ {
+  "key": "v15.app_correction",
+  "ar": "مطلوب تصحيح في طلبك: {0}",
+  "en": "Your application needs a correction: {0}"
+ },
+ {
+  "key": "v15.resubmit",
+  "ar": "تعديل الطلب وإعادة الإرسال",
+  "en": "Edit and resubmit"
+ },
+ {
+  "key": "v15.form_title",
+  "ar": "طلب العمل كسائق",
+  "en": "Driver application"
+ },
+ {
+  "key": "v15.licence",
+  "ar": "رخصة القيادة",
+  "en": "Driving licence"
+ },
+ {
+  "key": "v15.licence_no",
+  "ar": "رقم الرخصة",
+  "en": "Licence number"
+ },
+ {
+  "key": "v15.licence_issue",
+  "ar": "تاريخ إصدار الرخصة",
+  "en": "Licence issue date"
+ },
+ {
+  "key": "v15.licence_expiry",
+  "ar": "تاريخ انتهاء الرخصة",
+  "en": "Licence expiry date"
+ },
+ {
+  "key": "v15.licence_photo",
+  "ar": "صورة الرخصة",
+  "en": "Licence photo"
+ },
+ {
+  "key": "v15.vehicle",
+  "ar": "السيارة",
+  "en": "Vehicle"
+ },
+ {
+  "key": "v15.make",
+  "ar": "الماركة",
+  "en": "Make"
+ },
+ {
+  "key": "v15.model",
+  "ar": "الموديل",
+  "en": "Model"
+ },
+ {
+  "key": "v15.year",
+  "ar": "سنة الصنع",
+  "en": "Year"
+ },
+ {
+  "key": "v15.color",
+  "ar": "اللون",
+  "en": "Colour"
+ },
+ {
+  "key": "v15.plate",
+  "ar": "رقم اللوحة",
+  "en": "Plate number"
+ },
+ {
+  "key": "v15.seats",
+  "ar": "عدد الركاب",
+  "en": "Seats"
+ },
+ {
+  "key": "v15.car_photo",
+  "ar": "صورة السيارة",
+  "en": "Car photo"
+ },
+ {
+  "key": "v15.gender",
+  "ar": "الجنس",
+  "en": "Gender"
+ },
+ {
+  "key": "v15.male",
+  "ar": "ذكر",
+  "en": "Male"
+ },
+ {
+  "key": "v15.female",
+  "ar": "أنثى",
+  "en": "Female"
+ },
+ {
+  "key": "v15.smoking",
+  "ar": "يسمح بالتدخين",
+  "en": "Smoking allowed"
+ },
+ {
+  "key": "v15.required",
+  "ar": "مطلوب",
+  "en": "Required"
+ },
+ {
+  "key": "v15.send",
+  "ar": "إرسال للمراجعة",
+  "en": "Send for review"
+ },
+ {
+  "key": "v15.sent",
+  "ar": "أُرسل طلبك للمراجعة",
+  "en": "Application sent for review"
+ },
+ {
+  "key": "v15.err_trip",
+  "ar": "أنهِ رحلتك الحالية أولًا ثم بدّل الوضع",
+  "en": "Finish your current trip before switching"
+ },
+ {
+  "key": "v15.err_order",
+  "ar": "لديك طلب مفتوح، أنهِه أو ألغِه أولًا ثم بدّل الوضع",
+  "en": "You have an open order — finish or cancel it before switching"
+ },
+ {
+  "key": "v15.err_not_granted",
+  "ar": "لا يمكنك التبديل إلى وضع السائق قبل الموافقة على طلبك",
+  "en": "You can switch to driver after your application is approved"
+ },
+ {
+  "key": "v15.err_disabled",
+  "ar": "تبديل الوضع غير متاح حاليًا",
+  "en": "Switching is not available right now"
+ },
+ {
+  "key": "v15.err_pending",
+  "ar": "لديك طلب قيد المراجعة بالفعل",
+  "en": "You already have an application under review"
+ },
+ {
+  "key": "v15.err_already",
+  "ar": "حسابك سائق بالفعل",
+  "en": "Your account is already a driver"
+ },
+ {
+  "key": "v15.err_plate",
+  "ar": "رقم اللوحة مسجل لسيارة أخرى",
+  "en": "This plate is registered to another car"
+ },
+ {
+  "key": "v15.err_c2d_off",
+  "ar": "التسجيل كسائق غير متاح حاليًا",
+  "en": "Driver sign-up is not available right now"
+ },
+ {
+  "key": "v15.admin_title",
+  "ar": "طلبات السائقين",
+  "en": "Driver applications"
+ },
+ {
+  "key": "v15.admin_empty",
+  "ar": "لا توجد طلبات",
+  "en": "No applications"
+ },
+ {
+  "key": "v15.approve",
+  "ar": "موافقة",
+  "en": "Approve"
+ },
+ {
+  "key": "v15.reject",
+  "ar": "رفض",
+  "en": "Reject"
+ },
+ {
+  "key": "v15.correction",
+  "ar": "طلب تصحيح",
+  "en": "Request correction"
+ },
+ {
+  "key": "v15.reason",
+  "ar": "السبب",
+  "en": "Reason"
+ },
+ {
+  "key": "v15.done",
+  "ar": "تم",
+  "en": "Done"
+ },
+ {
+  "key": "v15.cancel",
+  "ar": "إلغاء",
+  "en": "Cancel"
+ },
+ {
+  "key": "v15.set_role_switch",
+  "ar": "السماح بالتبديل بين وضع العميل والسائق",
+  "en": "Allow switching between customer and driver"
+ },
+ {
+  "key": "v15.set_c2d",
+  "ar": "السماح للعملاء بالتسجيل كسائقين",
+  "en": "Allow customers to apply as drivers"
  }
 ]
