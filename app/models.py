@@ -94,7 +94,9 @@ class User(Base):
     vehicle: Mapped["Vehicle | None"] = relationship(
         back_populates="driver", uselist=False, lazy="selectin")
     roles: Mapped[list | None] = mapped_column(JSON, nullable=True)  # roles granted to the account; `role` is the ACTIVE one
-    driver_application: Mapped["DriverApplication | None"] = relationship(uselist=False, lazy="selectin")
+    driver_application: Mapped["DriverApplication | None"] = relationship(
+        "DriverApplication", primaryjoin="User.id == DriverApplication.user_id", foreign_keys="DriverApplication.user_id",
+        uselist=False, lazy="selectin", viewonly=True)
 
 
 class DriverProfile(Base):
