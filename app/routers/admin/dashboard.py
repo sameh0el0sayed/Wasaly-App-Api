@@ -1,4 +1,4 @@
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, date, datetime, timedelta
 from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, Depends
@@ -13,6 +13,7 @@ from ...deps import admin_user
 from ...models import Complaint, DriverProfile, Order, User, utcnow
 from ...serializers import money
 from ...services import settings_service
+from ...services.license import warn_days
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])
 
@@ -43,5 +44,9 @@ async def dashboard(admin: User = Depends(admin_user), db: AsyncSession = Depend
             select(O.currency, O.currency_decimals, func.coalesce(func.sum(O.commission), 0))
             .where(O.order_status == S.COMPLETED, O.completed_at >= today_start)
             .group_by(O.currency, O.currency_decimals))).all()},
+        "licenses_expired": await count(select(func.count()).select_from(DriverProfile).where(DriverProfile.license_expiry_date < date.today())),
+        "licenses_expiring": await count(select(func.count()).select_from(DriverProfile).where(
+            DriverProfile.license_expiry_date >= date.today(),
+            DriverProfile.license_expiry_date <= date.today() + timedelta(days=max(warn_days((await settings_service.get_all(db))["license_expiry_warn_days"]) or [30])))),
         "open_complaints": await count(select(func.count()).select_from(Complaint).where(Complaint.status == "OPEN")),
     }

@@ -12,6 +12,19 @@ DEFAULT_LANGUAGE = "ar"
 
 # (arabic, english). Placeholders: {name}. Order does not matter: every entry is anchored (^...$).
 PAIRS: list[tuple[str, str]] = [
+    # v14 licence
+    ("تنتهي رخصة القيادة بعد {n} يوم. حدّثها لتستمر في استقبال الطلبات.", "Your driving licence expires in {n} days. Renew it to keep receiving orders."),
+    ("لم يتم اعتماد طلب تجديد الرخصة. السبب: {r}", "Your licence renewal was not approved. Reason: {r}"),
+    ("انتهت رخصة السائق {name}.", "The licence of driver {name} has expired."),
+    ("قدّم السائق {name} طلب تجديد الرخصة.", "Driver {name} submitted a licence renewal request."),
+    ("رخصتك تنتهي قريبًا", "Your licence expires soon"),
+    ("انتهت رخصتك", "Your licence has expired"),
+    ("انتهت رخصة القيادة، وتوقف إرسال الطلبات إليك حتى تحديثها.", "Your driving licence has expired. Orders will not be sent to you until you renew it."),
+    ("تم تجديد الرخصة", "Licence renewed"),
+    ("تم اعتماد رخصتك الجديدة، ويمكنك استقبال الطلبات.", "Your new licence has been approved. You can receive orders again."),
+    ("تم رفض تجديد الرخصة", "Licence renewal rejected"),
+    ("رخصة سائق منتهية", "Driver licence expired"),
+    ("طلب تجديد رخصة", "Licence renewal request"),
     # account / auth
     ("لا يمكن حذف الحساب أثناء وجود طلب جارٍ", "You cannot delete your account while an order is in progress"),
     ("يوجد مبلغ غير مدفوع", "You have an unpaid amount"),

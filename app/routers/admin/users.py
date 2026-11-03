@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from ...constants import AccountStatus, ReviewStatus, Role
 from ...database import get_db
 from ...deps import admin_user, paging, super_admin_user
-from ...models import AdminAuditLog, DriverServiceArea, Order, Rating, User, utcnow
+from ...models import AdminAuditLog, DriverProfile, DriverServiceArea, Order, Rating, User, utcnow
 from ...schemas import AdminCreateIn, ApproveIn, DebtSettleIn, ReasonIn, ReinstateIn, ResetPasswordIn
 from ...security import cpr_hash, decrypt, hash_password
 from ...serializers import driver_block, dt, money, user_public
@@ -17,6 +17,8 @@ from ...services import settings_service
 from ...services.activity import is_online
 from ...services.audit import audit
 from ...services.dispatch import force_offline
+from ...services.license import info as license_info
+from ...services.license import warn_days
 from ...services.notifications import notify
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])
@@ -24,7 +26,7 @@ router = APIRouter(prefix="/api/admin", tags=["admin"])
 
 # ---------------- users ----------------
 @router.get("/users")
-async def list_users(role: str | None = None, status: str | None = None, q: str | None = None, online: bool | None = None,
+async def list_users(role: str | None = None, status: str | None = None, q: str | None = None, online: bool | None = None, license_status: str | None = None,
                      page=Depends(paging), admin: User = Depends(admin_user), db: AsyncSession = Depends(get_db)):
     limit, offset = page
     stmt = select(User).where(User.role.in_([Role.CUSTOMER, Role.DRIVER]))
@@ -32,6 +34,14 @@ async def list_users(role: str | None = None, status: str | None = None, q: str 
         stmt = stmt.where(User.role == role)
     if status:
         stmt = stmt.where(User.account_status == status)
+    if license_status:
+        from datetime import date as _d
+        wd = max(warn_days((await settings_service.get_all(db))["license_expiry_warn_days"]) or [30])
+        stmt = stmt.join(DriverProfile, DriverProfile.user_id == User.id)
+        if license_status == "EXPIRED":
+            stmt = stmt.where(DriverProfile.license_expiry_date < _d.today())
+        elif license_status == "EXPIRING":
+            stmt = stmt.where(DriverProfile.license_expiry_date >= _d.today(), DriverProfile.license_expiry_date <= _d.today() + timedelta(days=wd))
     win = int((await settings_service.get_all(db))["online_window_minutes"])
     if online is not None:
         edge = utcnow() - timedelta(minutes=win)
@@ -47,10 +57,14 @@ async def list_users(role: str | None = None, status: str | None = None, q: str 
     agg = {i: (c, a, o) for i, c, a, o in (await db.execute(
         select(Rating.ratee_id, func.count(), func.avg(Rating.stars), func.sum(case((Rating.stars == 1, 1), else_=0)))
         .where(Rating.ratee_id.in_(ids or [0])).group_by(Rating.ratee_id))).all()}
+    wd = max(warn_days((await settings_service.get_all(db))["license_expiry_warn_days"]) or [30])
+    lic = lambda u: ({"license_expiry_date": u.driver_profile.license_expiry_date.isoformat(), "license_status": license_info(u.driver_profile, warn_max=wd)["status"]}
+                     if u.driver_profile else {})
     rate = lambda u: {"rating_avg": round(float(agg[u.id][1]), 2) if u.id in agg else None,
                       "ratings_count": agg[u.id][0] if u.id in agg else 0, "one_star_count": int(agg[u.id][2] or 0) if u.id in agg else 0}
     return {"total": total, "items": [{**user_public(u), **rate(u), "created_at": dt(u.created_at), "online": is_online(u.last_seen_at, win), "is_online": is_online(u.last_seen_at, win), "auto_suspended": bool(u.auto_suspended),
-                                          "last_seen_at": dt(u.last_seen_at), "app_open_count": u.app_open_count or 0} for u in rows]}
+                                          "last_seen_at": dt(u.last_seen_at), "app_open_count": u.app_open_count or 0,
+                                          **lic(u)} for u in rows]}
 
 
 @router.get("/users/{user_id}")
@@ -68,6 +82,8 @@ async def get_user(user_id: int, reveal_cpr: bool = False, admin: User = Depends
         await db.commit()
     if u.role == Role.DRIVER:
         d["driver"] = driver_block(u, reveal=reveal_cpr)
+        d["driver"]["license"] = license_info(u.driver_profile)
+        d["license_expiry_date"], d["license_status"] = d["driver"]["license"]["expiry_date"], d["driver"]["license"]["status"]
         d["debt_balance"] = str(u.driver_profile.debt_balance or 0)
         d["service_area_ids"] = list((await db.execute(select(DriverServiceArea.service_area_id).where(DriverServiceArea.driver_id == u.id))).scalars())
     orders = (await db.execute(select(Order.id, Order.order_status, Order.created_at, Order.final_price, Order.currency, Order.currency_decimals)

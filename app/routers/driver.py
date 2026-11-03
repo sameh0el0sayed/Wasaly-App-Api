@@ -99,6 +99,8 @@ async def availability(body: AvailabilityIn, user: User = Depends(driver_user), 
     mode = body.mode or (("LIVE" if profile.mode == "LIVE" and profile.is_online else "NORMAL") if body.online else "OFF")
     if mode != "OFF":
         blockers = work_blockers(user)
+        if "LICENSE_EXPIRED" in blockers:
+            raise HTTPException(409, {"code": "LICENSE_EXPIRED", "expiry_date": user.driver_profile.license_expiry_date.isoformat()})
         if not user.driver_profile.license_expiry_date or blockers:
             raise HTTPException(403, {"code": "CANNOT_GO_ONLINE", "reasons": blockers})
         areas = (await db.execute(select(func.count()).select_from(DriverServiceArea)

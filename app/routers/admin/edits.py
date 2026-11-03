@@ -43,7 +43,7 @@ async def edit_user(user_id: int, body: AdminUserEditIn, admin: User = Depends(a
         if (await db.execute(select(User.id).where(User.cpr_hash == h, User.id != u.id))).first():
             raise HTTPException(409, {"code": "CPR_EXISTS"})
         u.cpr_encrypted, u.cpr_hash, u.cpr_last3 = encrypt(data["cpr"]), h, data["cpr"][-3:]
-    for k in ("full_name", "phone", "profile_photo", "cpr_photo"):
+    for k in ("full_name", "phone", "profile_photo", "cpr_photo", "cpr_issue_date", "cpr_expiry_date"):
         if data.get(k) is not None:
             setattr(u, k, data[k])
     return await _finish(db, admin, u, sorted(data), body.reason)
@@ -66,6 +66,8 @@ async def edit_license(user_id: int, body: AdminLicenseEditIn, admin: User = Dep
         p.license_number_encrypted = encrypt(data["license_number"])
     if data.get("license_expiry_date"):
         p.license_expiry_date = data["license_expiry_date"]
+    if data.get("license_issue_date"):
+        p.license_issue_date = data["license_issue_date"]
     if data.get("license_document"):
         p.license_document = data["license_document"]
     return await _finish(db, admin, u, sorted(data), body.reason)

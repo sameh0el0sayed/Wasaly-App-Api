@@ -13,15 +13,15 @@ log = logging.getLogger("notifications")
 
 
 async def notify(db: AsyncSession, user_id: int, ntype: str, title: str, message: str,
-                 order_id: int | None = None) -> None:
+                 order_id: int | None = None, data: dict | None = None) -> None:
     """Stores an in-app notification and triggers push. The app must always re-fetch state from the API."""
     lang = (await db.execute(select(User.language).where(User.id == user_id))).scalar_one_or_none() or "ar"
     title, message = localize(title, lang), localize(message, lang)  # stored (and pushed) in the recipient's language
     db.add(Notification(user_id=user_id, notification_type=ntype, title=title, message=message,
-                        related_order_id=order_id))
+                        related_order_id=order_id, data=data))
     tokens = (await db.execute(select(DeviceToken.token).where(DeviceToken.user_id == user_id))).scalars().all()
     for t in tokens:  # fire-and-forget: a slow/unreachable FCM must never slow down the API request
-        task = asyncio.create_task(send_push(t, title, message, {"type": ntype, "order_id": str(order_id or "")}))
+        task = asyncio.create_task(send_push(t, title, message, {"type": ntype, "order_id": str(order_id or ""), **{k: str(v) for k, v in (data or {}).items()}}))
         _pending.add(task)
         task.add_done_callback(_pending.discard)
 

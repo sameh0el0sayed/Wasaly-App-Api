@@ -16,10 +16,10 @@ log = logging.getLogger("payments")
 OPEN_STATES = ("UNPAID", "PENDING_PAYMENT", "PENDING_VERIFICATION", "REJECTED", "FAILED")
 
 
-async def notify_admins(db: AsyncSession, ntype: str, title: str, message: str) -> None:
+async def notify_admins(db: AsyncSession, ntype: str, title: str, message: str, data: dict | None = None) -> None:
     ids = (await db.execute(select(User.id).where(User.role.in_(list(Role.ADMINS))))).scalars().all()
     for uid in ids:
-        await notify(db, uid, ntype, title, message)
+        await notify(db, uid, ntype, title, message, data=data)
 
 
 def tap_fee(amount: Decimal, s: dict, decimals: int) -> Decimal:

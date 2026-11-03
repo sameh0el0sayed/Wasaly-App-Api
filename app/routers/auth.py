@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import date, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy import or_, select
@@ -47,6 +47,11 @@ async def register(body: RegisterIn, db: AsyncSession = Depends(get_db), lang: s
     for key in filter(None, keys):
         await assert_owned(db, user.id, key, claim=True)
     user.profile_photo, user.cpr_photo = body.profile_photo, body.cpr_photo
+    if body.cpr_issue_date >= body.cpr_expiry_date or body.cpr_expiry_date <= date.today():
+        raise HTTPException(422, {"code": "INVALID_CPR_DATES"})
+    if body.role == "DRIVER" and body.driver and body.driver.license_issue_date >= body.driver.license_expiry_date:
+        raise HTTPException(422, {"code": "INVALID_DATES"})
+    user.cpr_issue_date, user.cpr_expiry_date = body.cpr_issue_date, body.cpr_expiry_date
     if body.role == "CUSTOMER":
         from .v11 import apply_referral, ensure_code
         await ensure_code(db, user)
@@ -56,7 +61,7 @@ async def register(body: RegisterIn, db: AsyncSession = Depends(get_db), lang: s
         if (await db.execute(select(Vehicle.id).where(Vehicle.plate_number == v.plate_number))).first():
             raise HTTPException(409, "Vehicle plate number is already registered")
         db.add(DriverProfile(user_id=user.id, license_number_encrypted=encrypt(d.license_number),
-                             license_expiry_date=d.license_expiry_date, license_document=d.license_document,
+                             license_expiry_date=d.license_expiry_date, license_issue_date=d.license_issue_date, license_document=d.license_document,
                              gender=d.gender, smoking_allowed=d.smoking_allowed))
         db.add(Vehicle(driver_id=user.id, **v.model_dump()))
     await db.commit()

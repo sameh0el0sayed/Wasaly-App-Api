@@ -58,6 +58,8 @@ async def app_config(db: AsyncSession = Depends(get_db)):
             "large_car_vehicle_types": [t.strip() for t in s["large_car_vehicle_types"].split(",") if t.strip()],
             "location_snapshots_enabled": s["location_snapshots_enabled"] == "true",
             "languages": ["ar", "en"], "default_language": "ar",
+            "i18n": {"version": int(s["i18n_version"] or 0), "languages": ["ar", "en"], "default": "ar"},
+            "analytics": {"enabled": s["analytics_enabled"] == "true", "batch_size": 20, "flush_seconds": 30},
             "promo_enabled": s["promo_enabled"] == "true",
             "customer_live_tracking_enabled": s["customer_live_tracking_enabled"] == "true",
             "service_categories": _categories(s["service_categories"]),

@@ -9,6 +9,13 @@ from ..constants import CURRENCIES
 from ..models import AppSetting
 
 DEFAULTS = {
+    "i18n_version": "0",
+    "license_expiry_warn_days": "30,7,1",
+    "license_expiry_block_offers": "true",
+    "analytics_enabled": "true",
+    "analytics_retention_days": "180",
+    "license_job_last_run": "",
+    "analytics_cleanup_last_run": "",
     "currency_code": "BHD",
     "unit_price": "0.500",
     "unit_duration_seconds": "300",

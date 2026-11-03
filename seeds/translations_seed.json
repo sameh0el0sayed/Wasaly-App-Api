@@ -1,0 +1,7147 @@
+[
+ {
+  "key": "main.dart.6c33091",
+  "ar": "عرض",
+  "en": "View"
+ },
+ {
+  "key": "customer.17c4ca4",
+  "ar": "الرئيسية",
+  "en": "Home"
+ },
+ {
+  "key": "customer.944a671",
+  "ar": "طلباتي",
+  "en": "Orders"
+ },
+ {
+  "key": "customer.2dd4651",
+  "ar": "مدفوعاتي",
+  "en": "Payments"
+ },
+ {
+  "key": "customer.a2e4503",
+  "ar": "حسابي",
+  "en": "Account"
+ },
+ {
+  "key": "customer.2d5e06e",
+  "ar": "موقعي الحالي",
+  "en": "My location"
+ },
+ {
+  "key": "customer.d9f2c9c",
+  "ar": "ابحث عن مكان…",
+  "en": "Search a place…"
+ },
+ {
+  "key": "customer.6de4a61",
+  "ar": "أين نوصّل؟ (الوجهة)",
+  "en": "Where to? (drop-off)"
+ },
+ {
+  "key": "customer.1a08b72",
+  "ar": "من أين نستلم؟ (نقطة الاستلام)",
+  "en": "Where from? (pickup)"
+ },
+ {
+  "key": "customer.f114f6e",
+  "ar": "حرّك الخريطة لتحديد الموقع",
+  "en": "Move the map to set the spot"
+ },
+ {
+  "key": "customer.ab62337",
+  "ar": "تغيير",
+  "en": "Change"
+ },
+ {
+  "key": "customer.9d9308f",
+  "ar": "تأكيد الوجهة",
+  "en": "Confirm drop-off"
+ },
+ {
+  "key": "customer.1da406a",
+  "ar": "تأكيد نقطة الاستلام",
+  "en": "Confirm pickup"
+ },
+ {
+  "key": "customer.248b8c0",
+  "ar": "سبب الإلغاء",
+  "en": "Cancellation reason"
+ },
+ {
+  "key": "customer.97bb147",
+  "ar": "إلغاء الطلب",
+  "en": "Cancel order"
+ },
+ {
+  "key": "customer.116a701",
+  "ar": "حالة الطلب",
+  "en": "Order status"
+ },
+ {
+  "key": "customer.9b0b16b",
+  "ar": "تابع طلبك لحظة بلحظة",
+  "en": "Follow your order step by step"
+ },
+ {
+  "key": "customer.fcc9fe7",
+  "ar": "تم إلغاء الطلب",
+  "en": "Order cancelled"
+ },
+ {
+  "key": "customer.4c22e1d",
+  "ar": "الرحلة جارية — السعر النهائي يظهر عند التسليم",
+  "en": "Trip in progress — the final price appears on delivery"
+ },
+ {
+  "key": "customer.39e9560",
+  "ar": "عرض الإيصال والدفع",
+  "en": "View receipt & pay"
+ },
+ {
+  "key": "customer.49b8b9a",
+  "ar": "تفاصيل الطلب",
+  "en": "Order details"
+ },
+ {
+  "key": "customer.f28d5b8",
+  "ar": "التعريفة",
+  "en": "Pricing"
+ },
+ {
+  "key": "customer.1f5b728",
+  "ar": "الرحلات خارج البحرين متاحة.",
+  "en": "Trips outside Bahrain are available."
+ },
+ {
+  "key": "customer.f6fd9e6",
+  "ar": "السعر لكل {0} دقائق",
+  "en": "Price per {0} minutes"
+ },
+ {
+  "key": "customer.7cd15fb",
+  "ar": "أو جزء منها، من بدء الرحلة حتى الوصول للوجهة",
+  "en": "or part of it, from trip start to arrival"
+ },
+ {
+  "key": "customer.168b909",
+  "ar": "الحد الأدنى للرحلة",
+  "en": "Minimum fare"
+ },
+ {
+  "key": "customer.a30fd7c",
+  "ar": "رسوم الليل",
+  "en": "Night surcharge"
+ },
+ {
+  "key": "customer.4ec9bb8",
+  "ar": "رسوم الخدمة",
+  "en": "Service fee"
+ },
+ {
+  "key": "customer.5657d8d",
+  "ar": "السعر النهائي يحسبه النظام تلقائيًا عند الوصول للوجهة، ويظهر في الإيصال.",
+  "en": "The final price is calculated by the system on arrival and shown on your receipt."
+ },
+ {
+  "key": "customer.a522dd0",
+  "ar": "نقطة الاستلام خارج مناطق الخدمة",
+  "en": "Pickup is outside the service area"
+ },
+ {
+  "key": "customer.33b6e68",
+  "ar": "تم حجز الرحلة",
+  "en": "Trip booked"
+ },
+ {
+  "key": "customer.1ca89b7",
+  "ar": "لديك رحلة غير مدفوعة",
+  "en": "You have an unpaid trip"
+ },
+ {
+  "key": "customer.4d212a1",
+  "ar": "ادفع الرحلة السابقة أولًا لتتمكن من الطلب.",
+  "en": "Pay your previous trip first to order again."
+ },
+ {
+  "key": "customer.98b46a8",
+  "ar": "لديك طلب نشط بالفعل",
+  "en": "You already have an active order"
+ },
+ {
+  "key": "customer.b4bde92",
+  "ar": "مطلوب",
+  "en": "Required"
+ },
+ {
+  "key": "customer.35152b2",
+  "ar": "تفاصيل التوصيلة",
+  "en": "Delivery details"
+ },
+ {
+  "key": "customer.318112e",
+  "ar": "طلب مباشر إلى {0}",
+  "en": "Direct request to {0}"
+ },
+ {
+  "key": "customer.1b8b08b",
+  "ar": "الاستلام",
+  "en": "Pickup"
+ },
+ {
+  "key": "customer.ce128ba",
+  "ar": "الوجهة",
+  "en": "Drop-off"
+ },
+ {
+  "key": "customer.cc5ab5f",
+  "ar": "تفضيلات الرحلة",
+  "en": "Trip preferences"
+ },
+ {
+  "key": "customer.dbea02a",
+  "ar": "ماذا سنوصّل؟",
+  "en": "What are we delivering?"
+ },
+ {
+  "key": "customer.6ac1bf7",
+  "ar": "وصف الشحنة",
+  "en": "Item description"
+ },
+ {
+  "key": "customer.50907e8",
+  "ar": "مثال: كرتونة ملابس، أوراق، طعام…",
+  "en": "e.g. a box of clothes, documents, food…"
+ },
+ {
+  "key": "customer.5ed8681",
+  "ar": "الوزن التقريبي (كجم) — اختياري",
+  "en": "Approx. weight (kg) — optional"
+ },
+ {
+  "key": "customer.6a87a61",
+  "ar": "صورة الشحنة",
+  "en": "Item photo"
+ },
+ {
+  "key": "customer.b17f3de",
+  "ar": "المستلم",
+  "en": "Receiver"
+ },
+ {
+  "key": "customer.8701b0c",
+  "ar": "اسم المستلم",
+  "en": "Receiver name"
+ },
+ {
+  "key": "customer.671d1d0",
+  "ar": "رقم المستلم",
+  "en": "Receiver phone"
+ },
+ {
+  "key": "customer.5ea1cc7",
+  "ar": "ملاحظات للسائق (اختياري)",
+  "en": "Notes for the driver (optional)"
+ },
+ {
+  "key": "customer.0da62ff",
+  "ar": "أقرّ بأن قبول الطلب يعتمد على سعة السيارة والقوانين، ولا أُرسل أشياء ممنوعة.",
+  "en": "I understand acceptance depends on vehicle capacity and the law, and I won't send prohibited items."
+ },
+ {
+  "key": "customer.94b1604",
+  "ar": "مطلوب للمتابعة",
+  "en": "Required to continue"
+ },
+ {
+  "key": "customer.88e52f9",
+  "ar": "متابعة — مراجعة السعر",
+  "en": "Continue — review price"
+ },
+ {
+  "key": "customer.fc94396",
+  "ar": "الإيصال",
+  "en": "Receipt"
+ },
+ {
+  "key": "customer.4fa32b2",
+  "ar": "تم التسليم بنجاح",
+  "en": "Delivered successfully"
+ },
+ {
+  "key": "customer.e3959b9",
+  "ar": "الإجمالي",
+  "en": "Total"
+ },
+ {
+  "key": "customer.fbdf178",
+  "ar": "مدفوع",
+  "en": "Paid"
+ },
+ {
+  "key": "customer.c3f222b",
+  "ar": "رقم الطلب",
+  "en": "Order"
+ },
+ {
+  "key": "customer.8b14730",
+  "ar": "بدء الرحلة",
+  "en": "Trip start"
+ },
+ {
+  "key": "customer.99e61da",
+  "ar": "الوصول",
+  "en": "Arrival"
+ },
+ {
+  "key": "customer.43ea05c",
+  "ar": "سعر الرحلة",
+  "en": "Trip price"
+ },
+ {
+  "key": "customer.be27584",
+  "ar": "خصم",
+  "en": "Discount"
+ },
+ {
+  "key": "customer.352e142",
+  "ar": "الإجمالي المستحق",
+  "en": "Total due"
+ },
+ {
+  "key": "customer.8d2d697",
+  "ar": "رحلة خارج نطاق الدولة",
+  "en": "Cross-border trip"
+ },
+ {
+  "key": "customer.0dd89b7",
+  "ar": "ادفع الآن",
+  "en": "Pay now"
+ },
+ {
+  "key": "customer.f58c60a",
+  "ar": "الحالة",
+  "en": "Status"
+ },
+ {
+  "key": "customer.deb9af5",
+  "ar": "تاريخ الطلب",
+  "en": "Ordered"
+ },
+ {
+  "key": "customer.96fb044",
+  "ar": "الشحنة",
+  "en": "Item"
+ },
+ {
+  "key": "customer.83e7eb1",
+  "ar": "الوصف",
+  "en": "Description"
+ },
+ {
+  "key": "customer.03a1f42",
+  "ar": "الوزن",
+  "en": "Weight"
+ },
+ {
+  "key": "customer.042250b",
+  "ar": "كجم",
+  "en": "kg"
+ },
+ {
+  "key": "customer.9f3686e",
+  "ar": "السجل الزمني",
+  "en": "Timeline"
+ },
+ {
+  "key": "customer.506d28e",
+  "ar": "تم رفع السعر وإعادة الإرسال",
+  "en": "Price increased and request resent"
+ },
+ {
+  "key": "customer.45ca75c",
+  "ar": "أعلى من الحد المسموح",
+  "en": "Above the allowed maximum"
+ },
+ {
+  "key": "customer.8d4916b",
+  "ar": "اختر زيادة أكبر من الحالية",
+  "en": "Pick more than the current increase"
+ },
+ {
+  "key": "customer.e656a4e",
+  "ar": "الطلب لم يعد يبحث عن سائق",
+  "en": "The order is no longer searching"
+ },
+ {
+  "key": "customer.1e56655",
+  "ar": "إلغاء الطلب؟",
+  "en": "Cancel the order?"
+ },
+ {
+  "key": "customer.38f78ff",
+  "ar": "لم يقبل أي سائق",
+  "en": "No driver accepted"
+ },
+ {
+  "key": "customer.2b4c071",
+  "ar": "جاري البحث عن سائق…",
+  "en": "Finding a driver…"
+ },
+ {
+  "key": "customer.2964b61",
+  "ar": "السائقون مشغولون الآن. حاول مرة أخرى.",
+  "en": "All drivers are currently busy. Please try again."
+ },
+ {
+  "key": "customer.73e04d5",
+  "ar": "نرسل طلبك لأقرب السائقين المتاحين",
+  "en": "Sending your request to nearby available drivers"
+ },
+ {
+  "key": "customer.6ba8641",
+  "ar": "زدت السعر +{0}% · {1}",
+  "en": "Price raised +{0}% · {1}"
+ },
+ {
+  "key": "customer.edb2cb1",
+  "ar": "زوّد السعر",
+  "en": "Raise the price"
+ },
+ {
+  "key": "customer.96cbdad",
+  "ar": "إعادة المحاولة",
+  "en": "Try again"
+ },
+ {
+  "key": "customer.c4ac0a1",
+  "ar": "التفاصيل",
+  "en": "Details"
+ },
+ {
+  "key": "customer.c65b4f6",
+  "ar": "اتصال",
+  "en": "Call"
+ },
+ {
+  "key": "customer.2b6e98e",
+  "ar": "صورة الاستلام",
+  "en": "Pickup photo"
+ },
+ {
+  "key": "customer.7ba08c0",
+  "ar": "صورة التسليم",
+  "en": "Delivery photo"
+ },
+ {
+  "key": "customer.dd1130a",
+  "ar": "؟",
+  "en": ""
+ },
+ {
+  "key": "customer.e7a0087",
+  "ar": "مباشر",
+  "en": "Live"
+ },
+ {
+  "key": "customer.6947e4d",
+  "ar": "يصل خلال {0} د",
+  "en": "Arrives in {0} min"
+ },
+ {
+  "key": "customer.51b1452",
+  "ar": "التسليم خلال {0} د",
+  "en": "Delivery in {0} min"
+ },
+ {
+  "key": "customer.d15b802",
+  "ar": "تكييف",
+  "en": "Air conditioning"
+ },
+ {
+  "key": "customer.4529c65",
+  "ar": "سيارة كبيرة (سفر وأمتعة)",
+  "en": "Large car (travel & luggage)"
+ },
+ {
+  "key": "customer.05f9bf0",
+  "ar": "التدخين",
+  "en": "Smoking"
+ },
+ {
+  "key": "customer.5fec733",
+  "ar": "لا يهم",
+  "en": "Any"
+ },
+ {
+  "key": "customer.35006c7",
+  "ar": "ممنوع",
+  "en": "Not allowed"
+ },
+ {
+  "key": "customer.e78ba05",
+  "ar": "مسموح",
+  "en": "Allowed"
+ },
+ {
+  "key": "customer.d675535",
+  "ar": "السائق",
+  "en": "Driver"
+ },
+ {
+  "key": "customer.466f996",
+  "ar": "سائقة",
+  "en": "Female"
+ },
+ {
+  "key": "customer.8f87168",
+  "ar": "سائق",
+  "en": "Male"
+ },
+ {
+  "key": "customer.00232b7",
+  "ar": "الطلب يُعرض فقط على السائقين المطابقين للتفضيلات.",
+  "en": "Only drivers matching these preferences get the request."
+ },
+ {
+  "key": "customer.3fb6238",
+  "ar": "تكييف",
+  "en": "A/C"
+ },
+ {
+  "key": "customer.8f0e695",
+  "ar": "سيارة كبيرة",
+  "en": "Large car"
+ },
+ {
+  "key": "customer.0369200",
+  "ar": "ممنوع التدخين",
+  "en": "No smoking"
+ },
+ {
+  "key": "customer.4b99e0b",
+  "ar": "التدخين مسموح",
+  "en": "Smoking allowed"
+ },
+ {
+  "key": "customer.85cecf6",
+  "ar": "سائقة",
+  "en": "Female driver"
+ },
+ {
+  "key": "customer.8ad27a4",
+  "ar": "سائق رجل",
+  "en": "Male driver"
+ },
+ {
+  "key": "customer.68c0c98",
+  "ar": "جاري حساب السعر…",
+  "en": "Calculating price…"
+ },
+ {
+  "key": "customer.c626d55",
+  "ar": "إعادة",
+  "en": "Retry"
+ },
+ {
+  "key": "customer.7ef70ce",
+  "ar": "نقطة الاستلام خارج مناطق الخدمة حاليًا. جرّب مكانًا آخر.",
+  "en": "Pickup is outside our service areas. Try another spot."
+ },
+ {
+  "key": "customer.466287e",
+  "ar": "السعر التقديري",
+  "en": "Estimated price"
+ },
+ {
+  "key": "customer.da968bf",
+  "ar": "تقديري",
+  "en": "Estimate"
+ },
+ {
+  "key": "customer.43b7eb4",
+  "ar": "كم",
+  "en": "km"
+ },
+ {
+  "key": "customer.c95d0c8",
+  "ar": "دقيقة",
+  "en": "min"
+ },
+ {
+  "key": "customer.fd15e41",
+  "ar": "رسوم ليلية",
+  "en": "Night rate"
+ },
+ {
+  "key": "customer.b9f97b9",
+  "ar": "خارج البحرين",
+  "en": "Outside Bahrain"
+ },
+ {
+  "key": "customer.8bdede1",
+  "ar": "رسوم مطار",
+  "en": "Airport fee"
+ },
+ {
+  "key": "customer.7e1fcf6",
+  "ar": "السعر والمسافة والمدة تقديرية. السعر النهائي حسب وقت الرحلة الفعلي.",
+  "en": "Price, distance and time are estimates. Final price follows the actual trip time."
+ },
+ {
+  "key": "customer.638ac2a",
+  "ar": "تأكيد الطلب",
+  "en": "Confirm order"
+ },
+ {
+  "key": "customer.ecdb771",
+  "ar": "من",
+  "en": "From"
+ },
+ {
+  "key": "customer.32c46ec",
+  "ar": "إلى",
+  "en": "To"
+ },
+ {
+  "key": "customer.6f35b31",
+  "ar": "تأكيد وإرسال الطلب",
+  "en": "Confirm & place order"
+ },
+ {
+  "key": "customer.4cbb34b",
+  "ar": "تعديل",
+  "en": "Edit"
+ },
+ {
+  "key": "customer.959ba36",
+  "ar": "الكود غير صحيح",
+  "en": "Invalid code"
+ },
+ {
+  "key": "customer.462b8c4",
+  "ar": "انتهت صلاحية الكود",
+  "en": "This code has expired"
+ },
+ {
+  "key": "customer.586ccd0",
+  "ar": "الكود لم يبدأ بعد",
+  "en": "This code isn't active yet"
+ },
+ {
+  "key": "customer.60d2675",
+  "ar": "قيمة الطلب أقل من الحد الأدنى للكود",
+  "en": "Order is below the minimum for this code"
+ },
+ {
+  "key": "customer.c813a12",
+  "ar": "أكواد الخصم متوقفة حاليًا",
+  "en": "Promo codes are off right now"
+ },
+ {
+  "key": "customer.af3ab6d",
+  "ar": "تم تطبيق الكود",
+  "en": "Code applied"
+ },
+ {
+  "key": "customer.c91a997",
+  "ar": "إزالة",
+  "en": "Remove"
+ },
+ {
+  "key": "customer.ca76df8",
+  "ar": "كود الخصم (اختياري)",
+  "en": "Promo code (optional)"
+ },
+ {
+  "key": "customer.a2f3ed0",
+  "ar": "تطبيق",
+  "en": "Apply"
+ },
+ {
+  "key": "customer.f894cd0",
+  "ar": "الدفع بالبطاقة",
+  "en": "Card payment"
+ },
+ {
+  "key": "customer.51eb8cb",
+  "ar": "الدفع بالبطاقة غير متاح حاليًا",
+  "en": "Card payment is unavailable right now"
+ },
+ {
+  "key": "customer.00846a0",
+  "ar": "استخدم BenefitPay بدلًا منه.",
+  "en": "Please use BenefitPay instead."
+ },
+ {
+  "key": "customer.77ada50",
+  "ar": "المبلغ الذي سيُخصم",
+  "en": "Amount to be charged"
+ },
+ {
+  "key": "customer.bce8ccd",
+  "ar": "يشمل رسوم بوابة الدفع",
+  "en": "Includes the payment gateway fee"
+ },
+ {
+  "key": "customer.22343de",
+  "ar": "ادفع بأمان",
+  "en": "Pay securely"
+ },
+ {
+  "key": "customer.c79563f",
+  "ar": "الدفع",
+  "en": "Payment"
+ },
+ {
+  "key": "customer.ac1430e",
+  "ar": "المبلغ المستحق",
+  "en": "Amount due"
+ },
+ {
+  "key": "customer.b23317c",
+  "ar": "تم رفض الإيصال",
+  "en": "Receipt rejected"
+ },
+ {
+  "key": "customer.6c6a8af",
+  "ar": "اختر طريقة الدفع",
+  "en": "Choose a payment method"
+ },
+ {
+  "key": "customer.ca94641",
+  "ar": "لا توجد طريقة دفع متاحة حاليًا، حاول لاحقًا.",
+  "en": "No payment method is available right now. Please try later."
+ },
+ {
+  "key": "customer.c1d3a13",
+  "ar": "بطاقة (Tap)",
+  "en": "Card (Tap)"
+ },
+ {
+  "key": "customer.96b3d73",
+  "ar": "حوّل من تطبيق البنك وارفع لقطة الشاشة.",
+  "en": "Transfer from your bank app and upload a screenshot."
+ },
+ {
+  "key": "customer.4fb26bb",
+  "ar": "لا يوجد دفع نقدي. كل المدفوعات آمنة وموثّقة.",
+  "en": "No cash. All payments are secure and recorded."
+ },
+ {
+  "key": "customer.143f3e3",
+  "ar": "متابعة",
+  "en": "Continue"
+ },
+ {
+  "key": "customer.ceb39c5",
+  "ar": "دفع إلكتروني فوري. رسوم البوابة{0} تُضاف على المبلغ.",
+  "en": "Instant online payment. Gateway fee{0} is added."
+ },
+ {
+  "key": "customer.4abcdf3",
+  "ar": "تم الدفع بنجاح",
+  "en": "Payment successful"
+ },
+ {
+  "key": "customer.6ec401d",
+  "ar": "شكرًا لاستخدامك وصلي",
+  "en": "Thanks for using Wasaly"
+ },
+ {
+  "key": "customer.8c27363",
+  "ar": "فشل الدفع",
+  "en": "Payment failed"
+ },
+ {
+  "key": "customer.f4e5a18",
+  "ar": "لم يتم خصم المبلغ. حاول مرة أخرى.",
+  "en": "You were not charged. Please try again."
+ },
+ {
+  "key": "customer.6347b9d",
+  "ar": "قيد التحقق",
+  "en": "Being verified"
+ },
+ {
+  "key": "customer.1d0061e",
+  "ar": "نراجع إيصال التحويل وسنُشعرك فور التأكيد.",
+  "en": "We're checking your transfer and will notify you."
+ },
+ {
+  "key": "customer.0700482",
+  "ar": "جاري التحقق من الدفع…",
+  "en": "Checking payment…"
+ },
+ {
+  "key": "customer.59236c5",
+  "ar": "لا تغلق هذه الشاشة",
+  "en": "Don't close this screen"
+ },
+ {
+  "key": "customer.ff9ba5f",
+  "ar": "حالة الدفع",
+  "en": "Payment status"
+ },
+ {
+  "key": "customer.56fac8e",
+  "ar": "إعادة رفع الإيصال",
+  "en": "Re-upload receipt"
+ },
+ {
+  "key": "customer.592e683",
+  "ar": "حاول مجددًا",
+  "en": "Try again"
+ },
+ {
+  "key": "customer.05785d5",
+  "ar": "العودة للرئيسية",
+  "en": "Back to home"
+ },
+ {
+  "key": "customer.7da7d2a",
+  "ar": "حوّل المبلغ إلى حساب الشركة",
+  "en": "Transfer the amount to our account"
+ },
+ {
+  "key": "customer.f6ba1ca",
+  "ar": "المبلغ",
+  "en": "Amount"
+ },
+ {
+  "key": "customer.b9c3c62",
+  "ar": "اسم الحساب",
+  "en": "Account name"
+ },
+ {
+  "key": "customer.8e7b794",
+  "ar": "رقم الحساب / الهاتف",
+  "en": "Account / phone"
+ },
+ {
+  "key": "customer.c383f1b",
+  "ar": "ارفع لقطة شاشة التحويل",
+  "en": "Upload the transfer screenshot"
+ },
+ {
+  "key": "customer.3bf0066",
+  "ar": "لقطة شاشة التحويل",
+  "en": "Transfer screenshot"
+ },
+ {
+  "key": "customer.ddd4bf8",
+  "ar": "مطلوبة",
+  "en": "Required"
+ },
+ {
+  "key": "customer.b2b9694",
+  "ar": "رقم المرجع (اختياري)",
+  "en": "Reference no. (optional)"
+ },
+ {
+  "key": "customer.621ecec",
+  "ar": "ستراجع الإدارة الإيصال وتؤكد الدفع.",
+  "en": "Our team will review and confirm the payment."
+ },
+ {
+  "key": "customer.9bc2999",
+  "ar": "إرسال الإيصال",
+  "en": "Submit receipt"
+ },
+ {
+  "key": "customer.52460fe",
+  "ar": "تم النسخ",
+  "en": "Copied"
+ },
+ {
+  "key": "customer.ae7a526",
+  "ar": "مدفوعاتي",
+  "en": "My payments"
+ },
+ {
+  "key": "customer.49485c2",
+  "ar": "لا توجد مدفوعات",
+  "en": "No payments yet"
+ },
+ {
+  "key": "customer.fba5f4c",
+  "ar": "طلب",
+  "en": "Order"
+ },
+ {
+  "key": "customer.eabe5f6",
+  "ar": "الكل",
+  "en": "All"
+ },
+ {
+  "key": "customer.a2476e2",
+  "ar": "النشطة",
+  "en": "Active"
+ },
+ {
+  "key": "customer.e781190",
+  "ar": "المكتملة",
+  "en": "Completed"
+ },
+ {
+  "key": "customer.45c1246",
+  "ar": "الملغاة",
+  "en": "Cancelled"
+ },
+ {
+  "key": "customer.e004664",
+  "ar": "طلباتي",
+  "en": "My orders"
+ },
+ {
+  "key": "customer.138ee06",
+  "ar": "لا توجد طلبات بعد",
+  "en": "No orders yet"
+ },
+ {
+  "key": "customer.bcdab17",
+  "ar": "اطلب أول توصيلة الآن",
+  "en": "Request your first delivery now"
+ },
+ {
+  "key": "customer.bac2d30",
+  "ar": "طلب توصيلة",
+  "en": "Request a delivery"
+ },
+ {
+  "key": "customer.dae8872",
+  "ar": "توصيلة",
+  "en": "Delivery"
+ },
+ {
+  "key": "customer.c1a3437",
+  "ar": "صباح الخير",
+  "en": "Good morning"
+ },
+ {
+  "key": "customer.5a610bb",
+  "ar": "مساء الخير",
+  "en": "Good evening"
+ },
+ {
+  "key": "customer.3c55a4b",
+  "ar": "إلى أين نوصّل؟",
+  "en": "Where to?"
+ },
+ {
+  "key": "customer.0dc10d3",
+  "ar": "الآن",
+  "en": "Now"
+ },
+ {
+  "key": "customer.85428e1",
+  "ar": "التعريفة والأسعار",
+  "en": "Pricing"
+ },
+ {
+  "key": "customer.0ded22f",
+  "ar": "{0}، {1} 👋",
+  "en": "{0}, {1} 👋"
+ },
+ {
+  "key": "customer.11c5df0",
+  "ar": "توصيلة",
+  "en": "Delivery"
+ },
+ {
+  "key": "customer.65c1053",
+  "ar": "رحلة بانتظار الدفع",
+  "en": "Trip awaiting payment"
+ },
+ {
+  "key": "customer.c3854c9",
+  "ar": "لديك طلب نشط",
+  "en": "You have an active order"
+ },
+ {
+  "key": "customer.c735e47",
+  "ar": "{0}",
+  "en": "{0}"
+ },
+ {
+  "key": "customer.5d32687",
+  "ar": "أضف المنزل والعمل",
+  "en": "Add home & work"
+ },
+ {
+  "key": "customer.5a2abb1",
+  "ar": "أماكني",
+  "en": "My places"
+ },
+ {
+  "key": "customer.caa465c",
+  "ar": "رحلاتك السابقة",
+  "en": "Your recent trips"
+ },
+ {
+  "key": "customer.b589c90",
+  "ar": "عرض الكل",
+  "en": "See all"
+ },
+ {
+  "key": "customer.fb56b58",
+  "ar": "اطلب مجددًا",
+  "en": "Order again"
+ },
+ {
+  "key": "customer.de6f06a",
+  "ar": "مستندات",
+  "en": "Documents"
+ },
+ {
+  "key": "customer.8420b22",
+  "ar": "طرد",
+  "en": "Parcel"
+ },
+ {
+  "key": "customer.0f9d3b6",
+  "ar": "طلب محل",
+  "en": "Shop order"
+ },
+ {
+  "key": "customer.b3aa05e",
+  "ar": "أغراض كبيرة",
+  "en": "Large items"
+ },
+ {
+  "key": "customer.2c45084",
+  "ar": "مطار وسفر",
+  "en": "Airport & travel"
+ },
+ {
+  "key": "admin.a7ef89b",
+  "ar": "الرئيسية",
+  "en": "Dashboard"
+ },
+ {
+  "key": "admin.71a355f",
+  "ar": "المستخدمون",
+  "en": "Users"
+ },
+ {
+  "key": "admin.68fdab1",
+  "ar": "الطلبات",
+  "en": "Orders"
+ },
+ {
+  "key": "admin.4ec2873",
+  "ar": "المزيد",
+  "en": "More"
+ },
+ {
+  "key": "admin.25d33a9",
+  "ar": "خصم {0}% على رحلتك",
+  "en": "{0}% off your trip"
+ },
+ {
+  "key": "admin.5d93b19",
+  "ar": "استخدم الكود {0}",
+  "en": "Use code {0}"
+ },
+ {
+  "key": "admin.976006a",
+  "ar": "لم يتم حفظ: {0}",
+  "en": "Not saved: {0}"
+ },
+ {
+  "key": "admin.92c92eb",
+  "ar": "تأكيد استلام المبلغ؟",
+  "en": "Confirm payment received?"
+ },
+ {
+  "key": "admin.1de4f45",
+  "ar": "سبب رفض الإيصال",
+  "en": "Reason for rejecting this receipt"
+ },
+ {
+  "key": "admin.8eb64b3",
+  "ar": "للتحقق",
+  "en": "To verify"
+ },
+ {
+  "key": "admin.8086f0c",
+  "ar": "مدفوعة",
+  "en": "Paid"
+ },
+ {
+  "key": "admin.6022b49",
+  "ar": "مرفوضة",
+  "en": "Rejected"
+ },
+ {
+  "key": "admin.b181567",
+  "ar": "فاشلة",
+  "en": "Failed"
+ },
+ {
+  "key": "admin.eabe5f6",
+  "ar": "الكل",
+  "en": "All"
+ },
+ {
+  "key": "admin.7198397",
+  "ar": "المدفوعات",
+  "en": "Payments"
+ },
+ {
+  "key": "admin.eebb916",
+  "ar": "لا يوجد شيء للمراجعة",
+  "en": "Nothing to review"
+ },
+ {
+  "key": "admin.fba5f4c",
+  "ar": "طلب",
+  "en": "Order"
+ },
+ {
+  "key": "admin.8a223f3",
+  "ar": "رفض",
+  "en": "Reject"
+ },
+ {
+  "key": "admin.b3ee3f0",
+  "ar": "تأكيد الدفع",
+  "en": "Confirm"
+ },
+ {
+  "key": "admin.442615d",
+  "ar": "المرجع",
+  "en": "Reference"
+ },
+ {
+  "key": "admin.f1fdc6c",
+  "ar": "المبلغ المتوقع",
+  "en": "Expected amount"
+ },
+ {
+  "key": "admin.4363c5f",
+  "ar": "حساب الشركة",
+  "en": "Company account"
+ },
+ {
+  "key": "admin.1d634a6",
+  "ar": "العميل",
+  "en": "Customer"
+ },
+ {
+  "key": "admin.d675535",
+  "ar": "السائق",
+  "en": "Driver"
+ },
+ {
+  "key": "admin.f0e83fa",
+  "ar": "الرحلة",
+  "en": "Trip"
+ },
+ {
+  "key": "admin.fffe414",
+  "ar": "تم التحقق بواسطة",
+  "en": "Verified by"
+ },
+ {
+  "key": "admin.9a107f9",
+  "ar": "⚠️ المبلغ المدفوع لا يطابق المتوقع",
+  "en": "⚠️ Paid amount differs from expected"
+ },
+ {
+  "key": "admin.9876305",
+  "ar": "سجل التدقيق",
+  "en": "Audit log"
+ },
+ {
+  "key": "admin.3064ace",
+  "ar": "بحث بالإجراء أو المستخدم",
+  "en": "Search action or user"
+ },
+ {
+  "key": "admin.34ff25b",
+  "ar": "لا توجد سجلات",
+  "en": "No entries"
+ },
+ {
+  "key": "admin.2070dd8",
+  "ar": "مناطق المطار",
+  "en": "Airport zones"
+ },
+ {
+  "key": "admin.17c1523",
+  "ar": "منطقة جديدة",
+  "en": "New zone"
+ },
+ {
+  "key": "admin.9a3d053",
+  "ar": "لا توجد مناطق",
+  "en": "No zones yet"
+ },
+ {
+  "key": "admin.aed8d78",
+  "ar": "أضف منطقة المطار ورسومها",
+  "en": "Add the airport area and its fee"
+ },
+ {
+  "key": "admin.cadfc2e",
+  "ar": "مضلع",
+  "en": "Polygon"
+ },
+ {
+  "key": "admin.08194ce",
+  "ar": "نقاط",
+  "en": "points"
+ },
+ {
+  "key": "admin.482e1e5",
+  "ar": "دائرة",
+  "en": "Circle"
+ },
+ {
+  "key": "admin.9aa1181",
+  "ar": "حذف المنطقة؟",
+  "en": "Delete zone?"
+ },
+ {
+  "key": "admin.99e68ab",
+  "ar": "الطلبات القديمة تحتفظ برسومها.",
+  "en": "Old orders keep their fee."
+ },
+ {
+  "key": "admin.c2dfcfe",
+  "ar": "تعديل المنطقة",
+  "en": "Edit zone"
+ },
+ {
+  "key": "admin.28bb9f6",
+  "ar": "اضغط على الخريطة لإضافة نقاط (3 على الأقل)",
+  "en": "Tap the map to add points (at least 3)"
+ },
+ {
+  "key": "admin.116a086",
+  "ar": "اضغط على الخريطة لتحديد المركز",
+  "en": "Tap the map to set the centre"
+ },
+ {
+  "key": "admin.54603b6",
+  "ar": "تراجع عن نقطة",
+  "en": "Undo point"
+ },
+ {
+  "key": "admin.5136f42",
+  "ar": "نصف القطر",
+  "en": "Radius"
+ },
+ {
+  "key": "admin.78e727e",
+  "ar": "الاسم",
+  "en": "Name"
+ },
+ {
+  "key": "admin.2b078cb",
+  "ar": "مطار البحرين الدولي",
+  "en": "Bahrain Intl Airport"
+ },
+ {
+  "key": "admin.82b7b15",
+  "ar": "الرسوم",
+  "en": "Fee"
+ },
+ {
+  "key": "admin.0c32536",
+  "ar": "مفعّلة",
+  "en": "Active"
+ },
+ {
+  "key": "admin.0360038",
+  "ar": "حفظ",
+  "en": "Save"
+ },
+ {
+  "key": "admin.bef067e",
+  "ar": "منطقة جديدة",
+  "en": "New area"
+ },
+ {
+  "key": "admin.0486563",
+  "ar": "تعديل المنطقة",
+  "en": "Edit area"
+ },
+ {
+  "key": "admin.b7e060f",
+  "ar": "المركز = منتصف الخريطة الحالي",
+  "en": "Centre = current map centre"
+ },
+ {
+  "key": "admin.9f7f52b",
+  "ar": "اسم المنطقة",
+  "en": "Area name"
+ },
+ {
+  "key": "admin.bce8a66",
+  "ar": "نصف القطر (كم)",
+  "en": "Radius (km)"
+ },
+ {
+  "key": "admin.9edcfa8",
+  "ar": "سبب التعديل",
+  "en": "Reason"
+ },
+ {
+  "key": "admin.0620c1c",
+  "ar": "مناطق الخدمة",
+  "en": "Service areas"
+ },
+ {
+  "key": "admin.060c2ab",
+  "ar": "لا توجد مناطق",
+  "en": "No areas yet"
+ },
+ {
+  "key": "admin.43b7eb4",
+  "ar": "كم",
+  "en": "km"
+ },
+ {
+  "key": "admin.120418f",
+  "ar": "غير مفعّلة",
+  "en": "Inactive"
+ },
+ {
+  "key": "admin.2cd762f",
+  "ar": "مدير عام",
+  "en": "Super admin"
+ },
+ {
+  "key": "admin.4327776",
+  "ar": "إدارة",
+  "en": "Admin"
+ },
+ {
+  "key": "admin.a005cb0",
+  "ar": "ملخص اليوم",
+  "en": "Today's overview"
+ },
+ {
+  "key": "admin.6761d66",
+  "ar": "طلبات تبحث عن سائق",
+  "en": "Searching for a driver"
+ },
+ {
+  "key": "admin.6d4d9d0",
+  "ar": "جارية الآن",
+  "en": "In progress"
+ },
+ {
+  "key": "admin.8e06a5a",
+  "ar": "إيرادات اليوم",
+  "en": "Revenue today"
+ },
+ {
+  "key": "admin.13b5f38",
+  "ar": "عمولة الشركة",
+  "en": "Company profit"
+ },
+ {
+  "key": "admin.ee8c452",
+  "ar": "المستخدمون المتصلون",
+  "en": "Online users"
+ },
+ {
+  "key": "admin.7fe19e0",
+  "ar": "سائقون متصلون",
+  "en": "Online drivers"
+ },
+ {
+  "key": "admin.f526ec6",
+  "ar": "مكتملة اليوم",
+  "en": "Completed today"
+ },
+ {
+  "key": "admin.98d32ea",
+  "ar": "رخص منتهية / تنتهي قريبًا",
+  "en": "Licences expired / expiring"
+ },
+ {
+  "key": "admin.a35591d",
+  "ar": "تحتاج إجراء",
+  "en": "Needs action"
+ },
+ {
+  "key": "admin.bdeac7a",
+  "ar": "طلبات تسجيل بانتظار المراجعة",
+  "en": "Registrations awaiting review"
+ },
+ {
+  "key": "admin.8ffddd9",
+  "ar": "إيصالات BenefitPay للتحقق",
+  "en": "BenefitPay receipts to verify"
+ },
+ {
+  "key": "admin.f5f035f",
+  "ar": "تحويلات سائقين فاشلة",
+  "en": "Failed driver payouts"
+ },
+ {
+  "key": "admin.c3727b4",
+  "ar": "شكاوى مفتوحة",
+  "en": "Open complaints"
+ },
+ {
+  "key": "admin.a222c18",
+  "ar": "بحث",
+  "en": "Searching"
+ },
+ {
+  "key": "admin.3d2628a",
+  "ar": "جارية",
+  "en": "Running"
+ },
+ {
+  "key": "admin.1e93e80",
+  "ar": "مكتملة",
+  "en": "Completed"
+ },
+ {
+  "key": "admin.dd66303",
+  "ar": "ملغاة",
+  "en": "Cancelled"
+ },
+ {
+  "key": "admin.0fba1d8",
+  "ar": "بلا سائق",
+  "en": "No driver"
+ },
+ {
+  "key": "admin.6280f2b",
+  "ar": "بحث برقم الطلب أو الهاتف",
+  "en": "Search order # or phone"
+ },
+ {
+  "key": "admin.a33499e",
+  "ar": "لا توجد طلبات",
+  "en": "No orders"
+ },
+ {
+  "key": "admin.e3959b9",
+  "ar": "الإجمالي",
+  "en": "Total"
+ },
+ {
+  "key": "admin.c493262",
+  "ar": "🟢 متصل الآن",
+  "en": "🟢 Online now"
+ },
+ {
+  "key": "admin.b0cbbdb",
+  "ar": "بانتظار المراجعة",
+  "en": "Pending"
+ },
+ {
+  "key": "admin.f451887",
+  "ar": "تصحيح",
+  "en": "Correction"
+ },
+ {
+  "key": "admin.05fbe42",
+  "ar": "معتمد",
+  "en": "Approved"
+ },
+ {
+  "key": "admin.0dbe228",
+  "ar": "موقوف",
+  "en": "Suspended"
+ },
+ {
+  "key": "admin.8290f87",
+  "ar": "مرفوض",
+  "en": "Rejected"
+ },
+ {
+  "key": "admin.363eeb5",
+  "ar": "محذوف",
+  "en": "Deleted"
+ },
+ {
+  "key": "admin.53626eb",
+  "ar": "كل الأدوار",
+  "en": "All roles"
+ },
+ {
+  "key": "admin.3a77066",
+  "ar": "العملاء",
+  "en": "Customers"
+ },
+ {
+  "key": "admin.a19b77c",
+  "ar": "السائقون",
+  "en": "Drivers"
+ },
+ {
+  "key": "admin.cf46c2f",
+  "ar": "بحث بالاسم أو الهاتف",
+  "en": "Search name or phone"
+ },
+ {
+  "key": "admin.7ce5ed6",
+  "ar": "لا يوجد مستخدمون",
+  "en": "No users"
+ },
+ {
+  "key": "admin.81caea3",
+  "ar": "سائق",
+  "en": "Driver"
+ },
+ {
+  "key": "admin.23e8040",
+  "ar": "عميل",
+  "en": "Customer"
+ },
+ {
+  "key": "admin.248b8c0",
+  "ar": "سبب الإلغاء",
+  "en": "Cancellation reason"
+ },
+ {
+  "key": "admin.61bb8e6",
+  "ar": "تعديل سعر الرحلة",
+  "en": "Adjust trip price"
+ },
+ {
+  "key": "admin.dc34889",
+  "ar": "السعر الجديد",
+  "en": "New price"
+ },
+ {
+  "key": "admin.484f3d2",
+  "ar": "تراجع",
+  "en": "Cancel"
+ },
+ {
+  "key": "admin.f74c02b",
+  "ar": "متابعة",
+  "en": "Next"
+ },
+ {
+  "key": "admin.e3c4888",
+  "ar": "سبب تعديل السعر",
+  "en": "Reason for adjustment"
+ },
+ {
+  "key": "admin.cb2621b",
+  "ar": "الطلب",
+  "en": "Order"
+ },
+ {
+  "key": "admin.f58c60a",
+  "ar": "الحالة",
+  "en": "Status"
+ },
+ {
+  "key": "admin.1b8b08b",
+  "ar": "الاستلام",
+  "en": "Pickup"
+ },
+ {
+  "key": "admin.ce128ba",
+  "ar": "الوجهة",
+  "en": "Drop-off"
+ },
+ {
+  "key": "admin.96fb044",
+  "ar": "الشحنة",
+  "en": "Item"
+ },
+ {
+  "key": "admin.b17f3de",
+  "ar": "المستلم",
+  "en": "Receiver"
+ },
+ {
+  "key": "admin.ff60f9b",
+  "ar": "بدء الرحلة",
+  "en": "Started"
+ },
+ {
+  "key": "admin.7ed150c",
+  "ar": "الوصول",
+  "en": "Arrived"
+ },
+ {
+  "key": "admin.1a97e83",
+  "ar": "التفاصيل المالية",
+  "en": "Financials"
+ },
+ {
+  "key": "admin.43ea05c",
+  "ar": "سعر الرحلة",
+  "en": "Trip price"
+ },
+ {
+  "key": "admin.a30fd7c",
+  "ar": "رسوم الليل",
+  "en": "Night surcharge"
+ },
+ {
+  "key": "admin.4ec9bb8",
+  "ar": "رسوم الخدمة",
+  "en": "Service fee"
+ },
+ {
+  "key": "admin.481d42c",
+  "ar": "ما دفعه العميل",
+  "en": "Customer total"
+ },
+ {
+  "key": "admin.1574633",
+  "ar": "عمولة الشركة",
+  "en": "Company commission"
+ },
+ {
+  "key": "admin.bb95a89",
+  "ar": "خصم خارجي",
+  "en": "Cross-border fee"
+ },
+ {
+  "key": "admin.de7a71f",
+  "ar": "نصيب السائق",
+  "en": "Driver share"
+ },
+ {
+  "key": "admin.ae3c36a",
+  "ar": "حالة الدفع",
+  "en": "Payment"
+ },
+ {
+  "key": "admin.5256ac5",
+  "ar": "تعديل السعر (مدير عام)",
+  "en": "Adjust price (super admin)"
+ },
+ {
+  "key": "admin.97bb147",
+  "ar": "إلغاء الطلب",
+  "en": "Cancel order"
+ },
+ {
+  "key": "admin.5b51e4f",
+  "ar": "هذا المستخدم",
+  "en": "this user"
+ },
+ {
+  "key": "admin.d7c7d52",
+  "ar": "كل العملاء",
+  "en": "all customers"
+ },
+ {
+  "key": "admin.1d439cf",
+  "ar": "كل السائقين",
+  "en": "all drivers"
+ },
+ {
+  "key": "admin.cf74290",
+  "ar": "الجميع (عملاء وسائقين)",
+  "en": "everyone"
+ },
+ {
+  "key": "admin.b80f65b",
+  "ar": "إرسال الإشعار إلى {0}؟",
+  "en": "Send to {0}?"
+ },
+ {
+  "key": "admin.58b8804",
+  "ar": "تم الإرسال",
+  "en": "Sent"
+ },
+ {
+  "key": "admin.0bd0cc5",
+  "ar": "وصل الإشعار إلى {0} مستخدم.",
+  "en": "Delivered to {0} users."
+ },
+ {
+  "key": "admin.2b48d77",
+  "ar": "تم",
+  "en": "Done"
+ },
+ {
+  "key": "admin.b4bde92",
+  "ar": "مطلوب",
+  "en": "Required"
+ },
+ {
+  "key": "admin.d4fbca0",
+  "ar": "الجميع",
+  "en": "Everyone"
+ },
+ {
+  "key": "admin.6e7716e",
+  "ar": "إرسال إشعار",
+  "en": "Send notification"
+ },
+ {
+  "key": "admin.9011c81",
+  "ar": "إلى من؟",
+  "en": "To whom?"
+ },
+ {
+  "key": "admin.1377a04",
+  "ar": "مستخدم واحد",
+  "en": "One user"
+ },
+ {
+  "key": "admin.69c7ac1",
+  "ar": "الرسالة",
+  "en": "Message"
+ },
+ {
+  "key": "admin.20e10d3",
+  "ar": "العنوان",
+  "en": "Title"
+ },
+ {
+  "key": "admin.2b98b8e",
+  "ar": "النص",
+  "en": "Message"
+ },
+ {
+  "key": "admin.284ce89",
+  "ar": "معاينة",
+  "en": "Preview"
+ },
+ {
+  "key": "admin.53d1edd",
+  "ar": "نص الإشعار…",
+  "en": "Message…"
+ },
+ {
+  "key": "admin.ad89df6",
+  "ar": "إرسال",
+  "en": "Send"
+ },
+ {
+  "key": "admin.e3f361a",
+  "ar": "البانرات",
+  "en": "Banners"
+ },
+ {
+  "key": "admin.4621282",
+  "ar": "بانر جديد",
+  "en": "New banner"
+ },
+ {
+  "key": "admin.17a430d",
+  "ar": "لا توجد بانرات",
+  "en": "No banners"
+ },
+ {
+  "key": "admin.ef4f48f",
+  "ar": "حذف البانر؟",
+  "en": "Delete banner?"
+ },
+ {
+  "key": "admin.ad7c1b6",
+  "ar": "تعديل البانر",
+  "en": "Edit banner"
+ },
+ {
+  "key": "admin.5777813",
+  "ar": "العنوان (عربي)",
+  "en": "Title (Arabic)"
+ },
+ {
+  "key": "admin.dec529e",
+  "ar": "العنوان (إنجليزي)",
+  "en": "Title (English)"
+ },
+ {
+  "key": "admin.cfc5866",
+  "ar": "وصف (عربي)",
+  "en": "Subtitle (Arabic)"
+ },
+ {
+  "key": "admin.ad371c7",
+  "ar": "وصف (إنجليزي)",
+  "en": "Subtitle (English)"
+ },
+ {
+  "key": "admin.f758cd3",
+  "ar": "اللون",
+  "en": "Colour"
+ },
+ {
+  "key": "admin.c3b60ad",
+  "ar": "صورة (اختياري)",
+  "en": "Image (optional)"
+ },
+ {
+  "key": "admin.f71c103",
+  "ar": "الجمهور",
+  "en": "Audience"
+ },
+ {
+  "key": "admin.c4cacbb",
+  "ar": "الكل",
+  "en": "Everyone"
+ },
+ {
+  "key": "admin.661de96",
+  "ar": "عند الضغط",
+  "en": "On tap"
+ },
+ {
+  "key": "admin.0f4d707",
+  "ar": "لا شيء",
+  "en": "Nothing"
+ },
+ {
+  "key": "admin.0daf6eb",
+  "ar": "فتح شاشة",
+  "en": "Open screen"
+ },
+ {
+  "key": "admin.c092fbf",
+  "ar": "فتح رابط",
+  "en": "Open link"
+ },
+ {
+  "key": "admin.0ecb453",
+  "ar": "طلب جديد",
+  "en": "New order"
+ },
+ {
+  "key": "admin.302108c",
+  "ar": "الأسعار",
+  "en": "Pricing"
+ },
+ {
+  "key": "admin.0c9a5bd",
+  "ar": "الدعم",
+  "en": "Support"
+ },
+ {
+  "key": "admin.947c5cc",
+  "ar": "الترتيب",
+  "en": "Sort order"
+ },
+ {
+  "key": "admin.537233c",
+  "ar": "مفعّل",
+  "en": "Active"
+ },
+ {
+  "key": "admin.f61f44e",
+  "ar": "بحث",
+  "en": "Search"
+ },
+ {
+  "key": "admin.f5a40fe",
+  "ar": "لا يوجد سائقون",
+  "en": "No drivers"
+ },
+ {
+  "key": "admin.ebcea8e",
+  "ar": "بدون مناطق",
+  "en": "No areas"
+ },
+ {
+  "key": "admin.0653761",
+  "ar": "المناطق",
+  "en": "Areas"
+ },
+ {
+  "key": "admin.b4b29a7",
+  "ar": "، ",
+  "en": ""
+ },
+ {
+  "key": "admin.9ff6af9",
+  "ar": "أخطاء التطبيق",
+  "en": "App errors"
+ },
+ {
+  "key": "admin.896ad18",
+  "ar": "لا توجد أخطاء",
+  "en": "No errors"
+ },
+ {
+  "key": "admin.52460fe",
+  "ar": "تم النسخ",
+  "en": "Copied"
+ },
+ {
+  "key": "admin.681355d",
+  "ar": "نسخ",
+  "en": "Copy"
+ },
+ {
+  "key": "admin.515c6f3",
+  "ar": "تم التنفيذ",
+  "en": "Done"
+ },
+ {
+  "key": "admin.e025148",
+  "ar": "رفع الحظر",
+  "en": "Lift ban"
+ },
+ {
+  "key": "admin.08aa821",
+  "ar": "السبب",
+  "en": "Reason"
+ },
+ {
+  "key": "admin.89fefe3",
+  "ar": "تم استلام رسوم رفع الحظر",
+  "en": "Fee received"
+ },
+ {
+  "key": "admin.53004ae",
+  "ar": "لو لم تُستلم تُضاف كمستحقات على السائق",
+  "en": "Otherwise added as driver debt"
+ },
+ {
+  "key": "admin.e453d02",
+  "ar": "إلزامية للعميل",
+  "en": "Required for customers"
+ },
+ {
+  "key": "admin.2378b20",
+  "ar": "مرجع الدفع (اختياري)",
+  "en": "Payment reference (optional)"
+ },
+ {
+  "key": "admin.c67a25f",
+  "ar": "تم رفع الحظر",
+  "en": "Ban lifted"
+ },
+ {
+  "key": "admin.7a9fb59",
+  "ar": "تسوية المستحقات",
+  "en": "Settle debt"
+ },
+ {
+  "key": "admin.d2531bf",
+  "ar": "المبلغ المستلم",
+  "en": "Amount received"
+ },
+ {
+  "key": "admin.b02ad63",
+  "ar": "مرجع الدفع",
+  "en": "Payment reference"
+ },
+ {
+  "key": "admin.1709c9c",
+  "ar": "تسوية",
+  "en": "Settle"
+ },
+ {
+  "key": "admin.c3819e8",
+  "ar": "المتبقي",
+  "en": "Remaining"
+ },
+ {
+  "key": "admin.38c7b72",
+  "ar": "ذكر",
+  "en": "Male"
+ },
+ {
+  "key": "admin.dc8f800",
+  "ar": "أنثى",
+  "en": "Female"
+ },
+ {
+  "key": "admin.00b6a21",
+  "ar": "سبب تعديل الجنس",
+  "en": "Reason for change"
+ },
+ {
+  "key": "admin.112e51b",
+  "ar": "تم التعديل",
+  "en": "Updated"
+ },
+ {
+  "key": "admin.00da5be",
+  "ar": "استعادة هذا الحساب؟",
+  "en": "Restore this account?"
+ },
+ {
+  "key": "admin.3e7e67f",
+  "ar": "سيعود الحساب لحالته قبل الحذف ويستطيع المستخدم الدخول مجددًا.",
+  "en": "The account returns to its previous status and the user can sign in again."
+ },
+ {
+  "key": "admin.cdb9c1b",
+  "ar": "تمت الاستعادة",
+  "en": "Restored"
+ },
+ {
+  "key": "admin.b69ff42",
+  "ar": "سبب رفض المستند",
+  "en": "Reason for rejecting this document"
+ },
+ {
+  "key": "admin.641b5f4",
+  "ar": "بيانات المستخدم",
+  "en": "User details"
+ },
+ {
+  "key": "admin.b543744",
+  "ar": "تم الحفظ",
+  "en": "Saved"
+ },
+ {
+  "key": "admin.4af4e01",
+  "ar": "الرقم مستخدم لحساب آخر",
+  "en": "Phone number already in use"
+ },
+ {
+  "key": "admin.2177e37",
+  "ar": "الرقم الشخصي مستخدم لحساب آخر",
+  "en": "ID number already in use"
+ },
+ {
+  "key": "admin.0accdd2",
+  "ar": "رقم اللوحة مسجّل لسيارة أخرى",
+  "en": "Plate already registered"
+ },
+ {
+  "key": "admin.3f997e9",
+  "ar": "الصورة لم تُرفع، حاول مرة أخرى",
+  "en": "Photo upload failed, try again"
+ },
+ {
+  "key": "admin.4b5acf5",
+  "ar": "تم الاعتماد",
+  "en": "Approved"
+ },
+ {
+  "key": "admin.1fcd9f4",
+  "ar": "تم إرسال الطلب",
+  "en": "Request sent"
+ },
+ {
+  "key": "admin.ce1417d",
+  "ar": "كشف رقم الهوية؟",
+  "en": "Reveal ID number?"
+ },
+ {
+  "key": "admin.66d2f71",
+  "ar": "ستُسجَّل هذه العملية في سجل التدقيق.",
+  "en": "This action is recorded in the audit log."
+ },
+ {
+  "key": "admin.3ca5000",
+  "ar": "إعدادات السائق",
+  "en": "Driver settings"
+ },
+ {
+  "key": "admin.8640b00",
+  "ar": "الجنس",
+  "en": "Gender"
+ },
+ {
+  "key": "admin.fc159c9",
+  "ar": "التدخين في السيارة",
+  "en": "Smoking in car"
+ },
+ {
+  "key": "admin.e78ba05",
+  "ar": "مسموح",
+  "en": "Allowed"
+ },
+ {
+  "key": "admin.35006c7",
+  "ar": "ممنوع",
+  "en": "Not allowed"
+ },
+ {
+  "key": "admin.380e347",
+  "ar": "مستحق للشركة",
+  "en": "Owed to company"
+ },
+ {
+  "key": "admin.8204bfa",
+  "ar": "تعديل الجنس",
+  "en": "Change gender"
+ },
+ {
+  "key": "admin.f4f5e9c",
+  "ar": "مناطق العمل",
+  "en": "Work areas"
+ },
+ {
+  "key": "admin.ed9a778",
+  "ar": "تسوية المستحق",
+  "en": "Settle debt"
+ },
+ {
+  "key": "admin.eee2d9f",
+  "ar": "التقييم",
+  "en": "Rating"
+ },
+ {
+  "key": "admin.857ea02",
+  "ar": "المتوسط",
+  "en": "Average"
+ },
+ {
+  "key": "admin.0f110e5",
+  "ar": "تقييمات نجمة واحدة",
+  "en": "1-star ratings"
+ },
+ {
+  "key": "admin.389d893",
+  "ar": "النشاط",
+  "en": "Activity"
+ },
+ {
+  "key": "admin.1aecc38",
+  "ar": "إرسال إشعار",
+  "en": "Notify"
+ },
+ {
+  "key": "admin.d6954ca",
+  "ar": "الإجراءات",
+  "en": "Actions"
+ },
+ {
+  "key": "admin.6b84fe0",
+  "ar": "محظور نهائيًا — رفع الحظر للسوبر أدمن فقط.",
+  "en": "Permanently banned — only a super admin can lift it."
+ },
+ {
+  "key": "admin.61c0576",
+  "ar": "اعتماد",
+  "en": "Approve"
+ },
+ {
+  "key": "admin.f66fa08",
+  "ar": "طلب تصحيح من المستخدم",
+  "en": "Ask the user to correct"
+ },
+ {
+  "key": "admin.ea4d601",
+  "ar": "سبب الرفض",
+  "en": "Rejection reason"
+ },
+ {
+  "key": "admin.17e35e3",
+  "ar": "سبب الإيقاف",
+  "en": "Suspension reason"
+ },
+ {
+  "key": "admin.37a4d6e",
+  "ar": "إيقاف الحساب",
+  "en": "Suspend"
+ },
+ {
+  "key": "admin.ef1fad5",
+  "ar": "استعادة الحساب",
+  "en": "Restore account"
+ },
+ {
+  "key": "admin.7dad4d8",
+  "ar": "سبب إعادة التفعيل",
+  "en": "Reactivation reason"
+ },
+ {
+  "key": "admin.86577b0",
+  "ar": "إعادة التفعيل",
+  "en": "Reactivate"
+ },
+ {
+  "key": "admin.2f594f7",
+  "ar": "تعذّر التنزيل",
+  "en": "Download failed"
+ },
+ {
+  "key": "admin.51c6120",
+  "ar": "الملخص والعمولة",
+  "en": "Summary & commission"
+ },
+ {
+  "key": "admin.79b71f9",
+  "ar": "الطلبات حسب اليوم",
+  "en": "Orders by day"
+ },
+ {
+  "key": "admin.a81b080",
+  "ar": "الرحلات",
+  "en": "Trips"
+ },
+ {
+  "key": "admin.bcc84e6",
+  "ar": "أداء السائقين",
+  "en": "Per driver"
+ },
+ {
+  "key": "admin.76b7fe4",
+  "ar": "ساعات عمل السائقين",
+  "en": "Driver hours"
+ },
+ {
+  "key": "admin.400ed43",
+  "ar": "حسب المنطقة",
+  "en": "Per area"
+ },
+ {
+  "key": "admin.224cba0",
+  "ar": "طلبات بلا سائق",
+  "en": "No-driver orders"
+ },
+ {
+  "key": "admin.125538d",
+  "ar": "تحويلات السائقين",
+  "en": "Driver payouts"
+ },
+ {
+  "key": "admin.2706090",
+  "ar": "الاشتراكات",
+  "en": "Subscriptions"
+ },
+ {
+  "key": "admin.047fe14",
+  "ar": "التقارير",
+  "en": "Reports"
+ },
+ {
+  "key": "admin.b660b99",
+  "ar": "عرض",
+  "en": "Preview"
+ },
+ {
+  "key": "admin.969651e",
+  "ar": "إجمالي الطلبات",
+  "en": "Total orders"
+ },
+ {
+  "key": "admin.dd57d3d",
+  "ar": "الطلبات",
+  "en": "Orders"
+ },
+ {
+  "key": "admin.a221a7f",
+  "ar": "طلبات مكتملة",
+  "en": "Completed orders"
+ },
+ {
+  "key": "admin.49f26c0",
+  "ar": "مكتملة",
+  "en": "Completed"
+ },
+ {
+  "key": "admin.548f070",
+  "ar": "طلبات ملغاة",
+  "en": "Cancelled orders"
+ },
+ {
+  "key": "admin.7fe60f9",
+  "ar": "ملغاة",
+  "en": "Cancelled"
+ },
+ {
+  "key": "admin.b84e784",
+  "ar": "بلا سائق",
+  "en": "No driver"
+ },
+ {
+  "key": "admin.64ea596",
+  "ar": "منتهية",
+  "en": "Expired"
+ },
+ {
+  "key": "admin.e5f9021",
+  "ar": "الرحلات",
+  "en": "Trips"
+ },
+ {
+  "key": "admin.aa0122f",
+  "ar": "قيمة الرحلات",
+  "en": "Trip value"
+ },
+ {
+  "key": "admin.56fbb7b",
+  "ar": "إجمالي ما دفعه العملاء",
+  "en": "Total paid by customers"
+ },
+ {
+  "key": "admin.8bbe1db",
+  "ar": "أرباح السائقين",
+  "en": "Driver earnings"
+ },
+ {
+  "key": "admin.4bca1d4",
+  "ar": "عمولة الشركة",
+  "en": "Company commission"
+ },
+ {
+  "key": "admin.3ad0f0d",
+  "ar": "ربح الشركة",
+  "en": "Company profit"
+ },
+ {
+  "key": "admin.6b0df55",
+  "ar": "رسوم الخدمة",
+  "en": "Service fee"
+ },
+ {
+  "key": "admin.a23dd3c",
+  "ar": "الخصومات",
+  "en": "Discounts"
+ },
+ {
+  "key": "admin.6f29c72",
+  "ar": "الفترة",
+  "en": "Period"
+ },
+ {
+  "key": "admin.310aac7",
+  "ar": "اليوم",
+  "en": "Day"
+ },
+ {
+  "key": "admin.187eb24",
+  "ar": "التاريخ",
+  "en": "Date"
+ },
+ {
+  "key": "admin.565d12c",
+  "ar": "رقم السائق",
+  "en": "Driver ID"
+ },
+ {
+  "key": "admin.632a5c7",
+  "ar": "السائق",
+  "en": "Driver"
+ },
+ {
+  "key": "admin.1140382",
+  "ar": "المنطقة",
+  "en": "Area"
+ },
+ {
+  "key": "admin.d0cfb3e",
+  "ar": "الساعات",
+  "en": "Hours"
+ },
+ {
+  "key": "admin.7faed68",
+  "ar": "ساعات الاتصال",
+  "en": "Online hours"
+ },
+ {
+  "key": "admin.c04c149",
+  "ar": "المبلغ",
+  "en": "Amount"
+ },
+ {
+  "key": "admin.a47482a",
+  "ar": "العملة",
+  "en": "Currency"
+ },
+ {
+  "key": "admin.6d1dae1",
+  "ar": "الحالة",
+  "en": "Status"
+ },
+ {
+  "key": "admin.ac64e23",
+  "ar": "العدد",
+  "en": "Count"
+ },
+ {
+  "key": "admin.b17011e",
+  "ar": "المدفوعات",
+  "en": "Payments"
+ },
+ {
+  "key": "admin.5428e38",
+  "ar": "التحويلات",
+  "en": "Payouts"
+ },
+ {
+  "key": "admin.dda4f14",
+  "ar": "الاشتراكات",
+  "en": "Subscriptions"
+ },
+ {
+  "key": "admin.9b53b8a",
+  "ar": "العميل",
+  "en": "Customer"
+ },
+ {
+  "key": "admin.05b7af7",
+  "ar": "تاريخ الإكمال",
+  "en": "Completed on"
+ },
+ {
+  "key": "admin.5474355",
+  "ar": "رقم الطلب",
+  "en": "Order number"
+ },
+ {
+  "key": "admin.440bee1",
+  "ar": "طريقة الدفع",
+  "en": "Payment method"
+ },
+ {
+  "key": "admin.06061c6",
+  "ar": "السعر النهائي",
+  "en": "Final price"
+ },
+ {
+  "key": "admin.8543daf",
+  "ar": "التقييم",
+  "en": "Rating"
+ },
+ {
+  "key": "admin.d3093e4",
+  "ar": "نشاط المستخدم",
+  "en": "User activity"
+ },
+ {
+  "key": "admin.d0eb021",
+  "ar": "متصل الآن",
+  "en": "Online now"
+ },
+ {
+  "key": "admin.dab7081",
+  "ar": "غير متصل",
+  "en": "Offline"
+ },
+ {
+  "key": "admin.9398a40",
+  "ar": "آخر ظهور",
+  "en": "Last seen"
+ },
+ {
+  "key": "admin.b1eed35",
+  "ar": "إحصائيات",
+  "en": "Stats"
+ },
+ {
+  "key": "admin.bf6b741",
+  "ar": "الأجهزة",
+  "en": "Devices"
+ },
+ {
+  "key": "admin.4ab3d91",
+  "ar": "السجل",
+  "en": "History"
+ },
+ {
+  "key": "admin.1344c03",
+  "ar": "تسجيل دخول",
+  "en": "Login"
+ },
+ {
+  "key": "admin.f67caf7",
+  "ar": "فتح التطبيق",
+  "en": "App open"
+ },
+ {
+  "key": "admin.b534171",
+  "ar": "الموقع",
+  "en": "Location"
+ },
+ {
+  "key": "admin.35141fb",
+  "ar": "عرض نقاط الموقع",
+  "en": "Show location points"
+ },
+ {
+  "key": "admin.98c81a8",
+  "ar": "يتم تسجيل الاطلاع في سجل التدقيق",
+  "en": "Viewing is audit-logged"
+ },
+ {
+  "key": "admin.37fda26",
+  "ar": "المستخدم لم يوافق على مشاركة الموقع",
+  "en": "User has not consented to location"
+ },
+ {
+  "key": "admin.7f3b44d",
+  "ar": "لا توجد نقاط مسجّلة",
+  "en": "No points recorded"
+ },
+ {
+  "key": "admin.6f73072",
+  "ar": "مرات فتح التطبيق",
+  "en": "App opens"
+ },
+ {
+  "key": "admin.dd4da8d",
+  "ar": "فتح التطبيق (30 يوم)",
+  "en": "Opens (30d)"
+ },
+ {
+  "key": "admin.3cd4e66",
+  "ar": "تسجيلات الدخول",
+  "en": "Logins"
+ },
+ {
+  "key": "admin.d05a73c",
+  "ar": "طلبات مكتملة",
+  "en": "Completed"
+ },
+ {
+  "key": "admin.8781e25",
+  "ar": "طلبات ملغاة",
+  "en": "Cancelled"
+ },
+ {
+  "key": "admin.44779c5",
+  "ar": "نقاط الموقع",
+  "en": "Location points"
+ },
+ {
+  "key": "admin.8559dbb",
+  "ar": "إنشاء طلب",
+  "en": "Order created"
+ },
+ {
+  "key": "admin.f243675",
+  "ar": "قبول عرض",
+  "en": "Offer accepted"
+ },
+ {
+  "key": "admin.626e37c",
+  "ar": "في الطريق",
+  "en": "On the way"
+ },
+ {
+  "key": "admin.83db2b3",
+  "ar": "وصل للاستلام",
+  "en": "At pickup"
+ },
+ {
+  "key": "admin.8dc174f",
+  "ar": "بدء الرحلة",
+  "en": "Trip started"
+ },
+ {
+  "key": "admin.e0adf85",
+  "ar": "وصل للوجهة",
+  "en": "Arrived"
+ },
+ {
+  "key": "admin.798441a",
+  "ar": "السائق متاح",
+  "en": "Driver online"
+ },
+ {
+  "key": "admin.06fa1b4",
+  "ar": "تحويلات السائقين",
+  "en": "Payouts"
+ },
+ {
+  "key": "admin.9e21ebb",
+  "ar": "الشكاوى",
+  "en": "Complaints"
+ },
+ {
+  "key": "admin.e244f79",
+  "ar": "الخريطة اللايف",
+  "en": "Live map"
+ },
+ {
+  "key": "admin.6467dea",
+  "ar": "تنبيهات الطوارئ",
+  "en": "SOS alerts"
+ },
+ {
+  "key": "admin.b915675",
+  "ar": "مراجعة التصحيحات",
+  "en": "Review corrections"
+ },
+ {
+  "key": "admin.039eb7f",
+  "ar": "طلبات تغيير الرقم",
+  "en": "Phone change requests"
+ },
+ {
+  "key": "admin.6eae6ab",
+  "ar": "أكواد الخصم",
+  "en": "Promo codes"
+ },
+ {
+  "key": "admin.09b5cc5",
+  "ar": "الترجمة",
+  "en": "Translations"
+ },
+ {
+  "key": "admin.95a88b2",
+  "ar": "الإحصاءات",
+  "en": "Analytics"
+ },
+ {
+  "key": "admin.110095b",
+  "ar": "الإعدادات العامة",
+  "en": "System settings"
+ },
+ {
+  "key": "admin.f7bc642",
+  "ar": "حساب إدارة جديد",
+  "en": "New admin"
+ },
+ {
+  "key": "admin.0810983",
+  "ar": "حسابي",
+  "en": "My account"
+ },
+ {
+  "key": "admin.b335e09",
+  "ar": "لم تُحفظ المناطق على الخادم، حاول مرة أخرى",
+  "en": "The server didn't save the areas, try again"
+ },
+ {
+  "key": "admin.d278738",
+  "ar": "مناطق السائق",
+  "en": "Driver areas"
+ },
+ {
+  "key": "admin.75e6e91",
+  "ar": "لا توجد مناطق خدمة — أضفها من \"مناطق الخدمة\"",
+  "en": "No service areas — add them in \"Service areas\""
+ },
+ {
+  "key": "admin.eaa9fbb",
+  "ar": "سبب إنشاء الحساب",
+  "en": "Reason"
+ },
+ {
+  "key": "admin.abc66f2",
+  "ar": "تم إنشاء الحساب",
+  "en": "Account created"
+ },
+ {
+  "key": "admin.373ff92",
+  "ar": "حساب إدارة جديد",
+  "en": "New admin account"
+ },
+ {
+  "key": "admin.b9a4ed8",
+  "ar": "الاسم الكامل",
+  "en": "Full name"
+ },
+ {
+  "key": "admin.69df538",
+  "ar": "رقم الهاتف",
+  "en": "Phone"
+ },
+ {
+  "key": "admin.8f143a1",
+  "ar": "8 أحرف على الأقل",
+  "en": "At least 8 characters"
+ },
+ {
+  "key": "admin.9e73ee0",
+  "ar": "كلمة مرور مؤقتة",
+  "en": "Temporary password"
+ },
+ {
+  "key": "admin.bc8ec7c",
+  "ar": "إنشاء الحساب",
+  "en": "Create account"
+ },
+ {
+  "key": "admin.578f80a",
+  "ar": "كود جديد",
+  "en": "New code"
+ },
+ {
+  "key": "admin.fcd78ef",
+  "ar": "لا توجد أكواد",
+  "en": "No promo codes"
+ },
+ {
+  "key": "admin.bb157e4",
+  "ar": "حد أدنى",
+  "en": "Min"
+ },
+ {
+  "key": "admin.d65039c",
+  "ar": "استُخدم",
+  "en": "Used"
+ },
+ {
+  "key": "admin.aa01ec7",
+  "ar": "من 1 إلى 100",
+  "en": "1 to 100"
+ },
+ {
+  "key": "admin.8fff327",
+  "ar": "الكود موجود بالفعل",
+  "en": "Code already exists"
+ },
+ {
+  "key": "admin.423d930",
+  "ar": "حذف الكود؟",
+  "en": "Delete code?"
+ },
+ {
+  "key": "admin.b6d12b7",
+  "ar": "الطلبات السابقة تحتفظ بخصمها.",
+  "en": "Past orders keep their discount."
+ },
+ {
+  "key": "admin.2dbb2ae",
+  "ar": "تعديل الكود",
+  "en": "Edit code"
+ },
+ {
+  "key": "admin.b36867c",
+  "ar": "الخصم على سعر الرحلة فقط (لا يشمل رسوم المطار أو التفضيلات)، وتتحمّله الشركة، ولا تتغير أرباح السائق.",
+  "en": "Discount applies to the trip price only (not airport / preference fees). The platform pays it — driver earnings are unchanged."
+ },
+ {
+  "key": "admin.98e2d3c",
+  "ar": "الكود",
+  "en": "Code"
+ },
+ {
+  "key": "admin.c655705",
+  "ar": "نسبة الخصم %",
+  "en": "Discount %"
+ },
+ {
+  "key": "admin.2895a51",
+  "ar": "أقل قيمة للطلب (اختياري)",
+  "en": "Minimum order (optional)"
+ },
+ {
+  "key": "admin.b0c098a",
+  "ar": "بدون مدة (دائم)",
+  "en": "No dates (always)"
+ },
+ {
+  "key": "admin.dc3e5a2",
+  "ar": "أعلن عنه كبانر للعملاء",
+  "en": "Announce as a customer banner"
+ },
+ {
+  "key": "admin.767eee0",
+  "ar": "بانر «خصم X% — استخدم الكود» بنفس مدة الكود",
+  "en": "\"X% off — use code\" banner with the same dates"
+ },
+ {
+  "key": "admin.2a37744",
+  "ar": "راجع الحقول المعلّمة بالأحمر",
+  "en": "Check the fields marked in red"
+ },
+ {
+  "key": "admin.71df9dc",
+  "ar": "لا توجد تغييرات",
+  "en": "No changes"
+ },
+ {
+  "key": "admin.a8594d0",
+  "ar": "سبب تعديل الإعدادات",
+  "en": "Reason for change"
+ },
+ {
+  "key": "admin.7ab8869",
+  "ar": "تم حفظ {0} إعداد",
+  "en": "Saved {0} settings"
+ },
+ {
+  "key": "admin.bb1f122",
+  "ar": "تغييرات الأسعار تُطبّق على الطلبات الجديدة فقط، وكل تعديل يُسجّل في سجل التدقيق. الحفظ للسوبر أدمن فقط.",
+  "en": "Price changes apply to new orders only; every change is audit-logged. Super admin only."
+ },
+ {
+  "key": "admin.6ba05de",
+  "ar": "إعداد",
+  "en": "settings"
+ },
+ {
+  "key": "admin.3f1cb61",
+  "ar": "قيم للعرض فقط",
+  "en": "Read-only values"
+ },
+ {
+  "key": "admin.bcac8bf",
+  "ar": "حفظ التغييرات",
+  "en": "Save changes"
+ },
+ {
+  "key": "admin.4b661c7",
+  "ar": "الدعم والتواصل",
+  "en": "Support"
+ },
+ {
+  "key": "admin.cb788b3",
+  "ar": "هاتف الدعم",
+  "en": "Support phone"
+ },
+ {
+  "key": "admin.bc54fc6",
+  "ar": "واتساب الدعم",
+  "en": "Support WhatsApp"
+ },
+ {
+  "key": "admin.fc1d095",
+  "ar": "بريد الدعم",
+  "en": "Support email"
+ },
+ {
+  "key": "admin.50fac01",
+  "ar": "التطبيق والصيانة",
+  "en": "App & maintenance"
+ },
+ {
+  "key": "admin.e80416e",
+  "ar": "وضع الصيانة",
+  "en": "Maintenance mode"
+ },
+ {
+  "key": "admin.f4714b9",
+  "ar": "يرفض الطلبات الجديدة (503) ويعرض شاشة الصيانة لغير الإدارة",
+  "en": "Rejects new requests (503) and shows the maintenance screen to non-admin users"
+ },
+ {
+  "key": "admin.9ab446f",
+  "ar": "رسالة الصيانة",
+  "en": "Maintenance message"
+ },
+ {
+  "key": "admin.1884ed2",
+  "ar": "أقل إصدار مسموح",
+  "en": "Minimum app version"
+ },
+ {
+  "key": "admin.0d149bd",
+  "ar": "الإصدارات الأقدم تظهر لها شاشة «حدّث التطبيق» ولا تتابع",
+  "en": "Older versions see the \"Update the app\" screen and cannot continue"
+ },
+ {
+  "key": "admin.7e27ea4",
+  "ar": "أحدث إصدار",
+  "en": "Latest version"
+ },
+ {
+  "key": "admin.4dee3d6",
+  "ar": "رسالة التحديث",
+  "en": "Update message"
+ },
+ {
+  "key": "admin.d8f58ea",
+  "ar": "التسعير",
+  "en": "Pricing"
+ },
+ {
+  "key": "admin.5c6db4d",
+  "ar": "العملة",
+  "en": "Currency"
+ },
+ {
+  "key": "admin.271f0d0",
+  "ar": "تغيير العملة يتطلب تعديل سعر الوحدة والحد الأدنى في نفس الحفظ",
+  "en": "Changing the currency requires updating the unit price and minimum fare in the same save"
+ },
+ {
+  "key": "admin.be52dba",
+  "ar": "سعر الوحدة",
+  "en": "Unit price"
+ },
+ {
+  "key": "admin.79cbccd",
+  "ar": "مدة الوحدة (ثانية)",
+  "en": "Unit length (s)"
+ },
+ {
+  "key": "admin.9ee5fe3",
+  "ar": "300 = كل 5 دقائق أو جزء منها",
+  "en": "300 = every 5 minutes or part thereof"
+ },
+ {
+  "key": "admin.cd9f8f0",
+  "ar": "الحد الأدنى للرحلة",
+  "en": "Minimum price"
+ },
+ {
+  "key": "admin.b17d84a",
+  "ar": "نسبة رسوم الليل %",
+  "en": "Night surcharge %"
+ },
+ {
+  "key": "admin.291c445",
+  "ar": "بداية الليل (HH:MM)",
+  "en": "Night start"
+ },
+ {
+  "key": "admin.d3e8c15",
+  "ar": "نهاية الليل (HH:MM)",
+  "en": "Night end"
+ },
+ {
+  "key": "admin.5a9644f",
+  "ar": "معامل الطريق للتقدير",
+  "en": "Estimate road factor"
+ },
+ {
+  "key": "admin.a4d1314",
+  "ar": "المسافة المستقيمة × المعامل = مسافة الطريق (للتقدير فقط)",
+  "en": "Straight-line distance × factor = road distance (estimate only)"
+ },
+ {
+  "key": "admin.c0ddc50",
+  "ar": "متوسط السرعة للتقدير (كم/س)",
+  "en": "Estimate avg speed"
+ },
+ {
+  "key": "admin.338cdfe",
+  "ar": "العمولة والرحلات الخارجية",
+  "en": "Commission & cross-border"
+ },
+ {
+  "key": "admin.ee57dce",
+  "ar": "نوع العمولة",
+  "en": "Commission type"
+ },
+ {
+  "key": "admin.4ba1455",
+  "ar": "قيمة العمولة",
+  "en": "Commission value"
+ },
+ {
+  "key": "admin.3237cc2",
+  "ar": "نسبة مئوية (الحد الأقصى 100) إذا كان النوع PERCENT، أو مبلغ ثابت إذا كان FIXED",
+  "en": "Percentage (max 100) if PERCENT, or an amount if FIXED"
+ },
+ {
+  "key": "admin.4d3eb3b",
+  "ar": "طريقة العمولة",
+  "en": "Commission mode"
+ },
+ {
+  "key": "admin.89c9250",
+  "ar": "ADD = تُضاف على السعر، DEDUCT = تُخصم من السعر",
+  "en": "ADD = added to the price, DEDUCT = deducted from the price"
+ },
+ {
+  "key": "admin.712b397",
+  "ar": "عمولة الاشتراكات %",
+  "en": "Subscription commission %"
+ },
+ {
+  "key": "admin.6948ae7",
+  "ar": "السماح بالرحلات خارج البحرين",
+  "en": "Allow cross-border trips"
+ },
+ {
+  "key": "admin.3464ba2",
+  "ar": "خصم الرحلات الخارجية من السائق %",
+  "en": "Cross-border driver cut %"
+ },
+ {
+  "key": "admin.721e2d0",
+  "ar": "توزيع الطلبات",
+  "en": "Dispatch"
+ },
+ {
+  "key": "admin.cadae30",
+  "ar": "مهلة قبول العرض (ثانية)",
+  "en": "Offer timeout (s)"
+ },
+ {
+  "key": "admin.5f73b98",
+  "ar": "أقصى سائقين لكل طلب (0 = الكل)",
+  "en": "Max drivers per order (0 = all)"
+ },
+ {
+  "key": "admin.102d68e",
+  "ar": "مهلة البحث عن سائق (ثانية)",
+  "en": "Order search timeout (s)"
+ },
+ {
+  "key": "admin.905973b",
+  "ar": "العميل يختار السائق من المقبولين",
+  "en": "Customer chooses the driver"
+ },
+ {
+  "key": "admin.50c46a2",
+  "ar": "السماح بزيادة السعر",
+  "en": "Allow price increase"
+ },
+ {
+  "key": "admin.735ccf9",
+  "ar": "أقصى زيادة في السعر (%)",
+  "en": "Max price increase (%)"
+ },
+ {
+  "key": "admin.338b8f9",
+  "ar": "أزرار الزيادة (مثال 10,25,50)",
+  "en": "Increase steps (e.g. 10,25,50)"
+ },
+ {
+  "key": "admin.cf3be84",
+  "ar": "مهلة رد العميل على طلب الزيادة (ثانية)",
+  "en": "Customer reply time for a price request (s)"
+ },
+ {
+  "key": "admin.a4ffc3c",
+  "ar": "أيام التنبيه قبل انتهاء الرخصة (مثل 30,7,1)",
+  "en": "Licence warning days (e.g. 30,7,1)"
+ },
+ {
+  "key": "admin.6906543",
+  "ar": "إيقاف الطلبات عن السائق عند انتهاء رخصته",
+  "en": "Pause orders when licence expires"
+ },
+ {
+  "key": "admin.527d01c",
+  "ar": "تفعيل الإحصاءات",
+  "en": "Enable analytics"
+ },
+ {
+  "key": "admin.5ddbab3",
+  "ar": "مدة حفظ الإحصاءات (يوم)",
+  "en": "Analytics retention (days)"
+ },
+ {
+  "key": "admin.fabd279",
+  "ar": "إظهار السائقين القريبين للعميل",
+  "en": "Show nearby drivers"
+ },
+ {
+  "key": "admin.f43469f",
+  "ar": "تفعيل زر الطوارئ",
+  "en": "SOS enabled"
+ },
+ {
+  "key": "admin.6c853f2",
+  "ar": "رقم الطوارئ",
+  "en": "Emergency number"
+ },
+ {
+  "key": "admin.ede276f",
+  "ar": "ضغطات تفعيل SOS",
+  "en": "SOS taps"
+ },
+ {
+  "key": "admin.d5c02f3",
+  "ar": "مهلة ضغطات SOS (ث)",
+  "en": "SOS tap window (s)"
+ },
+ {
+  "key": "admin.fa75749",
+  "ar": "مشاركة الرحلة",
+  "en": "Trip sharing"
+ },
+ {
+  "key": "admin.2f655c4",
+  "ar": "رسوم إلغاء العميل",
+  "en": "Customer cancel fee"
+ },
+ {
+  "key": "admin.df3abcd",
+  "ar": "إلغاء مجاني خلال (ث)",
+  "en": "Free cancel (s)"
+ },
+ {
+  "key": "admin.773197b",
+  "ar": "رسوم إلغاء السائق",
+  "en": "Driver cancel fee"
+ },
+ {
+  "key": "admin.43c0a72",
+  "ar": "رسوم السائق تذهب إلى (COMPANY/CUSTOMER_CREDIT)",
+  "en": "Driver fee goes to"
+ },
+ {
+  "key": "admin.28a3173",
+  "ar": "نصيب السائق من رسوم العميل %",
+  "en": "Driver share of customer fee %"
+ },
+ {
+  "key": "admin.c9bc047",
+  "ar": "الحجز المسبق",
+  "en": "Scheduled trips"
+ },
+ {
+  "key": "admin.af30939",
+  "ar": "رسوم الحجز المسبق %",
+  "en": "Scheduled fee %"
+ },
+ {
+  "key": "admin.d0907bb",
+  "ar": "أقل وقت للحجز (دقيقة)",
+  "en": "Min minutes ahead"
+ },
+ {
+  "key": "admin.b9f920b",
+  "ar": "أقصى أيام للحجز",
+  "en": "Max days ahead"
+ },
+ {
+  "key": "admin.2cef4f0",
+  "ar": "الإرسال للسائقين قبل (دقيقة)",
+  "en": "Dispatch before (min)"
+ },
+ {
+  "key": "admin.b673a9e",
+  "ar": "إضافة محطات",
+  "en": "Extra stops"
+ },
+ {
+  "key": "admin.2a50a23",
+  "ar": "أقصى عدد محطات",
+  "en": "Max stops"
+ },
+ {
+  "key": "admin.4107488",
+  "ar": "رسوم المحطة",
+  "en": "Stop fee"
+ },
+ {
+  "key": "admin.b85f1a6",
+  "ar": "كود الدعوة",
+  "en": "Referrals"
+ },
+ {
+  "key": "admin.d26dc1b",
+  "ar": "مكافأة الداعي",
+  "en": "Inviter reward"
+ },
+ {
+  "key": "admin.37092c5",
+  "ar": "مكافأة المدعو",
+  "en": "Invitee reward"
+ },
+ {
+  "key": "admin.a5ec8b1",
+  "ar": "أقصى دعوات للمستخدم",
+  "en": "Max invites"
+ },
+ {
+  "key": "admin.52cce3d",
+  "ar": "رحلات المدعو للمكافأة",
+  "en": "Trips before reward"
+ },
+ {
+  "key": "admin.20e47db",
+  "ar": "مرات \"إعادة المحاولة\" للطلب",
+  "en": "Max order retries"
+ },
+ {
+  "key": "admin.9b31817",
+  "ar": "الأقرب أولًا (لايف)",
+  "en": "Nearest first (Live)"
+ },
+ {
+  "key": "admin.98c8c43",
+  "ar": "أقصى بُعد عن الاستلام كم (0 = بلا حد)",
+  "en": "Max pickup distance km (0 = none)"
+ },
+ {
+  "key": "admin.384e74e",
+  "ar": "إيقاف السائق غير النشط بعد (دقيقة، 0 = معطل)",
+  "en": "Auto-offline idle driver (min, 0 = off)"
+ },
+ {
+  "key": "admin.2178ccb",
+  "ar": "السماح للعميل بالإلغاء بعد القبول",
+  "en": "Customer may cancel after accept"
+ },
+ {
+  "key": "admin.6d99e97",
+  "ar": "منع طلب جديد لو في طلب غير مدفوع",
+  "en": "Block new order if unpaid"
+ },
+ {
+  "key": "admin.e605baf",
+  "ar": "الدفع",
+  "en": "Payments"
+ },
+ {
+  "key": "admin.0c5d64d",
+  "ar": "الدفع بالبطاقة (Tap)",
+  "en": "Card payments (Tap)"
+ },
+ {
+  "key": "admin.ff10082",
+  "ar": "رسوم Tap %",
+  "en": "Tap fee %"
+ },
+ {
+  "key": "admin.0e02bff",
+  "ar": "رسوم Tap ثابتة",
+  "en": "Tap fixed fee"
+ },
+ {
+  "key": "admin.d14b5cb",
+  "ar": "اسم حساب BenefitPay",
+  "en": "BenefitPay account name"
+ },
+ {
+  "key": "admin.061ea7c",
+  "ar": "رقم حساب BenefitPay",
+  "en": "BenefitPay account number"
+ },
+ {
+  "key": "admin.6a6c90f",
+  "ar": "تعليمات الدفع للعميل",
+  "en": "Payment instructions"
+ },
+ {
+  "key": "admin.6b013b7",
+  "ar": "مدة الاشتراك (يوم)",
+  "en": "Period (days)"
+ },
+ {
+  "key": "admin.7423073",
+  "ar": "تذكير قبل الانتهاء (يوم)",
+  "en": "Renewal reminder (days)"
+ },
+ {
+  "key": "admin.8f06ee1",
+  "ar": "التسجيل والأمان",
+  "en": "Sign-up & security"
+ },
+ {
+  "key": "admin.da9dab2",
+  "ar": "صورة البطاقة الشخصية إجبارية",
+  "en": "CPR photo required"
+ },
+ {
+  "key": "admin.266033a",
+  "ar": "تنبيه قبل انتهاء الوثائق (يوم)",
+  "en": "Doc expiry warning (days)"
+ },
+ {
+  "key": "admin.8d20c82",
+  "ar": "محاولات الدخول الفاشلة قبل القفل",
+  "en": "Failed logins before lockout"
+ },
+ {
+  "key": "admin.6e0adca",
+  "ar": "مدة القفل (دقيقة)",
+  "en": "Lockout (min)"
+ },
+ {
+  "key": "admin.825ba8e",
+  "ar": "أقصى حجم للرفع (ميجا)",
+  "en": "Max upload (MB)"
+ },
+ {
+  "key": "admin.ce03c50",
+  "ar": "التقييم والحظر التلقائي",
+  "en": "Ratings & auto-suspend"
+ },
+ {
+  "key": "admin.0d59463",
+  "ar": "التقييم بعد الرحلة",
+  "en": "Ratings"
+ },
+ {
+  "key": "admin.221bf12",
+  "ar": "السائق يقيّم العميل",
+  "en": "Driver rates customer"
+ },
+ {
+  "key": "admin.66ba7f8",
+  "ar": "مهلة التقييم (ساعة)",
+  "en": "Rating window (h)"
+ },
+ {
+  "key": "admin.40817ff",
+  "ar": "أقصى طول للتعليق",
+  "en": "Max comment length"
+ },
+ {
+  "key": "admin.e3b8726",
+  "ar": "إيقاف السائق بعد كم نجمة واحدة (0 = معطل)",
+  "en": "Suspend driver after N 1-star (0 = off)"
+ },
+ {
+  "key": "admin.a525252",
+  "ar": "حظر نهائي عند الإيقاف التلقائي رقم (0 = أبدًا)",
+  "en": "Ban on Nth auto-suspension (0 = never)"
+ },
+ {
+  "key": "admin.4bc9ad2",
+  "ar": "رسوم رفع الحظر",
+  "en": "Ban reinstatement fee"
+ },
+ {
+  "key": "admin.cc7913c",
+  "ar": "إيقاف العميل بعد كم نجمة واحدة (0 = معطل)",
+  "en": "Suspend customer after N 1-star (0 = off)"
+ },
+ {
+  "key": "admin.9920999",
+  "ar": "معطّل افتراضيًا لأنه قد يُساء استخدامه من السائقين",
+  "en": "Disabled by default because drivers could abuse it"
+ },
+ {
+  "key": "admin.06bd88e",
+  "ar": "تفعيل أكواد الخصم",
+  "en": "Enable promo codes"
+ },
+ {
+  "key": "admin.97c0058",
+  "ar": "عند الإيقاف يختفي حقل الكود من التطبيق",
+  "en": "When disabled, the code field is hidden in the app"
+ },
+ {
+  "key": "admin.c339cc4",
+  "ar": "وضع لايف للسائق",
+  "en": "Driver Live mode"
+ },
+ {
+  "key": "admin.f0e2382",
+  "ar": "إتاحة وضع لايف",
+  "en": "Allow Live mode"
+ },
+ {
+  "key": "admin.2bf9983",
+  "ar": "إرسال الموقع كل (ثانية)",
+  "en": "Send location every (s)"
+ },
+ {
+  "key": "admin.bd3225a",
+  "ar": "تجاهل الموقع الأقدم من (ثانية)",
+  "en": "Ignore location older than (s)"
+ },
+ {
+  "key": "admin.3f3970b",
+  "ar": "الموقع والنشاط",
+  "en": "Location & activity"
+ },
+ {
+  "key": "admin.4d34634",
+  "ar": "تسجيل نقاط الموقع",
+  "en": "Record location points"
+ },
+ {
+  "key": "admin.825c622",
+  "ar": "يُعدّ متصلًا لمدة (دقيقة)",
+  "en": "Online window (min)"
+ },
+ {
+  "key": "admin.7921c34",
+  "ar": "الاحتفاظ بالسجل ونقاط الموقع (يوم)",
+  "en": "Activity retention (days)"
+ },
+ {
+  "key": "admin.9957708",
+  "ar": "مدة السماح قبل مسح بيانات الحساب المحذوف (يوم)",
+  "en": "Deleted-account grace period (days)"
+ },
+ {
+  "key": "admin.cc5ab5f",
+  "ar": "تفضيلات الرحلة",
+  "en": "Trip preferences"
+ },
+ {
+  "key": "admin.17599ce",
+  "ar": "جنس السائق الافتراضي (لغير المحدد)",
+  "en": "Default driver gender"
+ },
+ {
+  "key": "admin.645576e",
+  "ar": "تكييف افتراضيًا",
+  "en": "A/C by default"
+ },
+ {
+  "key": "admin.f32e16e",
+  "ar": "التدخين الافتراضي",
+  "en": "Default smoking"
+ },
+ {
+  "key": "admin.e48fe34",
+  "ar": "جنس السائق المطلوب افتراضيًا",
+  "en": "Default requested driver"
+ },
+ {
+  "key": "admin.c6d1e49",
+  "ar": "سيارة كبيرة افتراضيًا",
+  "en": "Large car by default"
+ },
+ {
+  "key": "admin.0565852",
+  "ar": "أنواع السيارات الكبيرة (مفصولة بفاصلة)",
+  "en": "Large car types (comma-separated)"
+ },
+ {
+  "key": "admin.8d56640",
+  "ar": "رسوم التكييف",
+  "en": "A/C fee"
+ },
+ {
+  "key": "admin.f3f9273",
+  "ar": "رسوم \"التدخين مسموح\"",
+  "en": "Smoking-allowed fee"
+ },
+ {
+  "key": "admin.986c640",
+  "ar": "رسوم \"ممنوع التدخين\"",
+  "en": "Non-smoking fee"
+ },
+ {
+  "key": "admin.79a0fc2",
+  "ar": "رسوم سائقة",
+  "en": "Female-driver fee"
+ },
+ {
+  "key": "admin.2d9a54b",
+  "ar": "رسوم سائق رجل",
+  "en": "Male-driver fee"
+ },
+ {
+  "key": "admin.ad47136",
+  "ar": "رسوم السيارة الكبيرة",
+  "en": "Large-car fee"
+ },
+ {
+  "key": "admin.90c0b3c",
+  "ar": "متقدم",
+  "en": "Advanced"
+ },
+ {
+  "key": "admin.2940fb6",
+  "ar": "أقل إصدار أندرويد",
+  "en": "Min Android version"
+ },
+ {
+  "key": "admin.162d84f",
+  "ar": "أقل إصدار iOS",
+  "en": "Min iOS version"
+ },
+ {
+  "key": "admin.851f510",
+  "ar": "الحد الأقصى 100 عندما يكون النوع PERCENT",
+  "en": "Maximum 100 when the type is PERCENT"
+ },
+ {
+  "key": "admin.fe28145",
+  "ar": "عدّل سعر الوحدة والحد الأدنى مع تغيير العملة",
+  "en": "Update the unit price and minimum fare when changing the currency"
+ },
+ {
+  "key": "admin.1cc3119",
+  "ar": " و ",
+  "en": " and "
+ },
+ {
+  "key": "admin.9b15bd8",
+  "ar": "رقم صحيح",
+  "en": "Whole number"
+ },
+ {
+  "key": "admin.807e23e",
+  "ar": "رقم",
+  "en": "Number"
+ },
+ {
+  "key": "admin.e9b3a95",
+  "ar": "مثال 1.2.0",
+  "en": "Example: 1.2.0"
+ },
+ {
+  "key": "admin.b5449b5",
+  "ar": "حد أقصى {0} حرف",
+  "en": "Maximum {0} characters"
+ },
+ {
+  "key": "admin.52f8bd3",
+  "ar": "ملاحظة الحل",
+  "en": "Resolution note"
+ },
+ {
+  "key": "admin.4379398",
+  "ar": "مفتوحة",
+  "en": "Open"
+ },
+ {
+  "key": "admin.89ecc55",
+  "ar": "محلولة",
+  "en": "Resolved"
+ },
+ {
+  "key": "admin.ab466c5",
+  "ar": "لا توجد شكاوى",
+  "en": "No complaints"
+ },
+ {
+  "key": "admin.0b15b7a",
+  "ar": "شكوى",
+  "en": "Complaint"
+ },
+ {
+  "key": "admin.0fd77e1",
+  "ar": "عرض الطلب",
+  "en": "View order"
+ },
+ {
+  "key": "admin.cbddfd2",
+  "ar": "تم الحل",
+  "en": "Resolve"
+ },
+ {
+  "key": "admin.9a2fbfc",
+  "ar": "مرجع التحويل",
+  "en": "Transfer reference"
+ },
+ {
+  "key": "admin.0690513",
+  "ar": "رقم المرجع",
+  "en": "Reference no."
+ },
+ {
+  "key": "admin.e86f0a5",
+  "ar": "ملاحظة / سبب",
+  "en": "Note / reason"
+ },
+ {
+  "key": "admin.8d5c33f",
+  "ar": "معلّقة",
+  "en": "Pending"
+ },
+ {
+  "key": "admin.2f0f3f1",
+  "ar": "محوّلة",
+  "en": "Transferred"
+ },
+ {
+  "key": "admin.5610c6d",
+  "ar": "لا توجد تحويلات",
+  "en": "No payouts"
+ },
+ {
+  "key": "admin.9182315",
+  "ar": "رحلة",
+  "en": "Trip"
+ },
+ {
+  "key": "admin.19fb610",
+  "ar": "دفع العميل",
+  "en": "Customer paid"
+ },
+ {
+  "key": "admin.fdd99b0",
+  "ar": "تجريبي — لم تتحرك أموال",
+  "en": "Simulated — no money moved"
+ },
+ {
+  "key": "admin.cf33307",
+  "ar": "إعادة المحاولة",
+  "en": "Retry"
+ },
+ {
+  "key": "admin.2bd005d",
+  "ar": "تم التحويل يدويًا",
+  "en": "Mark transferred"
+ },
+ {
+  "key": "admin.9bc382d",
+  "ar": "اكتب سبب التعديل",
+  "en": "Write a reason"
+ },
+ {
+  "key": "admin.8542ece",
+  "ar": "سبب التعديل (يُسجَّل)",
+  "en": "Reason (audited)"
+ },
+ {
+  "key": "admin.e391bce",
+  "ar": "تعديل البيانات الشخصية",
+  "en": "Edit personal data"
+ },
+ {
+  "key": "admin.cb68ebb",
+  "ar": "الهاتف",
+  "en": "Phone"
+ },
+ {
+  "key": "admin.03d8aa9",
+  "ar": "الرقم الشخصي (اتركه فارغًا لعدم التغيير)",
+  "en": "CPR (blank = keep)"
+ },
+ {
+  "key": "admin.fe121b3",
+  "ar": "إصدار البطاقة (YYYY-MM-DD)",
+  "en": "ID issue (YYYY-MM-DD)"
+ },
+ {
+  "key": "admin.61ca21f",
+  "ar": "انتهاء البطاقة (YYYY-MM-DD)",
+  "en": "ID expiry (YYYY-MM-DD)"
+ },
+ {
+  "key": "admin.89fb0da",
+  "ar": "الصورة الشخصية",
+  "en": "Profile photo"
+ },
+ {
+  "key": "admin.05c5dbf",
+  "ar": "صورة الهوية",
+  "en": "ID photo"
+ },
+ {
+  "key": "admin.77b485c",
+  "ar": "تعديل الرخصة",
+  "en": "Edit licence"
+ },
+ {
+  "key": "admin.bd165d5",
+  "ar": "رقم الرخصة (اتركه فارغًا لعدم التغيير)",
+  "en": "Licence no. (blank = keep)"
+ },
+ {
+  "key": "admin.e5dfff7",
+  "ar": "تاريخ الإصدار (YYYY-MM-DD)",
+  "en": "Issue (YYYY-MM-DD)"
+ },
+ {
+  "key": "admin.dbe2724",
+  "ar": "تاريخ الانتهاء (YYYY-MM-DD)",
+  "en": "Expiry (YYYY-MM-DD)"
+ },
+ {
+  "key": "admin.38cb399",
+  "ar": "صورة الرخصة",
+  "en": "Licence photo"
+ },
+ {
+  "key": "admin.0f27a0d",
+  "ar": "تعديل السيارة",
+  "en": "Edit vehicle"
+ },
+ {
+  "key": "admin.55ab14b",
+  "ar": "الشركة",
+  "en": "Make"
+ },
+ {
+  "key": "admin.9de077f",
+  "ar": "الموديل",
+  "en": "Model"
+ },
+ {
+  "key": "admin.9a1e365",
+  "ar": "سنة الصنع",
+  "en": "Year"
+ },
+ {
+  "key": "admin.35b8833",
+  "ar": "رقم اللوحة",
+  "en": "Plate"
+ },
+ {
+  "key": "admin.643d9f4",
+  "ar": "الفئة",
+  "en": "Type"
+ },
+ {
+  "key": "admin.7ed3772",
+  "ar": "عدد الركاب",
+  "en": "Seats"
+ },
+ {
+  "key": "admin.681a73d",
+  "ar": "عدد الشنط",
+  "en": "Luggage"
+ },
+ {
+  "key": "admin.59c57c2",
+  "ar": "الحمولة (كجم)",
+  "en": "Cargo (kg)"
+ },
+ {
+  "key": "admin.1275f13",
+  "ar": "فيها تكييف",
+  "en": "Has A/C"
+ },
+ {
+  "key": "admin.98a925a",
+  "ar": "مريحة",
+  "en": "Comfortable"
+ },
+ {
+  "key": "admin.258ec7d",
+  "ar": "صورة السيارة",
+  "en": "Vehicle photo"
+ },
+ {
+  "key": "admin.e07e9fe",
+  "ar": "ما المطلوب تصحيحه؟",
+  "en": "What needs correcting?"
+ },
+ {
+  "key": "admin.bb554b2",
+  "ar": "الحساب لن يُقفل، سيُطلب من المستخدم تعديل هذه البنود فقط.",
+  "en": "The account isn't locked; the user is asked to fix only these."
+ },
+ {
+  "key": "admin.7e5d05d",
+  "ar": "مثال: الصورة غير واضحة",
+  "en": "e.g. photo is blurry"
+ },
+ {
+  "key": "admin.cae0cff",
+  "ar": "ملاحظة عامة (اختياري)",
+  "en": "General note (optional)"
+ },
+ {
+  "key": "admin.fccf0f6",
+  "ar": "إرسال الطلب",
+  "en": "Send request"
+ },
+ {
+  "key": "admin.431fd1f",
+  "ar": "اختر بندًا واحدًا على الأقل",
+  "en": "Pick at least one item"
+ },
+ {
+  "key": "admin.96db305",
+  "ar": "اعتماد الحساب؟",
+  "en": "Approve account?"
+ },
+ {
+  "key": "admin.fafc17f",
+  "ar": "راجعت كل البيانات والصور؟ ({0} صورة)",
+  "en": "Reviewed all data and photos? ({0} photos)"
+ },
+ {
+  "key": "admin.9a3e13c",
+  "ar": "اعتماد المستندات المعلّقة أيضًا ({0})",
+  "en": "Also approve pending documents ({0})"
+ },
+ {
+  "key": "admin.210b779",
+  "ar": "إلغاء",
+  "en": "Cancel"
+ },
+ {
+  "key": "admin.f1cbf60",
+  "ar": "الوضع",
+  "en": "Mode"
+ },
+ {
+  "key": "admin.8075fe7",
+  "ar": "لا يوجد",
+  "en": "None"
+ },
+ {
+  "key": "admin.b2b5564",
+  "ar": "آخر موقع",
+  "en": "Last location"
+ },
+ {
+  "key": "admin.132144b",
+  "ar": "حساب التحويل",
+  "en": "Payout account"
+ },
+ {
+  "key": "admin.dcfaf41",
+  "ar": "غير مضاف",
+  "en": "Not added"
+ },
+ {
+  "key": "admin.7f4dc4a",
+  "ar": "إجمالي الطلبات",
+  "en": "Total orders"
+ },
+ {
+  "key": "admin.28bbac8",
+  "ar": "إجمالي الأرباح",
+  "en": "Total earnings"
+ },
+ {
+  "key": "admin.bd70989",
+  "ar": "بيانات السائق",
+  "en": "Driver info"
+ },
+ {
+  "key": "admin.668be3b",
+  "ar": "لا توجد رحلة جارية الآن",
+  "en": "No trip right now"
+ },
+ {
+  "key": "admin.9781c4d",
+  "ar": "على رحلة الآن",
+  "en": "On a trip now"
+ },
+ {
+  "key": "admin.3eecdfa",
+  "ar": "تم الطلب",
+  "en": "Requested"
+ },
+ {
+  "key": "admin.1b2ae5a",
+  "ar": "قبِل السائق",
+  "en": "Accepted"
+ },
+ {
+  "key": "admin.0058354",
+  "ar": "في الطريق للعميل",
+  "en": "On the way"
+ },
+ {
+  "key": "admin.80c9c80",
+  "ar": "الرحلة بدأت",
+  "en": "Trip started"
+ },
+ {
+  "key": "admin.9f1ed72",
+  "ar": "وصل للوجهة",
+  "en": "At destination"
+ },
+ {
+  "key": "admin.c2c4a0f",
+  "ar": "اكتملت",
+  "en": "Completed"
+ },
+ {
+  "key": "admin.4cbb34b",
+  "ar": "تعديل",
+  "en": "Edit"
+ },
+ {
+  "key": "admin.25caf8c",
+  "ar": "البيانات الشخصية",
+  "en": "Personal data"
+ },
+ {
+  "key": "admin.c7fa3a9",
+  "ar": "الرقم الشخصي",
+  "en": "CPR"
+ },
+ {
+  "key": "admin.0c59738",
+  "ar": "كشف",
+  "en": "Reveal"
+ },
+ {
+  "key": "admin.f5e0e4b",
+  "ar": "تاريخ التسجيل",
+  "en": "Joined"
+ },
+ {
+  "key": "admin.8e7432f",
+  "ar": "تاريخ الاعتماد",
+  "en": "Approved"
+ },
+ {
+  "key": "admin.b8e45b8",
+  "ar": "آخر ملاحظة",
+  "en": "Last note"
+ },
+ {
+  "key": "admin.40dc200",
+  "ar": "رخصة القيادة",
+  "en": "Driving licence"
+ },
+ {
+  "key": "admin.0aa93db",
+  "ar": "السيارة",
+  "en": "Vehicle"
+ },
+ {
+  "key": "admin.e6e6f92",
+  "ar": "ملكية السيارة",
+  "en": "Vehicle registration"
+ },
+ {
+  "key": "admin.5e93673",
+  "ar": "التأمين",
+  "en": "Insurance"
+ },
+ {
+  "key": "admin.23a5400",
+  "ar": "مستند",
+  "en": "Document"
+ },
+ {
+  "key": "admin.a4ec1a9",
+  "ar": "الصور المرفوعة",
+  "en": "Uploaded photos"
+ },
+ {
+  "key": "admin.fc761e0",
+  "ar": "لم يرفع أي صور",
+  "en": "No photos uploaded"
+ },
+ {
+  "key": "admin.9540f6e",
+  "ar": "رقم الرخصة",
+  "en": "Licence no."
+ },
+ {
+  "key": "admin.79fb9b5",
+  "ar": "تنتهي في",
+  "en": "Expires"
+ },
+ {
+  "key": "admin.83f3e00",
+  "ar": "نعم",
+  "en": "Yes"
+ },
+ {
+  "key": "admin.52c2ca8",
+  "ar": "لا",
+  "en": "No"
+ },
+ {
+  "key": "admin.20496ec",
+  "ar": "النوع",
+  "en": "Make / model"
+ },
+ {
+  "key": "admin.25fbf6c",
+  "ar": "الركاب / الشنط",
+  "en": "Seats / luggage"
+ },
+ {
+  "key": "admin.d1cee08",
+  "ar": "حمولة (كجم)",
+  "en": "Cargo (kg)"
+ },
+ {
+  "key": "admin.3fb6238",
+  "ar": "تكييف",
+  "en": "A/C"
+ },
+ {
+  "key": "admin.21a08b1",
+  "ar": "حالة السيارة",
+  "en": "Status"
+ },
+ {
+  "key": "admin.e1888a6",
+  "ar": "المستندات",
+  "en": "Documents"
+ },
+ {
+  "key": "admin.055d88e",
+  "ar": "ينتهي",
+  "en": "Expires"
+ },
+ {
+  "key": "admin.040b575",
+  "ar": "قبول",
+  "en": "Approve"
+ },
+ {
+  "key": "admin.19f51ec",
+  "ar": "آخر الطلبات",
+  "en": "Recent orders"
+ },
+ {
+  "key": "admin.b096d36",
+  "ar": "سجل الإدارة",
+  "en": "Admin log"
+ },
+ {
+  "key": "places.cce42bd",
+  "ar": "حذف هذا المكان؟",
+  "en": "Delete this place?"
+ },
+ {
+  "key": "places.5a2abb1",
+  "ar": "أماكني",
+  "en": "My places"
+ },
+ {
+  "key": "places.b77ba43",
+  "ar": "أماكن أخرى",
+  "en": "Other places"
+ },
+ {
+  "key": "places.1bf60dd",
+  "ar": "إضافة مكان",
+  "en": "Add place"
+ },
+ {
+  "key": "places.c3da337",
+  "ar": "آخر",
+  "en": "Other"
+ },
+ {
+  "key": "places.a8b6d1b",
+  "ar": "الاسم (اختياري)",
+  "en": "Name (optional)"
+ },
+ {
+  "key": "places.5a91ba2",
+  "ar": "بيت الأهل، الجيم…",
+  "en": "Parents' house, gym…"
+ },
+ {
+  "key": "places.0360038",
+  "ar": "حفظ",
+  "en": "Save"
+ },
+ {
+  "key": "places.7ba2463",
+  "ar": "اضغط للإضافة",
+  "en": "Tap to add"
+ },
+ {
+  "key": "places.4bc742b",
+  "ar": "البيت",
+  "en": "Home"
+ },
+ {
+  "key": "places.6b085b5",
+  "ar": "الشغل",
+  "en": "Work"
+ },
+ {
+  "key": "places.d6780b7",
+  "ar": "مكان",
+  "en": "Place"
+ },
+ {
+  "key": "extras.291b8d5",
+  "ar": "لا يوجد سائقون قريبون حاليًا، اطلب وسنوصلك بأقرب سائق متاح",
+  "en": "No drivers nearby now — order and we will find the nearest one"
+ },
+ {
+  "key": "extras.0cbd592",
+  "ar": "متاح الآن",
+  "en": "Available now"
+ },
+ {
+  "key": "extras.2ca1bd0",
+  "ar": "اطلب مع {0}",
+  "en": "Order with {0}"
+ },
+ {
+  "key": "extras.5b0e4b3",
+  "ar": "سائق واحد قريب منك",
+  "en": "1 driver near you"
+ },
+ {
+  "key": "extras.4edeea6",
+  "ar": "سائقان قريبان منك",
+  "en": "2 drivers near you"
+ },
+ {
+  "key": "extras.614840b",
+  "ar": "{0} سائقين قريبين منك",
+  "en": "{0} drivers near you"
+ },
+ {
+  "key": "extras.7b1e7c3",
+  "ar": "{0} سائقًا قريبًا منك",
+  "en": "{0} drivers near you"
+ },
+ {
+  "key": "extras.0204d4c",
+  "ar": "رسوم إلغاء",
+  "en": "Cancellation fee"
+ },
+ {
+  "key": "extras.25d35ac",
+  "ar": "سيتم احتساب رسوم إلغاء {0}. هل تريد المتابعة؟",
+  "en": "A cancellation fee of {0} applies. Continue?"
+ },
+ {
+  "key": "extras.3c08455",
+  "ar": "تم إبلاغ الإدارة بموقعك",
+  "en": "Admins alerted"
+ },
+ {
+  "key": "extras.e957918",
+  "ar": "اتصل بالشرطة {0}",
+  "en": "Call police {0}"
+ },
+ {
+  "key": "extras.00cd978",
+  "ar": "طوارئ (اضغط {0} مرات)",
+  "en": "SOS (tap {0} times)"
+ },
+ {
+  "key": "extras.27c43db",
+  "ar": "تابع رحلتي على وصلي:",
+  "en": "Follow my Wasaly trip:"
+ },
+ {
+  "key": "extras.a0d8e96",
+  "ar": "شارك الرحلة مع أهلك",
+  "en": "Share trip"
+ },
+ {
+  "key": "extras.b7823c3",
+  "ar": "وصلت للحد الأقصى للمحطات",
+  "en": "Max stops reached"
+ },
+ {
+  "key": "extras.d51ce77",
+  "ar": "المحطة خارج منطقة الخدمة",
+  "en": "Outside service area"
+ },
+ {
+  "key": "extras.7eae0f3",
+  "ar": "وصلت",
+  "en": "Arrived"
+ },
+ {
+  "key": "extras.2b48d77",
+  "ar": "تم",
+  "en": "Done"
+ },
+ {
+  "key": "extras.ede9686",
+  "ar": "إضافة محطة (+{0})",
+  "en": "Add a stop (+{0})"
+ },
+ {
+  "key": "extras.db9b675",
+  "ar": "متى تريد الرحلة؟",
+  "en": "When?"
+ },
+ {
+  "key": "extras.0dc10d3",
+  "ar": "الآن",
+  "en": "Now"
+ },
+ {
+  "key": "extras.72acaed",
+  "ar": "لاحقًا",
+  "en": "Later"
+ },
+ {
+  "key": "extras.f7b69de",
+  "ar": "رسوم الحجز المسبق {0}% من سعر الرحلة",
+  "en": "Booking fee {0}% of the trip price"
+ },
+ {
+  "key": "extras.d8f8262",
+  "ar": "ادعُ صاحبك والمحفظة",
+  "en": "Invite & wallet"
+ },
+ {
+  "key": "extras.a49e0ab",
+  "ar": "كود الدعوة الخاص بك",
+  "en": "Your invite code"
+ },
+ {
+  "key": "extras.681355d",
+  "ar": "نسخ",
+  "en": "Copy"
+ },
+ {
+  "key": "extras.3040b9d",
+  "ar": "مشاركة",
+  "en": "Share"
+ },
+ {
+  "key": "extras.78a8def",
+  "ar": "دعوت",
+  "en": "Invited"
+ },
+ {
+  "key": "extras.8f55531",
+  "ar": "حصلت على المكافأة",
+  "en": "Rewarded"
+ },
+ {
+  "key": "extras.8386038",
+  "ar": "ربحت",
+  "en": "Earned"
+ },
+ {
+  "key": "extras.7eba3c2",
+  "ar": "رصيد المحفظة",
+  "en": "Wallet balance"
+ },
+ {
+  "key": "extras.f2762f6",
+  "ar": "عرض المزيد",
+  "en": "Load more"
+ },
+ {
+  "key": "extras.77dd23e",
+  "ar": "هدفي اليومي",
+  "en": "Daily goal"
+ },
+ {
+  "key": "extras.210b779",
+  "ar": "إلغاء",
+  "en": "Cancel"
+ },
+ {
+  "key": "extras.0360038",
+  "ar": "حفظ",
+  "en": "Save"
+ },
+ {
+  "key": "extras.4fe149a",
+  "ar": "أرباحي والطلب",
+  "en": "Earnings & demand"
+ },
+ {
+  "key": "extras.f9c0a64",
+  "ar": "اليوم",
+  "en": "Today"
+ },
+ {
+  "key": "extras.240a34a",
+  "ar": "رحلة",
+  "en": "trips"
+ },
+ {
+  "key": "extras.75c9eb1",
+  "ar": "دقيقة اتصال",
+  "en": "min online"
+ },
+ {
+  "key": "extras.0673a9f",
+  "ar": "بدون هدف يومي",
+  "en": "No daily goal"
+ },
+ {
+  "key": "extras.14b9011",
+  "ar": "الهدف",
+  "en": "Goal"
+ },
+ {
+  "key": "extras.2096d56",
+  "ar": "تعديل الهدف",
+  "en": "Set goal"
+ },
+ {
+  "key": "extras.8c93774",
+  "ar": "أرباح الأسبوع",
+  "en": "This week"
+ },
+ {
+  "key": "extras.e380184",
+  "ar": "رحلات الأسبوع",
+  "en": "Trips"
+ },
+ {
+  "key": "extras.1b66247",
+  "ar": "أماكن الطلب الآن",
+  "en": "Where the demand is"
+ },
+ {
+  "key": "extras.1806c4a",
+  "ar": "طلبات تبحث",
+  "en": "Searching"
+ },
+ {
+  "key": "extras.e81d33b",
+  "ar": "سائقون فاضيون",
+  "en": "Free drivers"
+ },
+ {
+  "key": "extras.e244f79",
+  "ar": "الخريطة اللايف",
+  "en": "Live map"
+ },
+ {
+  "key": "extras.2f3b346",
+  "ar": "فاضي",
+  "en": "Free"
+ },
+ {
+  "key": "extras.181e362",
+  "ar": "مشغول",
+  "en": "Busy"
+ },
+ {
+  "key": "extras.5891440",
+  "ar": "طلبات",
+  "en": "Orders"
+ },
+ {
+  "key": "extras.bb50ab4",
+  "ar": "يبحث",
+  "en": "Searching"
+ },
+ {
+  "key": "extras.30a9c92",
+  "ar": "جارية",
+  "en": "Active"
+ },
+ {
+  "key": "extras.91030fe",
+  "ar": "كيف تم الحل؟",
+  "en": "Resolution"
+ },
+ {
+  "key": "extras.6467dea",
+  "ar": "تنبيهات الطوارئ",
+  "en": "SOS alerts"
+ },
+ {
+  "key": "extras.be1457e",
+  "ar": "لا توجد تنبيهات",
+  "en": "No alerts"
+ },
+ {
+  "key": "extras.9182315",
+  "ar": "رحلة",
+  "en": "Trip"
+ },
+ {
+  "key": "extras.c4e1e99",
+  "ar": "الطرف الآخر",
+  "en": "Other party"
+ },
+ {
+  "key": "extras.cbddfd2",
+  "ar": "تم الحل",
+  "en": "Resolve"
+ },
+ {
+  "key": "auth.d399f9b",
+  "ar": "تم رفض الحساب",
+  "en": "Account rejected"
+ },
+ {
+  "key": "auth.dc545ec",
+  "ar": "للأسف لم يتم قبول طلبك.",
+  "en": "Unfortunately your request was not accepted."
+ },
+ {
+  "key": "auth.ec08bd9",
+  "ar": "مطلوب تصحيح بيانات",
+  "en": "Correction needed"
+ },
+ {
+  "key": "auth.6e18eea",
+  "ar": "راجع الملاحظة بالأسفل وتواصل معنا لتحديث بياناتك.",
+  "en": "See the note below and contact us to update your details."
+ },
+ {
+  "key": "auth.eefa0e0",
+  "ar": "تم حظر الحساب",
+  "en": "Account banned"
+ },
+ {
+  "key": "auth.0296772",
+  "ar": "تم حظر حسابك نهائيًا ولا يمكن استخدامه.",
+  "en": "Your account has been permanently banned."
+ },
+ {
+  "key": "auth.f63a57f",
+  "ar": "الحساب موقوف",
+  "en": "Account suspended"
+ },
+ {
+  "key": "auth.efb1426",
+  "ar": "تم إيقاف حسابك مؤقتًا.",
+  "en": "Your account is temporarily suspended."
+ },
+ {
+  "key": "auth.d7e44f1",
+  "ar": "حسابك قيد المراجعة",
+  "en": "Your account is under review"
+ },
+ {
+  "key": "auth.9839bd4",
+  "ar": "نراجع بياناتك الآن. ستتحول تلقائيًا للتطبيق فور الاعتماد.",
+  "en": "We're reviewing your details. You'll be taken in automatically once approved."
+ },
+ {
+  "key": "auth.08aa821",
+  "ar": "السبب",
+  "en": "Reason"
+ },
+ {
+  "key": "auth.f7272df",
+  "ar": "نتحقق تلقائيًا…",
+  "en": "Checking automatically…"
+ },
+ {
+  "key": "auth.6737d27",
+  "ar": "تسجيل الخروج",
+  "en": "Sign out"
+ },
+ {
+  "key": "auth.14e3e85",
+  "ar": "تم إيقاف حسابك تلقائيًا بسبب تقييمات منخفضة. تواصل مع الدعم لإعادة التفعيل.",
+  "en": "Auto-suspended for low ratings. Contact support to reactivate."
+ },
+ {
+  "key": "auth.d83e6a4",
+  "ar": "تم حظر حسابك نهائيًا لتكرار التقييمات المنخفضة.",
+  "en": "Permanently banned for repeated low ratings."
+ },
+ {
+  "key": "auth.3ce0186",
+  "ar": "اتصل بالدعم",
+  "en": "Call support"
+ },
+ {
+  "key": "auth.fcb966a",
+  "ar": "واتساب",
+  "en": "WhatsApp"
+ },
+ {
+  "key": "auth.9d16a7e",
+  "ar": "البيانات الشخصية",
+  "en": "Personal"
+ },
+ {
+  "key": "auth.d5df605",
+  "ar": "رخصة القيادة",
+  "en": "Licence"
+ },
+ {
+  "key": "auth.0aa93db",
+  "ar": "السيارة",
+  "en": "Vehicle"
+ },
+ {
+  "key": "auth.a01b4e4",
+  "ar": "المراجعة",
+  "en": "Review"
+ },
+ {
+  "key": "auth.80d2d62",
+  "ar": "حساب سائق",
+  "en": "Driver account"
+ },
+ {
+  "key": "auth.896e5c8",
+  "ar": "السابق",
+  "en": "Back"
+ },
+ {
+  "key": "auth.65c136c",
+  "ar": "التالي",
+  "en": "Next"
+ },
+ {
+  "key": "auth.c77a602",
+  "ar": "إرسال للمراجعة",
+  "en": "Submit for review"
+ },
+ {
+  "key": "auth.b4bde92",
+  "ar": "مطلوب",
+  "en": "Required"
+ },
+ {
+  "key": "auth.05c5dbf",
+  "ar": "صورة الهوية",
+  "en": "ID photo"
+ },
+ {
+  "key": "auth.ddd4bf8",
+  "ar": "مطلوبة",
+  "en": "Required"
+ },
+ {
+  "key": "auth.3fcd7ae",
+  "ar": "رقم الرخصة",
+  "en": "Licence number"
+ },
+ {
+  "key": "auth.241d198",
+  "ar": "تاريخ إصدار الرخصة",
+  "en": "Licence issue date"
+ },
+ {
+  "key": "auth.ee8d5e2",
+  "ar": "تاريخ انتهاء الرخصة",
+  "en": "Licence expiry"
+ },
+ {
+  "key": "auth.38cb399",
+  "ar": "صورة الرخصة",
+  "en": "Licence photo"
+ },
+ {
+  "key": "auth.55ab14b",
+  "ar": "الشركة",
+  "en": "Make"
+ },
+ {
+  "key": "auth.9de077f",
+  "ar": "الموديل",
+  "en": "Model"
+ },
+ {
+  "key": "auth.9a1e365",
+  "ar": "سنة الصنع",
+  "en": "Year"
+ },
+ {
+  "key": "auth.f758cd3",
+  "ar": "اللون",
+  "en": "Colour"
+ },
+ {
+  "key": "auth.31bafe9",
+  "ar": "رقم اللوحة",
+  "en": "Plate number"
+ },
+ {
+  "key": "auth.8640b00",
+  "ar": "الجنس",
+  "en": "Gender"
+ },
+ {
+  "key": "auth.38c7b72",
+  "ar": "ذكر",
+  "en": "Male"
+ },
+ {
+  "key": "auth.dc8f800",
+  "ar": "أنثى",
+  "en": "Female"
+ },
+ {
+  "key": "auth.8afbd7b",
+  "ar": "التدخين مسموح في سيارتي",
+  "en": "Smoking allowed in my car"
+ },
+ {
+  "key": "auth.258ec7d",
+  "ar": "صورة السيارة",
+  "en": "Vehicle photo"
+ },
+ {
+  "key": "auth.78e727e",
+  "ar": "الاسم",
+  "en": "Name"
+ },
+ {
+  "key": "auth.cb68ebb",
+  "ar": "الهاتف",
+  "en": "Phone"
+ },
+ {
+  "key": "auth.858d3c0",
+  "ar": "رقم الهوية",
+  "en": "ID number"
+ },
+ {
+  "key": "auth.9f6c0eb",
+  "ar": "رقم الرخصة",
+  "en": "Licence"
+ },
+ {
+  "key": "auth.c3b6621",
+  "ar": "انتهاء الرخصة",
+  "en": "Expiry"
+ },
+ {
+  "key": "auth.f2c39a1",
+  "ar": "اللوحة",
+  "en": "Plate"
+ },
+ {
+  "key": "auth.560ee0e",
+  "ar": "بعد الإرسال ستراجع الإدارة بياناتك ومستنداتك. لن تستقبل طلبات قبل الاعتماد.",
+  "en": "After submitting, our team reviews your documents. You won't get requests until approved."
+ },
+ {
+  "key": "auth.998cf3e",
+  "ar": "الخطوة",
+  "en": "Step"
+ },
+ {
+  "key": "auth.2077f31",
+  "ar": "إنشاء حساب",
+  "en": "Create account"
+ },
+ {
+  "key": "auth.659a48f",
+  "ar": "كيف ستستخدم وصلي؟",
+  "en": "How will you use Wasaly?"
+ },
+ {
+  "key": "auth.189517c",
+  "ar": "اختر نوع الحساب. لا يمكن تغييره لاحقًا.",
+  "en": "Choose your account type. It can't be changed later."
+ },
+ {
+  "key": "auth.23e8040",
+  "ar": "عميل",
+  "en": "Customer"
+ },
+ {
+  "key": "auth.4ba5a82",
+  "ar": "أرسل أي شيء من مكان لمكان وتابع طلبك لحظة بلحظة",
+  "en": "Send anything from place to place and follow every step"
+ },
+ {
+  "key": "auth.81caea3",
+  "ar": "سائق",
+  "en": "Driver"
+ },
+ {
+  "key": "auth.ffa5588",
+  "ar": "استقبل طلبات التوصيل واربح مع كل رحلة",
+  "en": "Receive delivery requests and earn on every trip"
+ },
+ {
+  "key": "auth.8422b61",
+  "ar": "كل الحسابات تُراجع من الإدارة قبل التفعيل حفاظًا على الأمان.",
+  "en": "Every account is reviewed by our team before activation."
+ },
+ {
+  "key": "auth.0d113f4",
+  "ar": "توصيل أي شيء من أي مكان",
+  "en": "Deliver anything, from anywhere"
+ },
+ {
+  "key": "auth.588e115",
+  "ar": "أهلًا بعودتك",
+  "en": "Welcome back"
+ },
+ {
+  "key": "auth.11e7364",
+  "ar": "سجّل الدخول برقم هاتفك للمتابعة",
+  "en": "Sign in with your phone to continue"
+ },
+ {
+  "key": "auth.c3a4dae",
+  "ar": "رقم الهاتف",
+  "en": "Phone number"
+ },
+ {
+  "key": "auth.751ab62",
+  "ar": "كلمة المرور",
+  "en": "Password"
+ },
+ {
+  "key": "auth.c1ea515",
+  "ar": "تسجيل الدخول",
+  "en": "Sign in"
+ },
+ {
+  "key": "auth.225a1be",
+  "ar": "جديد على وصلي؟",
+  "en": "New to Wasaly?"
+ },
+ {
+  "key": "auth.4327776",
+  "ar": "إدارة",
+  "en": "Admin"
+ },
+ {
+  "key": "auth.81b237c",
+  "ar": "نسخة تجريبية — ادخل بحساب جاهز",
+  "en": "Demo — sign in with a ready account"
+ },
+ {
+  "key": "auth.2b16069",
+  "ar": "كل البيانات وهمية ومحفوظة على الجهاز فقط، وتُمسح عند إغلاق التطبيق.",
+  "en": "All data is fake, kept on the device only, and resets when the app restarts."
+ },
+ {
+  "key": "auth.fd00b9b",
+  "ar": "العربية",
+  "en": "Arabic"
+ },
+ {
+  "key": "auth.cd136ab",
+  "ar": "حساب عميل",
+  "en": "Customer account"
+ },
+ {
+  "key": "auth.7fe3c8c",
+  "ar": "بياناتك",
+  "en": "Your details"
+ },
+ {
+  "key": "auth.a95603c",
+  "ar": "ارفع صورة الهوية",
+  "en": "Upload your ID photo"
+ },
+ {
+  "key": "auth.ba4ddc1",
+  "ar": "كود دعوة (اختياري)",
+  "en": "Invite code (optional)"
+ },
+ {
+  "key": "auth.bc8ec7c",
+  "ar": "إنشاء الحساب",
+  "en": "Create account"
+ },
+ {
+  "key": "auth.b9a4ed8",
+  "ar": "الاسم الكامل",
+  "en": "Full name"
+ },
+ {
+  "key": "auth.61b9a71",
+  "ar": "رقم الهوية الشخصية",
+  "en": "National ID number"
+ },
+ {
+  "key": "auth.34806c7",
+  "ar": "مثل الرقم الشخصي (CPR) أو رقم الهوية في بلدك",
+  "en": "e.g. CPR or your national ID"
+ },
+ {
+  "key": "auth.903eb56",
+  "ar": "تاريخ إصدار البطاقة",
+  "en": "ID issue date"
+ },
+ {
+  "key": "auth.2ac1558",
+  "ar": "تاريخ انتهاء البطاقة",
+  "en": "ID expiry date"
+ },
+ {
+  "key": "auth.707f28c",
+  "ar": "البريد الإلكتروني (اختياري)",
+  "en": "Email (optional)"
+ },
+ {
+  "key": "auth.8f143a1",
+  "ar": "8 أحرف على الأقل",
+  "en": "At least 8 characters"
+ },
+ {
+  "key": "auth.5edbfe2",
+  "ar": "تأكيد كلمة المرور",
+  "en": "Confirm password"
+ },
+ {
+  "key": "auth.b28a5aa",
+  "ar": "غير متطابقة",
+  "en": "Doesn't match"
+ },
+ {
+  "key": "admin_v14.8f25db0",
+  "ar": "بدأ الطلب",
+  "en": "Started order"
+ },
+ {
+  "key": "admin_v14.fa54477",
+  "ar": "حدد الاستلام",
+  "en": "Set pickup"
+ },
+ {
+  "key": "admin_v14.a91152b",
+  "ar": "حدد الوجهة",
+  "en": "Set destination"
+ },
+ {
+  "key": "admin_v14.a6c7f1e",
+  "ar": "شاهد السعر",
+  "en": "Saw price"
+ },
+ {
+  "key": "admin_v14.892eb5e",
+  "ar": "أرسل الطلب",
+  "en": "Submitted"
+ },
+ {
+  "key": "admin_v14.733999e",
+  "ar": "قُبل من سائق",
+  "en": "Driver assigned"
+ },
+ {
+  "key": "admin_v14.5a741e1",
+  "ar": "اكتملت الرحلة",
+  "en": "Completed"
+ },
+ {
+  "key": "admin_v14.95a88b2",
+  "ar": "الإحصاءات",
+  "en": "Analytics"
+ },
+ {
+  "key": "admin_v14.f9863f2",
+  "ar": "{0} يومًا",
+  "en": "{0} days"
+ },
+ {
+  "key": "admin_v14.e83d5fb",
+  "ar": "نشطون يوميًا",
+  "en": "Daily active"
+ },
+ {
+  "key": "admin_v14.c7747bb",
+  "ar": "نشطون شهريًا",
+  "en": "Monthly active"
+ },
+ {
+  "key": "admin_v14.7a06547",
+  "ar": "مستخدمون جدد",
+  "en": "New users"
+ },
+ {
+  "key": "admin_v14.90e0140",
+  "ar": "متوسط الجلسة (دقيقة)",
+  "en": "Avg session (min)"
+ },
+ {
+  "key": "admin_v14.3a39611",
+  "ar": "مراحل الطلب",
+  "en": "Order funnel"
+ },
+ {
+  "key": "admin_v14.206f0c3",
+  "ar": "لا توجد بيانات بعد",
+  "en": "No data yet"
+ },
+ {
+  "key": "admin_v14.65f74ea",
+  "ar": "أين يتراجع العملاء",
+  "en": "Where customers drop off"
+ },
+ {
+  "key": "admin_v14.7406fd5",
+  "ar": "بعد",
+  "en": "After"
+ },
+ {
+  "key": "admin_v14.4ffa437",
+  "ar": "أكثر الشاشات استخدامًا",
+  "en": "Top screens"
+ },
+ {
+  "key": "admin_v14.05e1018",
+  "ar": "عودة المستخدمين أسبوعيًا",
+  "en": "Weekly retention"
+ },
+ {
+  "key": "admin_v14.a19b77c",
+  "ar": "السائقون",
+  "en": "Drivers"
+ },
+ {
+  "key": "admin_v14.633f34b",
+  "ar": "ساعات الاتصال",
+  "en": "Online hours"
+ },
+ {
+  "key": "admin_v14.5110e85",
+  "ar": "نسبة القبول %",
+  "en": "Accept rate %"
+ },
+ {
+  "key": "admin_v14.d89208f",
+  "ar": "عروض أُرسلت",
+  "en": "Offers shown"
+ },
+ {
+  "key": "admin_v14.b3f64c4",
+  "ar": "متوسط الرد (ث)",
+  "en": "Avg response (s)"
+ },
+ {
+  "key": "admin_v14.0360038",
+  "ar": "حفظ",
+  "en": "Save"
+ },
+ {
+  "key": "admin_v14.b543744",
+  "ar": "تم الحفظ",
+  "en": "Saved"
+ },
+ {
+  "key": "admin_v14.09b5cc5",
+  "ar": "الترجمة",
+  "en": "Translations"
+ },
+ {
+  "key": "admin_v14.fb6670f",
+  "ar": "ابحث في النصوص",
+  "en": "Search texts"
+ },
+ {
+  "key": "admin_v14.027e764",
+  "ar": "بدون ترجمة إنجليزية فقط",
+  "en": "Missing English only"
+ },
+ {
+  "key": "admin_v14.e3959b9",
+  "ar": "الإجمالي",
+  "en": "Total"
+ },
+ {
+  "key": "admin_v14.d5c9f9d",
+  "ar": "ناقص",
+  "en": "Missing"
+ },
+ {
+  "key": "admin_v14.fd00b9b",
+  "ar": "العربية",
+  "en": "Arabic"
+ },
+ {
+  "key": "driver.ce11e59",
+  "ar": "الطلبات",
+  "en": "Requests"
+ },
+ {
+  "key": "driver.6850a46",
+  "ar": "رحلاتي",
+  "en": "Trips"
+ },
+ {
+  "key": "driver.7171704",
+  "ar": "الأرباح",
+  "en": "Earnings"
+ },
+ {
+  "key": "driver.a2e4503",
+  "ar": "حسابي",
+  "en": "Account"
+ },
+ {
+  "key": "driver.9d87724",
+  "ar": "اختر منطقة واحدة على الأقل",
+  "en": "Pick at least one area"
+ },
+ {
+  "key": "driver.a6a0b9d",
+  "ar": "تم حفظ مناطق العمل",
+  "en": "Work areas saved"
+ },
+ {
+  "key": "driver.ec7c7ca",
+  "ar": "منطقة غير متاحة، حدّث القائمة",
+  "en": "An area is no longer available, refresh"
+ },
+ {
+  "key": "driver.f4f5e9c",
+  "ar": "مناطق العمل",
+  "en": "Work areas"
+ },
+ {
+  "key": "driver.745029e",
+  "ar": "ستصلك الطلبات من المناطق المختارة فقط.",
+  "en": "You only get orders from the areas you pick."
+ },
+ {
+  "key": "driver.26aa4da",
+  "ar": "حفظ ({0})",
+  "en": "Save ({0})"
+ },
+ {
+  "key": "driver.0646bff",
+  "ar": "الرئيسية",
+  "en": "Main"
+ },
+ {
+  "key": "driver.32db825",
+  "ar": "من الأمام",
+  "en": "Front"
+ },
+ {
+  "key": "driver.871f5ed",
+  "ar": "من الخلف",
+  "en": "Back"
+ },
+ {
+  "key": "driver.47b8993",
+  "ar": "الجانب الأيسر",
+  "en": "Left"
+ },
+ {
+  "key": "driver.be2fe8e",
+  "ar": "الجانب الأيمن",
+  "en": "Right"
+ },
+ {
+  "key": "driver.2d249db",
+  "ar": "الجانب",
+  "en": "Side"
+ },
+ {
+  "key": "driver.23fb3f0",
+  "ar": "من الداخل",
+  "en": "Interior"
+ },
+ {
+  "key": "driver.adb7389",
+  "ar": "الشنطة",
+  "en": "Trunk"
+ },
+ {
+  "key": "driver.6943960",
+  "ar": "لا توجد تغييرات",
+  "en": "Nothing changed"
+ },
+ {
+  "key": "driver.4b6dcd8",
+  "ar": "تم حفظ بيانات السيارة",
+  "en": "Car details saved"
+ },
+ {
+  "key": "driver.c01b5e2",
+  "ar": "بيانات سيارتي",
+  "en": "My car"
+ },
+ {
+  "key": "driver.3849085",
+  "ar": "الماركة والموديل والسنة واللوحة تُعدّل عن طريق الإدارة.",
+  "en": "Make, model, year and plate are changed by the admin."
+ },
+ {
+  "key": "driver.52366b8",
+  "ar": "اللون",
+  "en": "Color"
+ },
+ {
+  "key": "driver.7ed3772",
+  "ar": "عدد الركاب",
+  "en": "Seats"
+ },
+ {
+  "key": "driver.e8454aa",
+  "ar": "الحقائب",
+  "en": "Luggage"
+ },
+ {
+  "key": "driver.d1f220b",
+  "ar": "حمولة الشحن (كجم)",
+  "en": "Cargo (kg)"
+ },
+ {
+  "key": "driver.e4d6cf7",
+  "ar": "مكيّفة",
+  "en": "Air conditioning"
+ },
+ {
+  "key": "driver.b43b4b7",
+  "ar": "سيارة مريحة",
+  "en": "Comfortable car"
+ },
+ {
+  "key": "driver.2d76a00",
+  "ar": "صور السيارة",
+  "en": "Car photos"
+ },
+ {
+  "key": "driver.0360038",
+  "ar": "حفظ",
+  "en": "Save"
+ },
+ {
+  "key": "driver.e8c13ec",
+  "ar": "تم حفظ الحساب",
+  "en": "Account saved"
+ },
+ {
+  "key": "driver.28ba166",
+  "ar": "حساب استلام الأرباح",
+  "en": "Payout account"
+ },
+ {
+  "key": "driver.537233c",
+  "ar": "مفعّل",
+  "en": "Active"
+ },
+ {
+  "key": "driver.de781ea",
+  "ar": "تغيير الحساب",
+  "en": "Change account"
+ },
+ {
+  "key": "driver.dad1e39",
+  "ar": "أرباحك تُحوَّل إلى هذا الحساب بعد تأكيد دفع العميل. لأمانك، يظهر الرقم مقنّعًا بعد الحفظ.",
+  "en": "Earnings go to this account after the customer's payment is confirmed. It's masked after saving."
+ },
+ {
+  "key": "driver.3f93454",
+  "ar": "اسم صاحب الحساب",
+  "en": "Account holder name"
+ },
+ {
+  "key": "driver.b4bde92",
+  "ar": "مطلوب",
+  "en": "Required"
+ },
+ {
+  "key": "driver.995bba7",
+  "ar": "رقم IBAN غير صحيح",
+  "en": "Invalid IBAN"
+ },
+ {
+  "key": "driver.1854d1b",
+  "ar": "حفظ الحساب",
+  "en": "Save account"
+ },
+ {
+  "key": "driver.484f3d2",
+  "ar": "تراجع",
+  "en": "Cancel"
+ },
+ {
+  "key": "driver.71de107",
+  "ar": "الإدارة أوقفت وضع لايف حاليًا — استخدم \"عادي\"",
+  "en": "Live is turned off by admin — use Normal"
+ },
+ {
+  "key": "driver.c2e926a",
+  "ar": "الموافقة على الموقع",
+  "en": "Location consent"
+ },
+ {
+  "key": "driver.f4d4be8",
+  "ar": "لازم توافق على استخدام موقعك قبل الاتصال. يمكنك سحب الموافقة من الإعدادات، وعندها تُحذف بيانات موقعك المخزنة.",
+  "en": "You need to allow location before going online. You can withdraw it in Settings, which deletes stored location data."
+ },
+ {
+  "key": "driver.f068b4c",
+  "ar": "لا يمكنك الاتصال الآن",
+  "en": "You can't go online yet"
+ },
+ {
+  "key": "driver.32995bc",
+  "ar": "تشغيل الوضع المباشر (لايف)",
+  "en": "Go Live"
+ },
+ {
+  "key": "driver.5ee4e68",
+  "ar": "سيتم إرسال موقعك كل {0} ثانية طوال تشغيل الوضع المباشر والتطبيق مفتوح، لتصلك الطلبات الأقرب لك. يتوقف الإرسال فور اختيار \"عادي\" أو \"مقفول\".",
+  "en": "Your location is sent every {0} s while Live and the app is open, so you get the nearest requests. It stops as soon as you pick Normal or Off."
+ },
+ {
+  "key": "driver.c5dc00d",
+  "ar": "تشغيل لايف",
+  "en": "Go Live"
+ },
+ {
+  "key": "driver.210b779",
+  "ar": "إلغاء",
+  "en": "Cancel"
+ },
+ {
+  "key": "driver.6110f68",
+  "ar": "فعّل خدمة الموقع واسمح للتطبيق بالوصول إليه لتشغيل لايف",
+  "en": "Turn on location and allow access to go Live"
+ },
+ {
+  "key": "driver.64e4241",
+  "ar": "انتهى العرض",
+  "en": "The offer has ended"
+ },
+ {
+  "key": "driver.daf228f",
+  "ar": "أرسلت طلب زيادة بالفعل",
+  "en": "You already asked for more"
+ },
+ {
+  "key": "driver.45ca75c",
+  "ar": "أعلى من الحد المسموح",
+  "en": "Above the allowed maximum"
+ },
+ {
+  "key": "driver.b34678e",
+  "ar": "تم إرسال طلب الزيادة للعميل",
+  "en": "Request sent to the customer"
+ },
+ {
+  "key": "driver.1588bbe",
+  "ar": "تم إرسال قبولك — بانتظار اختيار العميل",
+  "en": "Sent — waiting for the customer to choose you"
+ },
+ {
+  "key": "driver.899dbc3",
+  "ar": "تم قبول الطلب من سائق آخر",
+  "en": "Another driver accepted this request"
+ },
+ {
+  "key": "driver.81caea3",
+  "ar": "سائق",
+  "en": "Driver"
+ },
+ {
+  "key": "driver.51e828f",
+  "ar": "أضف حساب IBAN لاستلام أرباحك",
+  "en": "Add your IBAN to receive earnings"
+ },
+ {
+  "key": "driver.06b347e",
+  "ar": "رحلة جارية",
+  "en": "Trip in progress"
+ },
+ {
+  "key": "driver.8ed3390",
+  "ar": "أنت غير متصل",
+  "en": "You're offline"
+ },
+ {
+  "key": "driver.154b7f6",
+  "ar": "اختر \"عادي\" أو \"لايف\" لتبدأ باستقبال طلبات التوصيل",
+  "en": "Pick Normal or Live to start receiving requests"
+ },
+ {
+  "key": "driver.4f914c4",
+  "ar": "بانتظار طلبات قريبة من موقعك…",
+  "en": "Waiting for requests near you…"
+ },
+ {
+  "key": "driver.bbd8653",
+  "ar": "بانتظار طلبات في منطقتك…",
+  "en": "Waiting for requests in your area…"
+ },
+ {
+  "key": "driver.0c8753a",
+  "ar": "سيظهر الطلب هنا، ولديك {0} ثانية لقبوله",
+  "en": "Requests appear here — you'll have {0} s to accept"
+ },
+ {
+  "key": "driver.2614cc3",
+  "ar": "مقفول",
+  "en": "Off"
+ },
+ {
+  "key": "driver.292ca65",
+  "ar": "عادي",
+  "en": "Normal"
+ },
+ {
+  "key": "driver.5d3c7aa",
+  "ar": "لايف",
+  "en": "Live"
+ },
+ {
+  "key": "driver.2202e6b",
+  "ar": "لن تصلك أي طلبات",
+  "en": "You won't get requests"
+ },
+ {
+  "key": "driver.9f3017f",
+  "ar": "تصلك طلبات مناطق خدمتك",
+  "en": "Requests from your service areas"
+ },
+ {
+  "key": "driver.b98a5bd",
+  "ar": "جارٍ تحديد موقعك…",
+  "en": "Getting your location…"
+ },
+ {
+  "key": "driver.a7292f7",
+  "ar": "تعذّر تحديث الموقع — نحاول مجددًا",
+  "en": "Couldn't update location — retrying"
+ },
+ {
+  "key": "driver.e46bca0",
+  "ar": "موقعك مباشر — آخر تحديث {0}",
+  "en": "Live — updated {0}"
+ },
+ {
+  "key": "driver.1c9feb1",
+  "ar": "رخصة القيادة منتهية",
+  "en": "Driving licence expired"
+ },
+ {
+  "key": "driver.86fd11d",
+  "ar": "اختر مناطق العمل أولاً",
+  "en": "Pick your work areas first"
+ },
+ {
+  "key": "driver.3104b9a",
+  "ar": "إحدى الوثائق منتهية",
+  "en": "A document has expired"
+ },
+ {
+  "key": "driver.7ee0f39",
+  "ar": "أضف حساب IBAN",
+  "en": "Add your IBAN"
+ },
+ {
+  "key": "driver.fed6040",
+  "ar": "المركبة غير معتمدة",
+  "en": "Vehicle not approved"
+ },
+ {
+  "key": "driver.5eb0bba",
+  "ar": "الحساب غير معتمد",
+  "en": "Account not approved"
+ },
+ {
+  "key": "driver.3adfc9b",
+  "ar": "يجب إرسال التصحيحات المطلوبة أولاً",
+  "en": "Send the requested corrections first"
+ },
+ {
+  "key": "driver.41b56cd",
+  "ar": "تصحيح",
+  "en": "Fix"
+ },
+ {
+  "key": "driver.831b8ab",
+  "ar": "اختيار",
+  "en": "Pick"
+ },
+ {
+  "key": "driver.c3bc9c8",
+  "ar": "بانتظار اختيار العميل…",
+  "en": "Waiting for the customer to choose…"
+ },
+ {
+  "key": "driver.c363767",
+  "ar": "طلبت +{0}%",
+  "en": "You asked +{0}%"
+ },
+ {
+  "key": "driver.766b1d1",
+  "ar": "تم التسليم",
+  "en": "Delivered"
+ },
+ {
+  "key": "driver.d244d12",
+  "ar": "أرباحك من هذه الرحلة",
+  "en": "Your earnings for this trip"
+ },
+ {
+  "key": "driver.4d16b4b",
+  "ar": "رقم الرحلة",
+  "en": "Trip"
+ },
+ {
+  "key": "driver.43ea05c",
+  "ar": "سعر الرحلة",
+  "en": "Trip price"
+ },
+ {
+  "key": "driver.b0da2ee",
+  "ar": "خصم الرحلات الخارجية",
+  "en": "Cross-border deduction"
+ },
+ {
+  "key": "driver.863dd50",
+  "ar": "عمولة المنصة",
+  "en": "Platform fee"
+ },
+ {
+  "key": "driver.f24505c",
+  "ar": "صافي أرباحك",
+  "en": "Your net"
+ },
+ {
+  "key": "driver.49a9037",
+  "ar": "يُحوَّل نصيبك إلى حساب IBAN بعد تأكيد دفع العميل.",
+  "en": "Your share is transferred to your IBAN once the customer's payment is confirmed."
+ },
+ {
+  "key": "driver.65e60bd",
+  "ar": "العودة للطلبات",
+  "en": "Back to requests"
+ },
+ {
+  "key": "driver.28bbac8",
+  "ar": "إجمالي الأرباح",
+  "en": "Total earnings"
+ },
+ {
+  "key": "driver.7b5ebdf",
+  "ar": "تم تحويله",
+  "en": "Transferred"
+ },
+ {
+  "key": "driver.376cf97",
+  "ar": "بانتظار التحويل",
+  "en": "Pending"
+ },
+ {
+  "key": "driver.f9c0a64",
+  "ar": "اليوم",
+  "en": "Today"
+ },
+ {
+  "key": "driver.519e8e4",
+  "ar": "هذا الأسبوع",
+  "en": "This week"
+ },
+ {
+  "key": "driver.4395e45",
+  "ar": "هذا الشهر",
+  "en": "This month"
+ },
+ {
+  "key": "driver.16b3dd2",
+  "ar": "عدد الرحلات",
+  "en": "Trips"
+ },
+ {
+  "key": "driver.0efd41b",
+  "ar": "سجل التحويلات",
+  "en": "Payout history"
+ },
+ {
+  "key": "driver.e12f419",
+  "ar": "حساب IBAN",
+  "en": "IBAN account"
+ },
+ {
+  "key": "driver.7499252",
+  "ar": "لا يمكن تخطي خطوة",
+  "en": "Steps can't be skipped"
+ },
+ {
+  "key": "driver.8792a38",
+  "ar": "سبب إلغاء الرحلة",
+  "en": "Why are you cancelling?"
+ },
+ {
+  "key": "driver.925d104",
+  "ar": "إلغاء الرحلة",
+  "en": "Cancel trip"
+ },
+ {
+  "key": "driver.f0e83fa",
+  "ar": "الرحلة",
+  "en": "Trip"
+ },
+ {
+  "key": "driver.b4afe74",
+  "ar": "تم إلغاء الرحلة",
+  "en": "Trip cancelled"
+ },
+ {
+  "key": "driver.e78d1a6",
+  "ar": "العودة",
+  "en": "Back"
+ },
+ {
+  "key": "driver.1b8b08b",
+  "ar": "الاستلام",
+  "en": "Pickup"
+ },
+ {
+  "key": "driver.1d634a6",
+  "ar": "العميل",
+  "en": "Customer"
+ },
+ {
+  "key": "driver.ce128ba",
+  "ar": "الوجهة",
+  "en": "Drop-off"
+ },
+ {
+  "key": "driver.b17f3de",
+  "ar": "المستلم",
+  "en": "Receiver"
+ },
+ {
+  "key": "driver.96fb044",
+  "ar": "الشحنة",
+  "en": "Item"
+ },
+ {
+  "key": "driver.46819ff",
+  "ar": "ملاحظات",
+  "en": "Notes"
+ },
+ {
+  "key": "driver.19dd327",
+  "ar": "العداد يعمل على السيرفر",
+  "en": "The meter runs on the server"
+ },
+ {
+  "key": "driver.3d76ad3",
+  "ar": "ملاحة",
+  "en": "Navigate"
+ },
+ {
+  "key": "driver.c65b4f6",
+  "ar": "اتصال",
+  "en": "Call"
+ },
+ {
+  "key": "driver.a2476e2",
+  "ar": "النشطة",
+  "en": "Active"
+ },
+ {
+  "key": "driver.e18746f",
+  "ar": "المقبولة",
+  "en": "Accepted"
+ },
+ {
+  "key": "driver.e781190",
+  "ar": "المكتملة",
+  "en": "Completed"
+ },
+ {
+  "key": "driver.45c1246",
+  "ar": "الملغاة",
+  "en": "Cancelled"
+ },
+ {
+  "key": "driver.cd4b2f2",
+  "ar": "رحلاتي",
+  "en": "My trips"
+ },
+ {
+  "key": "driver.1e9abb8",
+  "ar": "لا توجد رحلات",
+  "en": "No trips"
+ },
+ {
+  "key": "driver.b4c4f57",
+  "ar": "أرباحك",
+  "en": "Your earning"
+ },
+ {
+  "key": "driver.d7f4260",
+  "ar": "التحويلات",
+  "en": "Payouts"
+ },
+ {
+  "key": "driver.3927802",
+  "ar": "لا توجد تحويلات بعد",
+  "en": "No payouts yet"
+ },
+ {
+  "key": "driver.9182315",
+  "ar": "رحلة",
+  "en": "Trip"
+ },
+ {
+  "key": "driver.63e09b2",
+  "ar": "خُصم للمستحقات",
+  "en": "Kept for debt"
+ },
+ {
+  "key": "driver.9c76a84",
+  "ar": "تحويل تجريبي — لم تتحرك أموال",
+  "en": "Test transfer — no money moved"
+ },
+ {
+  "key": "driver.b362674",
+  "ar": "أضف حساب IBAN ليتم التحويل تلقائيًا ←",
+  "en": "Add an IBAN to receive it automatically →"
+ },
+ {
+  "key": "driver.0ebea3d",
+  "ar": "طلب جديد!",
+  "en": "New order!"
+ },
+ {
+  "key": "driver.d14e667",
+  "ar": "إيقاف وعرض الطلب",
+  "en": "Stop & view order"
+ },
+ {
+  "key": "driver.74588fe",
+  "ar": "مستحق للشركة",
+  "en": "Owed to the company"
+ },
+ {
+  "key": "driver.7099f25",
+  "ar": "يُخصم من أرباحك أولًا، ولا يتم تحويل أي مبلغ حتى يُسدّد.",
+  "en": "Taken from your earnings first; no payouts until it is cleared."
+ },
+ {
+  "key": "driver.6c7b2de",
+  "ar": "كل التفاصيل والخريطة",
+  "en": "All details & map"
+ },
+ {
+  "key": "driver.20a8fa2",
+  "ar": "اطلب سعرًا أعلى",
+  "en": "Ask for more"
+ },
+ {
+  "key": "driver.8881386",
+  "ar": "رفض",
+  "en": "Decline"
+ },
+ {
+  "key": "driver.14fac98",
+  "ar": "قبول الطلب",
+  "en": "Accept"
+ },
+ {
+  "key": "driver.fcc3db7",
+  "ar": "كم للاستلام",
+  "en": "km to pickup"
+ },
+ {
+  "key": "driver.43b7eb4",
+  "ar": "كم",
+  "en": "km"
+ },
+ {
+  "key": "driver.171be0d",
+  "ar": "د",
+  "en": "min"
+ },
+ {
+  "key": "driver.042250b",
+  "ar": "كجم",
+  "en": "kg"
+ },
+ {
+  "key": "driver.b669f5a",
+  "ar": "ليلي",
+  "en": "Night"
+ },
+ {
+  "key": "driver.10a21d0",
+  "ar": "خارج الدولة",
+  "en": "Cross-border"
+ },
+ {
+  "key": "driver.4074d7b",
+  "ar": "تفاصيل الطلب",
+  "en": "Request details"
+ },
+ {
+  "key": "driver.42286ca",
+  "ar": "تقديري — يُحسب النهائي حسب وقت الرحلة الفعلي.",
+  "en": "Estimate — final is based on actual trip time."
+ },
+ {
+  "key": "driver.fddef87",
+  "ar": "السعر التقديري للرحلة",
+  "en": "Estimated trip price"
+ },
+ {
+  "key": "driver.2408860",
+  "ar": "رسوم ليلية",
+  "en": "Night surcharge"
+ },
+ {
+  "key": "driver.7a03b9b",
+  "ar": "رسوم إضافية",
+  "en": "Extra fees"
+ },
+ {
+  "key": "driver.03a1f42",
+  "ar": "الوزن",
+  "en": "Weight"
+ },
+ {
+  "key": "driver.eb57c49",
+  "ar": "رقم العميل يظهر بعد القبول.",
+  "en": "The customer's phone appears after accepting."
+ },
+ {
+  "key": "driver.4d58c3e",
+  "ar": "أرباحك المتوقعة (تقديري)",
+  "en": "Expected earning (estimate)"
+ },
+ {
+  "key": "driver.2b6e98e",
+  "ar": "صورة الاستلام",
+  "en": "Pickup photo"
+ },
+ {
+  "key": "driver.7ba08c0",
+  "ar": "صورة التسليم",
+  "en": "Delivery photo"
+ },
+ {
+  "key": "driver.79168b9",
+  "ar": "صوّر الشحنة قبل بدء الرحلة — تظهر للعميل.",
+  "en": "Photograph the item before starting — the customer sees it."
+ },
+ {
+  "key": "driver.1ea3587",
+  "ar": "صوّر الشحنة عند التسليم — تظهر للعميل.",
+  "en": "Photograph the item at delivery — the customer sees it."
+ },
+ {
+  "key": "driver.9e5ea57",
+  "ar": "المعرض",
+  "en": "Gallery"
+ },
+ {
+  "key": "driver.3a69514",
+  "ar": "التقاط",
+  "en": "Take photo"
+ },
+ {
+  "key": "driver.8afbd7b",
+  "ar": "التدخين مسموح في سيارتي",
+  "en": "Smoking allowed in my car"
+ },
+ {
+  "key": "driver.eb2f6fa",
+  "ar": "تصلك فقط الطلبات المطابقة لهذا الاختيار",
+  "en": "You only get requests that match this"
+ },
+ {
+  "key": "driver.8640b00",
+  "ar": "الجنس",
+  "en": "Gender"
+ },
+ {
+  "key": "driver.c02d11a",
+  "ar": "غير محدد (يُعتبر ذكر) — تواصل مع الإدارة للتعديل",
+  "en": "Not set (treated as male) — contact admin to change"
+ },
+ {
+  "key": "driver.a241b51",
+  "ar": "للتعديل تواصل مع الإدارة",
+  "en": "Contact admin to change"
+ },
+ {
+  "key": "driver.dc8f800",
+  "ar": "أنثى",
+  "en": "Female"
+ },
+ {
+  "key": "driver.38c7b72",
+  "ar": "ذكر",
+  "en": "Male"
+ },
+ {
+  "key": "driver.70ea683",
+  "ar": "أنا في الطريق",
+  "en": "I'm on my way"
+ },
+ {
+  "key": "driver.760a6db",
+  "ar": "وصلت لنقطة الاستلام",
+  "en": "Arrived at pickup"
+ },
+ {
+  "key": "driver.68416d8",
+  "ar": "استلمت الشحنة — ابدأ الرحلة",
+  "en": "Picked up — start trip"
+ },
+ {
+  "key": "driver.95485d3",
+  "ar": "وصلت للوجهة — تم التسليم",
+  "en": "Arrived — delivered"
+ },
+ {
+  "key": "app_gate.96cbdad",
+  "ar": "إعادة المحاولة",
+  "en": "Try again"
+ },
+ {
+  "key": "app_gate.d83a03a",
+  "ar": "التطبيق تحت الصيانة",
+  "en": "We're under maintenance"
+ },
+ {
+  "key": "app_gate.721a660",
+  "ar": "نحسّن الخدمة الآن وسنعود قريبًا. شكرًا لصبرك.",
+  "en": "We're improving the service and will be back soon. Thanks for your patience."
+ },
+ {
+  "key": "app_gate.8f0af12",
+  "ar": "حدّث التطبيق",
+  "en": "Please update the app"
+ },
+ {
+  "key": "app_gate.aecdb6b",
+  "ar": "هذه النسخة لم تعد مدعومة. حدّث التطبيق للمتابعة.",
+  "en": "This version is no longer supported. Update the app to continue."
+ },
+ {
+  "key": "rating.402f264",
+  "ar": "سيئ جدًا",
+  "en": "Very bad"
+ },
+ {
+  "key": "rating.2b7c971",
+  "ar": "سيئ",
+  "en": "Bad"
+ },
+ {
+  "key": "rating.761fd29",
+  "ar": "مقبول",
+  "en": "Okay"
+ },
+ {
+  "key": "rating.9562c4d",
+  "ar": "جيد",
+  "en": "Good"
+ },
+ {
+  "key": "rating.7d2fcac",
+  "ar": "ممتاز!",
+  "en": "Excellent!"
+ },
+ {
+  "key": "rating.b491050",
+  "ar": "اضغط على النجوم",
+  "en": "Tap the stars"
+ },
+ {
+  "key": "rating.cdb4755",
+  "ar": "اختر سببًا أو اكتب ملاحظة لتقييم النجمة الواحدة",
+  "en": "Pick a reason or write a note for a 1-star rating"
+ },
+ {
+  "key": "rating.0f9f3e5",
+  "ar": "انتهت مهلة التقييم لهذه الرحلة",
+  "en": "The rating window for this trip has closed"
+ },
+ {
+  "key": "rating.02ff7bb",
+  "ar": "شكرًا على تقييمك",
+  "en": "Thanks for your rating"
+ },
+ {
+  "key": "rating.b4f8e70",
+  "ar": "كيف كانت رحلتك مع {0}؟",
+  "en": "How was your trip with {0}?"
+ },
+ {
+  "key": "rating.1708eca",
+  "ar": "قيّم العميل {0}",
+  "en": "Rate the customer {0}"
+ },
+ {
+  "key": "rating.5a8642a",
+  "ar": "ملاحظة (اختياري)",
+  "en": "Comment (optional)"
+ },
+ {
+  "key": "rating.a9231ed",
+  "ar": "إرسال التقييم",
+  "en": "Submit rating"
+ },
+ {
+  "key": "rating.e49ed79",
+  "ar": "تأخير",
+  "en": "Late"
+ },
+ {
+  "key": "rating.db8f33e",
+  "ar": "سلوك غير لائق",
+  "en": "Rude"
+ },
+ {
+  "key": "rating.18047a2",
+  "ar": "الشحنة تضررت",
+  "en": "Item damaged"
+ },
+ {
+  "key": "rating.b60edab",
+  "ar": "لم يتواصل",
+  "en": "No contact"
+ },
+ {
+  "key": "rating.d358a37",
+  "ar": "قيادة غير آمنة",
+  "en": "Unsafe driving"
+ },
+ {
+  "key": "rating.0444c3d",
+  "ar": "سريع",
+  "en": "Fast"
+ },
+ {
+  "key": "rating.4b74620",
+  "ar": "محترم",
+  "en": "Polite"
+ },
+ {
+  "key": "rating.619bb58",
+  "ar": "حافظ على الشحنة",
+  "en": "Careful with item"
+ },
+ {
+  "key": "rating.3d2b6a7",
+  "ar": "تواصل ممتاز",
+  "en": "Great communication"
+ },
+ {
+  "key": "rating.825db40",
+  "ar": "لم يكن جاهزًا",
+  "en": "Not ready"
+ },
+ {
+  "key": "rating.467f4ad",
+  "ar": "عنوان غير دقيق",
+  "en": "Wrong address"
+ },
+ {
+  "key": "rating.7c38f33",
+  "ar": "لم يرد",
+  "en": "No answer"
+ },
+ {
+  "key": "rating.1b48889",
+  "ar": "جاهز في الموعد",
+  "en": "On time"
+ },
+ {
+  "key": "rating.93c48c7",
+  "ar": "عنوان دقيق",
+  "en": "Accurate address"
+ },
+ {
+  "key": "rating.7f6af0a",
+  "ar": "متعاون",
+  "en": "Friendly"
+ },
+ {
+  "key": "corrections.0c6b7e7",
+  "ar": "تم القبول",
+  "en": "Accepted"
+ },
+ {
+  "key": "corrections.f2198a1",
+  "ar": "تم الرفض",
+  "en": "Rejected"
+ },
+ {
+  "key": "corrections.ea4d601",
+  "ar": "سبب الرفض",
+  "en": "Rejection reason"
+ },
+ {
+  "key": "corrections.210b779",
+  "ar": "إلغاء",
+  "en": "Cancel"
+ },
+ {
+  "key": "corrections.8a223f3",
+  "ar": "رفض",
+  "en": "Reject"
+ },
+ {
+  "key": "corrections.b915675",
+  "ar": "مراجعة التصحيحات",
+  "en": "Review corrections"
+ },
+ {
+  "key": "corrections.4c9d28e",
+  "ar": "طلبات تغيير البيانات",
+  "en": "Profile change requests"
+ },
+ {
+  "key": "corrections.eebb916",
+  "ar": "لا يوجد شيء للمراجعة",
+  "en": "Nothing to review"
+ },
+ {
+  "key": "corrections.449a7b5",
+  "ar": "القديم",
+  "en": "Old"
+ },
+ {
+  "key": "corrections.fcb2022",
+  "ar": "الجديد",
+  "en": "New"
+ },
+ {
+  "key": "corrections.e3b60bc",
+  "ar": "قبول",
+  "en": "Accept"
+ },
+ {
+  "key": "corrections.a1b02b8",
+  "ar": "تصحيح البيانات",
+  "en": "Fix your details"
+ },
+ {
+  "key": "corrections.6737d27",
+  "ar": "تسجيل الخروج",
+  "en": "Sign out"
+ },
+ {
+  "key": "corrections.677d9a7",
+  "ar": "أكمل كل البنود المطلوبة",
+  "en": "Complete every requested item"
+ },
+ {
+  "key": "corrections.0f4a5d7",
+  "ar": "تم الإرسال للمراجعة",
+  "en": "Sent for review"
+ },
+ {
+  "key": "corrections.6c312dc",
+  "ar": "الصورة غير صالحة، أعد رفعها",
+  "en": "Invalid photo, upload it again"
+ },
+ {
+  "key": "corrections.7704d6a",
+  "ar": "تاريخ الرخصة يجب أن يكون في المستقبل",
+  "en": "Licence date must be in the future"
+ },
+ {
+  "key": "corrections.0ec639f",
+  "ar": "قيمة غير صحيحة",
+  "en": "Invalid value"
+ },
+ {
+  "key": "corrections.c38b07c",
+  "ar": "تم إرسال هذا البند مسبقًا",
+  "en": "This item was already sent"
+ },
+ {
+  "key": "corrections.ab7e2cc",
+  "ar": "الرقم الشخصي مستخدم",
+  "en": "CPR already in use"
+ },
+ {
+  "key": "corrections.a3de21c",
+  "ar": "رقم اللوحة مستخدم",
+  "en": "Plate already in use"
+ },
+ {
+  "key": "corrections.8d63784",
+  "ar": "لا توجد تصحيحات مطلوبة",
+  "en": "Nothing to fix"
+ },
+ {
+  "key": "corrections.bf11aa6",
+  "ar": "طلبت الإدارة تصحيح البنود التالية. حسابك يعمل، لكن يجب إرسال التصحيحات للمتابعة.",
+  "en": "The admin asked you to fix the items below. Your account is active, but you must send them to continue."
+ },
+ {
+  "key": "corrections.2cd5150",
+  "ar": "إرسال التصحيحات",
+  "en": "Send corrections"
+ },
+ {
+  "key": "corrections.c7d4241",
+  "ar": "قيد المراجعة",
+  "en": "Under review"
+ },
+ {
+  "key": "corrections.ef3c28a",
+  "ar": "الحالية:",
+  "en": "Current:"
+ },
+ {
+  "key": "corrections.7e70fd3",
+  "ar": "الحالية",
+  "en": "Current"
+ },
+ {
+  "key": "corrections.f72f64b",
+  "ar": "الصورة الجديدة",
+  "en": "New photo"
+ },
+ {
+  "key": "corrections.af7775d",
+  "ar": "التاريخ الجديد",
+  "en": "New date"
+ },
+ {
+  "key": "corrections.cf079cd",
+  "ar": "القيمة الجديدة",
+  "en": "New value"
+ },
+ {
+  "key": "corrections.89fb0da",
+  "ar": "الصورة الشخصية",
+  "en": "Profile photo"
+ },
+ {
+  "key": "corrections.99fc310",
+  "ar": "صورة البطاقة",
+  "en": "ID card photo"
+ },
+ {
+  "key": "corrections.d8bb595",
+  "ar": "الرقم الشخصي",
+  "en": "CPR number"
+ },
+ {
+  "key": "corrections.2233dba",
+  "ar": "الرخصة (أمام)",
+  "en": "Licence (front)"
+ },
+ {
+  "key": "corrections.83468b9",
+  "ar": "الرخصة (خلف)",
+  "en": "Licence (back)"
+ },
+ {
+  "key": "corrections.3fcd7ae",
+  "ar": "رقم الرخصة",
+  "en": "Licence number"
+ },
+ {
+  "key": "corrections.4443e39",
+  "ar": "انتهاء الرخصة",
+  "en": "Licence expiry"
+ },
+ {
+  "key": "corrections.31bafe9",
+  "ar": "رقم اللوحة",
+  "en": "Plate number"
+ },
+ {
+  "key": "corrections.258ec7d",
+  "ar": "صورة السيارة",
+  "en": "Vehicle photo"
+ },
+ {
+  "key": "corrections.6f904f4",
+  "ar": "السيارة (أمام)",
+  "en": "Vehicle (front)"
+ },
+ {
+  "key": "corrections.00c3114",
+  "ar": "السيارة (خلف)",
+  "en": "Vehicle (back)"
+ },
+ {
+  "key": "corrections.7a6e665",
+  "ar": "السيارة (جانب)",
+  "en": "Vehicle (side)"
+ },
+ {
+  "key": "corrections.fdcdda3",
+  "ar": "السيارة (داخل)",
+  "en": "Vehicle (interior)"
+ },
+ {
+  "key": "corrections.69df538",
+  "ar": "رقم الهاتف",
+  "en": "Phone"
+ },
+ {
+  "key": "account.90588a7",
+  "ar": "استلام وتسليم أدق",
+  "en": "More accurate pickup & drop-off"
+ },
+ {
+  "key": "account.bd49049",
+  "ar": "نحدد موقعك عند فتح التطبيق وإنشاء الطلب.",
+  "en": "We read your spot when you open the app or order."
+ },
+ {
+  "key": "account.163aa76",
+  "ar": "رحلات أكثر أمانًا",
+  "en": "Safer trips"
+ },
+ {
+  "key": "account.f2607fd",
+  "ar": "نسجّل نقطة واحدة عند كل خطوة في الرحلة.",
+  "en": "One point at each trip step."
+ },
+ {
+  "key": "account.8b22946",
+  "ar": "تساعدنا في حل أي مشكلة في طلبك.",
+  "en": "Helps us resolve any issue with your order."
+ },
+ {
+  "key": "account.6c307c4",
+  "ar": "لا يوجد تتبّع مستمر",
+  "en": "No continuous tracking"
+ },
+ {
+  "key": "account.8a50c06",
+  "ar": "فقط لحظات محددة — إلا إذا شغّلت وضع \"لايف\" بنفسك، فيُرسل موقعك طول ما هو شغال، ويراه العميل أثناء طلبه الجاري فقط.",
+  "en": "Only specific moments — unless you turn on Live yourself; then it is shared while on and the customer sees it during their active order only."
+ },
+ {
+  "key": "account.9850b1a",
+  "ar": "فقط لحظات محددة — ويمكنك الإيقاف في أي وقت من الإعدادات.",
+  "en": "Only specific moments — turn it off any time in Settings."
+ },
+ {
+  "key": "account.20d5a89",
+  "ar": "نحتاج إذنك لاستخدام موقعك",
+  "en": "May we use your location?"
+ },
+ {
+  "key": "account.2c00a36",
+  "ar": "أوافق",
+  "en": "Allow"
+ },
+ {
+  "key": "account.f958ad7",
+  "ar": "ليس الآن",
+  "en": "Not now"
+ },
+ {
+  "key": "account.23e8040",
+  "ar": "عميل",
+  "en": "Customer"
+ },
+ {
+  "key": "account.81caea3",
+  "ar": "سائق",
+  "en": "Driver"
+ },
+ {
+  "key": "account.4327776",
+  "ar": "إدارة",
+  "en": "Admin"
+ },
+ {
+  "key": "account.2cd762f",
+  "ar": "مدير عام",
+  "en": "Super admin"
+ },
+ {
+  "key": "account.0810983",
+  "ar": "حسابي",
+  "en": "My account"
+ },
+ {
+  "key": "account.b1abf86",
+  "ar": "تعديل بياناتي",
+  "en": "Edit profile"
+ },
+ {
+  "key": "account.d8f8262",
+  "ar": "ادعُ صاحبك والمحفظة",
+  "en": "Invite & wallet"
+ },
+ {
+  "key": "account.0db7d0a",
+  "ar": "أرباحي وأماكن الطلب",
+  "en": "Earnings & demand"
+ },
+ {
+  "key": "account.c01b5e2",
+  "ar": "بيانات سيارتي",
+  "en": "My car"
+ },
+ {
+  "key": "account.befea4b",
+  "ar": "رخصتي",
+  "en": "My licence"
+ },
+ {
+  "key": "account.94f594f",
+  "ar": "التصحيحات (قيد المراجعة)",
+  "en": "Corrections (under review)"
+ },
+ {
+  "key": "account.5e88520",
+  "ar": "الإشعارات",
+  "en": "Notifications"
+ },
+ {
+  "key": "account.60cfdf3",
+  "ar": "حساب استلام الأرباح (IBAN)",
+  "en": "Payout account (IBAN)"
+ },
+ {
+  "key": "account.d7f4260",
+  "ar": "التحويلات",
+  "en": "Payouts"
+ },
+ {
+  "key": "account.85428e1",
+  "ar": "التعريفة والأسعار",
+  "en": "Pricing"
+ },
+ {
+  "key": "account.5766fe8",
+  "ar": "الإعدادات",
+  "en": "Settings"
+ },
+ {
+  "key": "account.6737d27",
+  "ar": "تسجيل الخروج",
+  "en": "Sign out"
+ },
+ {
+  "key": "account.3676dcc",
+  "ar": "تسجيل الخروج؟",
+  "en": "Sign out?"
+ },
+ {
+  "key": "account.190d72e",
+  "ar": "تغيير رقم الهاتف",
+  "en": "Change phone number"
+ },
+ {
+  "key": "account.dcc90e8",
+  "ar": "سيبقى رقمك الحالي يعمل حتى توافق الإدارة على الرقم الجديد.",
+  "en": "Your current number keeps working until the admin approves."
+ },
+ {
+  "key": "account.1d12fb9",
+  "ar": "الرقم الجديد",
+  "en": "New number"
+ },
+ {
+  "key": "account.210b779",
+  "ar": "إلغاء",
+  "en": "Cancel"
+ },
+ {
+  "key": "account.ad89df6",
+  "ar": "إرسال",
+  "en": "Send"
+ },
+ {
+  "key": "account.902766b",
+  "ar": "تم إرسال الطلب للمراجعة",
+  "en": "Request sent for review"
+ },
+ {
+  "key": "account.1d6b5f9",
+  "ar": "الرقم مستخدم بحساب آخر",
+  "en": "Number used by another account"
+ },
+ {
+  "key": "account.2705bd6",
+  "ar": "هذا هو رقمك الحالي",
+  "en": "This is your current number"
+ },
+ {
+  "key": "account.f76ca90",
+  "ar": "طلب تغيير الرقم قيد المراجعة",
+  "en": "Phone change under review"
+ },
+ {
+  "key": "account.7349843",
+  "ar": "الدعم والمساعدة",
+  "en": "Help & support"
+ },
+ {
+  "key": "account.c65b4f6",
+  "ar": "اتصال",
+  "en": "Call"
+ },
+ {
+  "key": "account.fcb966a",
+  "ar": "واتساب",
+  "en": "WhatsApp"
+ },
+ {
+  "key": "account.dd1130a",
+  "ar": "؟",
+  "en": ""
+ },
+ {
+  "key": "account.a8c5628",
+  "ar": "حذف الحساب نهائيًا؟",
+  "en": "Delete your account?"
+ },
+ {
+  "key": "account.03d8f99",
+  "ar": "سيتم تسجيل خروجك من كل الأجهزة ولن تتمكن من الدخول بهذا الحساب.",
+  "en": "You'll be signed out everywhere and can't sign in with this account."
+ },
+ {
+  "key": "account.240fbc9",
+  "ar": "تم حذف حسابك",
+  "en": "Your account was deleted"
+ },
+ {
+  "key": "account.cc2cc89",
+  "ar": "يوجد مبلغ غير مدفوع",
+  "en": "Unpaid amount"
+ },
+ {
+  "key": "account.72acaed",
+  "ar": "لاحقًا",
+  "en": "Later"
+ },
+ {
+  "key": "account.0dd89b7",
+  "ar": "ادفع الآن",
+  "en": "Pay now"
+ },
+ {
+  "key": "account.67670c1",
+  "ar": "سيتم تعطيل حسابك وتسجيل خروجك من كل الأجهزة.",
+  "en": "Your account is disabled and you are signed out on every device."
+ },
+ {
+  "key": "account.f6f13b6",
+  "ar": "بعد مدة السماح تُحذف بياناتك الشخصية (الاسم، الهاتف، الرقم الشخصي، الصور، المواقع).",
+  "en": "After the grace period your personal data (name, phone, CPR, photos, locations) is erased."
+ },
+ {
+  "key": "account.2d39b00",
+  "ar": "تُحفظ سجلات الطلبات والمدفوعات لأغراض محاسبية فقط.",
+  "en": "Order and payment records are kept for accounting only."
+ },
+ {
+  "key": "account.ffc9e7a",
+  "ar": "لا يمكن الحذف أثناء وجود طلب جارٍ أو مبلغ مستحق.",
+  "en": "You can't delete while an order is running or money is owed."
+ },
+ {
+  "key": "account.c0abe6b",
+  "ar": "حذف الحساب",
+  "en": "Delete account"
+ },
+ {
+  "key": "account.61a7515",
+  "ar": "هذا الإجراء لا يمكن التراجع عنه من التطبيق.",
+  "en": "This can't be undone from the app."
+ },
+ {
+  "key": "account.f7fc1bb",
+  "ar": "سبب الحذف (اختياري)",
+  "en": "Reason (optional)"
+ },
+ {
+  "key": "account.817c606",
+  "ar": "فهمت وأريد حذف حسابي",
+  "en": "I understand and want to delete my account"
+ },
+ {
+  "key": "account.6943960",
+  "ar": "لا توجد تغييرات",
+  "en": "Nothing changed"
+ },
+ {
+  "key": "account.6457fad",
+  "ar": "الاسم قصير جدًا",
+  "en": "Name is too short"
+ },
+ {
+  "key": "account.b543744",
+  "ar": "تم الحفظ",
+  "en": "Saved"
+ },
+ {
+  "key": "account.59011c0",
+  "ar": "الرقم الشخصي 9 أرقام",
+  "en": "CPR is 9 digits"
+ },
+ {
+  "key": "account.f067841",
+  "ar": "أدخل تاريخَي إصدار البطاقة وانتهائها",
+  "en": "Enter the ID issue and expiry dates"
+ },
+ {
+  "key": "account.0f4a5d7",
+  "ar": "تم الإرسال للمراجعة",
+  "en": "Sent for review"
+ },
+ {
+  "key": "account.2950e09",
+  "ar": "الرقم الشخصي مستخدم بحساب آخر",
+  "en": "CPR used by another account"
+ },
+ {
+  "key": "account.b9a4ed8",
+  "ar": "الاسم الكامل",
+  "en": "Full name"
+ },
+ {
+  "key": "account.89fb0da",
+  "ar": "الصورة الشخصية",
+  "en": "Profile photo"
+ },
+ {
+  "key": "account.0360038",
+  "ar": "حفظ",
+  "en": "Save"
+ },
+ {
+  "key": "account.1953007",
+  "ar": "الرقم الشخصي (CPR)",
+  "en": "CPR"
+ },
+ {
+  "key": "account.f96a07a",
+  "ar": "تغيير الرقم الشخصي أو صورة البطاقة يحتاج موافقة الإدارة. تبقى البيانات الحالية حتى الموافقة.",
+  "en": "CPR changes need admin approval; current data stays until then."
+ },
+ {
+  "key": "account.c7d4241",
+  "ar": "قيد المراجعة",
+  "en": "Under review"
+ },
+ {
+  "key": "account.318881d",
+  "ar": "صورة البطاقة",
+  "en": "ID photo"
+ },
+ {
+  "key": "account.af5900e",
+  "ar": "الرقم الشخصي الجديد",
+  "en": "New CPR"
+ },
+ {
+  "key": "account.9d98e29",
+  "ar": "صورة البطاقة الجديدة",
+  "en": "New ID photo"
+ },
+ {
+  "key": "account.903eb56",
+  "ar": "تاريخ إصدار البطاقة",
+  "en": "ID issue date"
+ },
+ {
+  "key": "account.2ac1558",
+  "ar": "تاريخ انتهاء البطاقة",
+  "en": "ID expiry date"
+ },
+ {
+  "key": "account.5a7f959",
+  "ar": "إرسال للمراجعة",
+  "en": "Send for review"
+ },
+ {
+  "key": "account.da771c3",
+  "ar": "اللغة",
+  "en": "Language"
+ },
+ {
+  "key": "account.4ed4aef",
+  "ar": "المظهر",
+  "en": "Appearance"
+ },
+ {
+  "key": "account.2590803",
+  "ar": "تلقائي",
+  "en": "Auto"
+ },
+ {
+  "key": "account.1fe50a9",
+  "ar": "فاتح",
+  "en": "Light"
+ },
+ {
+  "key": "account.471d787",
+  "ar": "داكن",
+  "en": "Dark"
+ },
+ {
+  "key": "account.53b4801",
+  "ar": "الخصوصية",
+  "en": "Privacy"
+ },
+ {
+  "key": "account.0b2e2bb",
+  "ar": "مشاركة الموقع",
+  "en": "Share location"
+ },
+ {
+  "key": "account.5aea02e",
+  "ar": "نقطة واحدة في اللحظات المهمة فقط — بدون تتبّع مستمر",
+  "en": "One point at key moments only — no continuous tracking"
+ },
+ {
+  "key": "account.004a949",
+  "ar": "تفضيلاتي كسائق",
+  "en": "Driver preferences"
+ },
+ {
+  "key": "account.f4f5e9c",
+  "ar": "مناطق العمل",
+  "en": "Work areas"
+ },
+ {
+  "key": "account.f8bd5ff",
+  "ar": "اختر المناطق التي تستقبل منها الطلبات",
+  "en": "Pick where you get orders from"
+ },
+ {
+  "key": "account.498cdcb",
+  "ar": "الحساب",
+  "en": "Account"
+ },
+ {
+  "key": "account.94be366",
+  "ar": "تم تفعيل الإشعارات",
+  "en": "Notifications on"
+ },
+ {
+  "key": "account.5a6eab1",
+  "ar": "تعذّر التفعيل",
+  "en": "Could not enable"
+ },
+ {
+  "key": "account.2cfc65c",
+  "ar": "الإشعارات مفعّلة",
+  "en": "Notifications are on"
+ },
+ {
+  "key": "account.102b023",
+  "ar": "الإشعارات غير مفعّلة على هذا الجهاز",
+  "en": "Notifications are off on this device"
+ },
+ {
+  "key": "account.4c0eaef",
+  "ar": "إعادة تفعيل الإشعارات",
+  "en": "Enable notifications again"
+ },
+ {
+  "key": "account.fd00b9b",
+  "ar": "العربية",
+  "en": "Arabic"
+ },
+ {
+  "key": "files.f160969",
+  "ar": "حجم الصورة أكبر من {0} ميجا",
+  "en": "Image is larger than {0} MB"
+ },
+ {
+  "key": "files.2038600",
+  "ar": "الكاميرا",
+  "en": "Camera"
+ },
+ {
+  "key": "files.9e5ea57",
+  "ar": "المعرض",
+  "en": "Gallery"
+ },
+ {
+  "key": "files.0ae826e",
+  "ar": "جاري الرفع…",
+  "en": "Uploading…"
+ },
+ {
+  "key": "files.5613c80",
+  "ar": "تم الرفع ✓ — اضغط للتغيير",
+  "en": "Uploaded ✓ — tap to change"
+ },
+ {
+  "key": "files.d4a25c7",
+  "ar": "اضغط لالتقاط أو اختيار صورة",
+  "en": "Tap to take or choose a photo"
+ },
+ {
+  "key": "notifications.5e88520",
+  "ar": "الإشعارات",
+  "en": "Notifications"
+ },
+ {
+  "key": "notifications.188083c",
+  "ar": "تعليم الكل كمقروء",
+  "en": "Mark all read"
+ },
+ {
+  "key": "notifications.eabe5f6",
+  "ar": "الكل",
+  "en": "All"
+ },
+ {
+  "key": "notifications.8914778",
+  "ar": "غير المقروءة",
+  "en": "Unread"
+ },
+ {
+  "key": "notifications.a82ad05",
+  "ar": "لا توجد إشعارات غير مقروءة",
+  "en": "No unread notifications"
+ },
+ {
+  "key": "notifications.50a0507",
+  "ar": "لا توجد إشعارات",
+  "en": "No notifications yet"
+ },
+ {
+  "key": "choice.41032eb",
+  "ar": "اطلب سعرًا أعلى",
+  "en": "Ask for a higher price"
+ },
+ {
+  "key": "choice.92dbf89",
+  "ar": "زوّد السعر لتجد سائقًا أسرع",
+  "en": "Raise the price"
+ },
+ {
+  "key": "choice.3e5ba47",
+  "ar": "الحد الأقصى +{0}% من السعر الأصلي",
+  "en": "Up to +{0}% of the original price"
+ },
+ {
+  "key": "choice.e48d9ed",
+  "ar": "وصلت للحد الأقصى",
+  "en": "Already at the maximum"
+ },
+ {
+  "key": "choice.a8ce2b7",
+  "ar": "السائقون المميزون: قيّم سائقك بأربع نجوم أو خمس، وسيظهر هنا عندما يكون متاحًا لتطلبه مباشرة.",
+  "en": "Featured drivers: rate a driver 4–5★ and he will appear here when available."
+ },
+ {
+  "key": "choice.5eed1ae",
+  "ar": "سائقون مميزون متاحون",
+  "en": "Featured drivers available"
+ },
+ {
+  "key": "choice.a6ba9ec",
+  "ar": "تم اختيار السائق",
+  "en": "Driver chosen"
+ },
+ {
+  "key": "choice.0a89513",
+  "ar": "انتهى عرض هذا السائق",
+  "en": "This driver's offer has ended"
+ },
+ {
+  "key": "choice.ba81026",
+  "ar": "السائق أصبح مشغولًا، اختر غيره",
+  "en": "Driver is now busy, pick another"
+ },
+ {
+  "key": "choice.3203d15",
+  "ar": "اختر سائقك ({0})",
+  "en": "Choose your driver ({0})"
+ },
+ {
+  "key": "choice.1773e07",
+  "ar": "مكيّف",
+  "en": "AC"
+ },
+ {
+  "key": "choice.4b79a25",
+  "ar": "يسمح بالتدخين",
+  "en": "Smoking allowed"
+ },
+ {
+  "key": "choice.d03f7b7",
+  "ar": "بدون تدخين",
+  "en": "No smoking"
+ },
+ {
+  "key": "choice.466f996",
+  "ar": "سائقة",
+  "en": "Female"
+ },
+ {
+  "key": "choice.8f87168",
+  "ar": "سائق",
+  "en": "Male"
+ },
+ {
+  "key": "choice.d6bb11c",
+  "ar": "مريحة",
+  "en": "Comfort"
+ },
+ {
+  "key": "choice.240a34a",
+  "ar": "رحلة",
+  "en": "trips"
+ },
+ {
+  "key": "choice.1fd792b",
+  "ar": "كم منك",
+  "en": "km away"
+ },
+ {
+  "key": "choice.73d82d1",
+  "ar": "السائق يطلب سعرًا أعلى من سعرك",
+  "en": "This driver asks for a higher price"
+ },
+ {
+  "key": "choice.c4ac0a1",
+  "ar": "التفاصيل",
+  "en": "Details"
+ },
+ {
+  "key": "choice.8881386",
+  "ar": "رفض",
+  "en": "Decline"
+ },
+ {
+  "key": "choice.c0e3ddf",
+  "ar": "اختيار",
+  "en": "Choose"
+ },
+ {
+  "key": "choice.83f3e00",
+  "ar": "نعم",
+  "en": "Yes"
+ },
+ {
+  "key": "choice.52c2ca8",
+  "ar": "لا",
+  "en": "No"
+ },
+ {
+  "key": "choice.78e727e",
+  "ar": "الاسم",
+  "en": "Name"
+ },
+ {
+  "key": "choice.eee2d9f",
+  "ar": "التقييم",
+  "en": "Rating"
+ },
+ {
+  "key": "choice.16b3dd2",
+  "ar": "عدد الرحلات",
+  "en": "Trips"
+ },
+ {
+  "key": "choice.2d6d375",
+  "ar": "عضو منذ",
+  "en": "Member since"
+ },
+ {
+  "key": "choice.05f9bf0",
+  "ar": "التدخين",
+  "en": "Smoking"
+ },
+ {
+  "key": "choice.e975f71",
+  "ar": "السيارة",
+  "en": "Car"
+ },
+ {
+  "key": "choice.52366b8",
+  "ar": "اللون",
+  "en": "Color"
+ },
+ {
+  "key": "choice.f2c39a1",
+  "ar": "اللوحة",
+  "en": "Plate"
+ },
+ {
+  "key": "choice.518e68b",
+  "ar": "النوع",
+  "en": "Type"
+ },
+ {
+  "key": "choice.239ec11",
+  "ar": "الركاب",
+  "en": "Seats"
+ },
+ {
+  "key": "choice.e8454aa",
+  "ar": "الحقائب",
+  "en": "Luggage"
+ },
+ {
+  "key": "choice.2d76a00",
+  "ar": "صور السيارة",
+  "en": "Car photos"
+ },
+ {
+  "key": "license.1291e93",
+  "ar": "طلب تجديد الرخصة قيد المراجعة.",
+  "en": "Licence renewal under review."
+ },
+ {
+  "key": "license.4598101",
+  "ar": "انتهت رخصة القيادة، وتوقف إرسال الطلبات إليك حتى تحديثها.",
+  "en": "Your licence expired. Orders are paused until you renew it."
+ },
+ {
+  "key": "license.67052f6",
+  "ar": "تنتهي رخصة القيادة بعد {0} يوم. حدّثها لتستمر في استقبال الطلبات.",
+  "en": "Your licence expires in {0} days. Renew it to keep receiving orders."
+ },
+ {
+  "key": "license.c1ad3b7",
+  "ar": "أُرسلت الرخصة للمراجعة",
+  "en": "Licence sent for review"
+ },
+ {
+  "key": "license.b800987",
+  "ar": "منتهية",
+  "en": "Expired"
+ },
+ {
+  "key": "license.2631f8d",
+  "ar": "تنتهي قريبًا",
+  "en": "Expiring soon"
+ },
+ {
+  "key": "license.7913ce3",
+  "ar": "التجديد قيد المراجعة",
+  "en": "Renewal under review"
+ },
+ {
+  "key": "license.7075afe",
+  "ar": "سارية",
+  "en": "Valid"
+ },
+ {
+  "key": "license.9895122",
+  "ar": "غير مسجلة",
+  "en": "Not recorded"
+ },
+ {
+  "key": "license.befea4b",
+  "ar": "رخصتي",
+  "en": "My licence"
+ },
+ {
+  "key": "license.b3dfbf8",
+  "ar": "تاريخ الإصدار",
+  "en": "Issued"
+ },
+ {
+  "key": "license.3bb1b75",
+  "ar": "تاريخ الانتهاء",
+  "en": "Expires"
+ },
+ {
+  "key": "license.ee3ff53",
+  "ar": "الأيام المتبقية",
+  "en": "Days left"
+ },
+ {
+  "key": "license.1f21a1b",
+  "ar": "أرسلتَ رخصة جديدة وهي قيد مراجعة الإدارة. سنُعلمك عند الموافقة.",
+  "en": "Your new licence is under admin review. We will notify you."
+ },
+ {
+  "key": "license.328586f",
+  "ar": "تجديد الرخصة",
+  "en": "Renew licence"
+ },
+ {
+  "key": "license.4d30e6d",
+  "ar": "تاريخ إصدار الرخصة الجديدة",
+  "en": "New issue date"
+ },
+ {
+  "key": "license.c0f3755",
+  "ar": "تاريخ انتهاء الرخصة الجديدة",
+  "en": "New expiry date"
+ },
+ {
+  "key": "license.e3f4069",
+  "ar": "يجب أن يكون بعد تاريخ الإصدار",
+  "en": "Must be after the issue date"
+ },
+ {
+  "key": "license.0a27cf9",
+  "ar": "رقم الرخصة (اختياري)",
+  "en": "Licence number (optional)"
+ },
+ {
+  "key": "license.a0a9a1f",
+  "ar": "صورة الرخصة الجديدة",
+  "en": "New licence photo"
+ },
+ {
+  "key": "license.b4bde92",
+  "ar": "مطلوب",
+  "en": "Required"
+ },
+ {
+  "key": "license.5a7f959",
+  "ar": "إرسال للمراجعة",
+  "en": "Send for review"
+ },
+ {
+  "key": "core.ad68d15",
+  "ar": "جاري البحث",
+  "en": "Searching"
+ },
+ {
+  "key": "core.58c5d0e",
+  "ar": "لا يوجد سائق",
+  "en": "No driver"
+ },
+ {
+  "key": "core.a106077",
+  "ar": "انتهت المهلة",
+  "en": "Expired"
+ },
+ {
+  "key": "core.0c6b7e7",
+  "ar": "تم القبول",
+  "en": "Accepted"
+ },
+ {
+  "key": "core.619dce2",
+  "ar": "في الطريق إليك",
+  "en": "On the way"
+ },
+ {
+  "key": "core.83db2b3",
+  "ar": "وصل للاستلام",
+  "en": "At pickup"
+ },
+ {
+  "key": "core.54c8275",
+  "ar": "جاري التوصيل",
+  "en": "Delivering"
+ },
+ {
+  "key": "core.766b1d1",
+  "ar": "تم التسليم",
+  "en": "Delivered"
+ },
+ {
+  "key": "core.1ed5cfb",
+  "ar": "محجوزة لوقت لاحق",
+  "en": "Scheduled"
+ },
+ {
+  "key": "core.08c22a1",
+  "ar": "يبحث عن سائق آخر",
+  "en": "Finding another driver"
+ },
+ {
+  "key": "core.9a82e15",
+  "ar": "ملغي",
+  "en": "Cancelled"
+ },
+ {
+  "key": "core.1ec2e9a",
+  "ar": "غير مدفوع",
+  "en": "Unpaid"
+ },
+ {
+  "key": "core.e3a999c",
+  "ar": "بانتظار الدفع",
+  "en": "Awaiting payment"
+ },
+ {
+  "key": "core.830a2fb",
+  "ar": "قيد التحقق",
+  "en": "Verifying"
+ },
+ {
+  "key": "core.fbdf178",
+  "ar": "مدفوع",
+  "en": "Paid"
+ },
+ {
+  "key": "core.c23fc23",
+  "ar": "فشل",
+  "en": "Failed"
+ },
+ {
+  "key": "core.8290f87",
+  "ar": "مرفوض",
+  "en": "Rejected"
+ },
+ {
+  "key": "core.9b30959",
+  "ar": "تم التحويل",
+  "en": "Transferred"
+ },
+ {
+  "key": "core.09eb274",
+  "ar": "خُصم للمستحقات",
+  "en": "Offset to debt"
+ },
+ {
+  "key": "core.c7d4241",
+  "ar": "قيد المراجعة",
+  "en": "Under review"
+ },
+ {
+  "key": "core.05fbe42",
+  "ar": "معتمد",
+  "en": "Approved"
+ },
+ {
+  "key": "core.c2a5813",
+  "ar": "مطلوب تصحيح",
+  "en": "Needs correction"
+ },
+ {
+  "key": "core.0dbe228",
+  "ar": "موقوف",
+  "en": "Suspended"
+ },
+ {
+  "key": "core.8bec0ac",
+  "ar": "محظور",
+  "en": "Banned"
+ },
+ {
+  "key": "core.363eeb5",
+  "ar": "محذوف",
+  "en": "Deleted"
+ },
+ {
+  "key": "core.4379398",
+  "ar": "مفتوحة",
+  "en": "Open"
+ },
+ {
+  "key": "core.89ecc55",
+  "ar": "محلولة",
+  "en": "Resolved"
+ },
+ {
+  "key": "core.03fb345",
+  "ar": "مغلقة",
+  "en": "Closed"
+ },
+ {
+  "key": "core.0c32536",
+  "ar": "مفعّلة",
+  "en": "Active"
+ },
+ {
+  "key": "core.27f7c2f",
+  "ar": "متوقفة",
+  "en": "Inactive"
+ },
+ {
+  "key": "core.e004664",
+  "ar": "طلباتي",
+  "en": "My orders"
+ },
+ {
+  "key": "core.b4bde92",
+  "ar": "مطلوب",
+  "en": "Required"
+ },
+ {
+  "key": "core.9f55c05",
+  "ar": "لا يوجد اتصال",
+  "en": "No connection"
+ },
+ {
+  "key": "core.1fb5a4b",
+  "ar": "حدث خطأ",
+  "en": "Something went wrong"
+ },
+ {
+  "key": "core.cf33307",
+  "ar": "إعادة المحاولة",
+  "en": "Retry"
+ },
+ {
+  "key": "core.001d23a",
+  "ar": "تحقق من الإنترنت وحاول مجددًا",
+  "en": "Check your internet and try again"
+ },
+ {
+  "key": "core.79a07c5",
+  "ar": "هذا الحساب محذوف",
+  "en": "This account was deleted"
+ },
+ {
+  "key": "core.1ae41e4",
+  "ar": "انتهت رخصة القيادة، ولا يمكنك استقبال الطلبات حتى تحديثها من \"رخصتي\".",
+  "en": "Your driving licence has expired. Renew it from \"My licence\" to receive orders."
+ },
+ {
+  "key": "core.5875d14",
+  "ar": "أدخل تاريخَي إصدار البطاقة وانتهائها، ويجب أن يكون تاريخ الانتهاء في المستقبل.",
+  "en": "Enter the ID issue and expiry dates; expiry must be in the future."
+ },
+ {
+  "key": "core.29b04ae",
+  "ar": "تحقق من التواريخ: يجب أن يسبق تاريخ الإصدار تاريخ الانتهاء، وأن يكون الانتهاء في المستقبل.",
+  "en": "Check the dates: issue must be before expiry, and expiry in the future."
+ },
+ {
+  "key": "core.709a586",
+  "ar": "لديك طلب تجديد قيد المراجعة بالفعل.",
+  "en": "A renewal is already under review."
+ },
+ {
+  "key": "core.c1bcbb1",
+  "ar": "هذا الرقم أو الرقم الشخصي محظور من التسجيل.",
+  "en": "This phone or CPR is banned from registering."
+ },
+ {
+  "key": "core.6c2cf43",
+  "ar": "خطأ غير متوقع",
+  "en": "Unexpected error"
+ },
+ {
+  "key": "core.03f1e97",
+  "ar": "اكتب السبب…",
+  "en": "Write the reason…"
+ },
+ {
+  "key": "core.889ba94",
+  "ar": "السبب مطلوب",
+  "en": "Reason is required"
+ },
+ {
+  "key": "core.449fee3",
+  "ar": "تأكيد",
+  "en": "Confirm"
+ },
+ {
+  "key": "core.484f3d2",
+  "ar": "تراجع",
+  "en": "Cancel"
+ },
+ {
+  "key": "customer.fav_driver",
+  "ar": "سائقك المفضل",
+  "en": "your favourite driver"
+ },
+ {
+  "key": "rating.the_driver",
+  "ar": "السائق",
+  "en": "the driver"
+ }
+]

@@ -212,8 +212,6 @@ async def enforce_driver_documents(db: AsyncSession, warn: bool = False) -> None
             await notify(db, u.id, "DOCUMENT_EXPIRED", "مستند منتهي", "تم إيقاف عملك حتى تجديد المستند واعتماده.")
         if warn:
             soon = []
-            if today <= p.license_expiry_date <= today + timedelta(days=warn_days):
-                soon.append("license")
             for d in (u.vehicle.documents if u.vehicle else []):
                 if d.expiry_date and today <= d.expiry_date <= today + timedelta(days=warn_days):
                     soon.append(d.document_type)

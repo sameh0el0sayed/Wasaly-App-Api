@@ -40,6 +40,7 @@ class VehiclePatch(BaseModel):
 class DriverRegIn(BaseModel):
     license_number: str = Field(min_length=3, max_length=40)
     license_expiry_date: date
+    license_issue_date: date
     license_document: str | None = None
     gender: Literal["MALE", "FEMALE"] | None = None  # needed to receive orders that ask for a male/female driver
     smoking_allowed: bool = False
@@ -56,6 +57,8 @@ class RegisterIn(BaseModel):
     password_confirm: str
     profile_photo: str | None = None
     cpr_photo: str | None = None
+    cpr_issue_date: date
+    cpr_expiry_date: date
     driver: DriverRegIn | None = None
     referral_code: str | None = Field(default=None, max_length=16)
     device_id: str | None = Field(default=None, max_length=100)
@@ -283,6 +286,8 @@ class AdminUserEditIn(BaseModel):
     cpr: str | None = None
     profile_photo: str | None = None
     cpr_photo: str | None = None
+    cpr_issue_date: date | None = None
+    cpr_expiry_date: date | None = None
     reason: str = Field(min_length=2, max_length=500)
     v_phone = field_validator("phone")(lambda cls, v: normalize_phone(v) if v is not None else v)
     v_cpr = field_validator("cpr")(lambda cls, v: validate_cpr(v) if v is not None else v)
@@ -291,6 +296,7 @@ class AdminUserEditIn(BaseModel):
 class AdminLicenseEditIn(BaseModel):
     license_number: str | None = Field(default=None, min_length=1, max_length=60)
     license_expiry_date: date | None = None
+    license_issue_date: date | None = None
     license_document: str | None = None
     reason: str = Field(min_length=2, max_length=500)
 
@@ -338,6 +344,8 @@ class ChangeReviewIn(BaseModel):
 class CprChangeIn(BaseModel):
     cpr_number: str | None = None
     cpr_photo: str | None = None
+    cpr_issue_date: date | None = None
+    cpr_expiry_date: date | None = None
 
     @field_validator("cpr_number")
     @classmethod

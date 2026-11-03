@@ -41,6 +41,8 @@ class User(Base):
     cpr_encrypted: Mapped[str | None] = mapped_column(Text, nullable=True)
     cpr_hash: Mapped[str | None] = mapped_column(String(64), unique=True, index=True, nullable=True)
     cpr_last3: Mapped[str | None] = mapped_column(String(3), nullable=True)
+    cpr_issue_date: Mapped[date | None] = mapped_column(Date, nullable=True)
+    cpr_expiry_date: Mapped[date | None] = mapped_column(Date, nullable=True)
     password_hash: Mapped[str] = mapped_column(String(255))
     role: Mapped[str] = mapped_column(String(20), index=True)
     account_status: Mapped[str] = mapped_column(String(30), index=True, default=AccountStatus.PENDING_APPROVAL)
@@ -81,6 +83,7 @@ class User(Base):
 class DriverProfile(Base):
     __tablename__ = "driver_profiles"
     gender: Mapped[str | None] = mapped_column(String(8), nullable=True)  # MALE | FEMALE, set at registration, changed by admin only
+    license_issue_date: Mapped[date | None] = mapped_column(Date, nullable=True)
     smoking_allowed: Mapped[bool] = mapped_column(Boolean, default=False)  # driver's car allows smoking
     daily_goal: Mapped[Decimal] = mapped_column(Numeric(12, 3), default=0, server_default="0")  # earnings goal per day (0 = none)
     debt_balance: Mapped[Decimal] = mapped_column(Numeric(12, 3), default=0)  # owed to the company; deducted from payouts before any transfer
@@ -390,6 +393,7 @@ class Notification(Base):
     title: Mapped[str] = mapped_column(String(150))
     message: Mapped[str] = mapped_column(Text)
     related_order_id: Mapped[int | None] = mapped_column(ForeignKey("orders.id"), nullable=True)
+    data: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     is_read: Mapped[bool] = mapped_column(Boolean, default=False)
     created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
 
@@ -703,4 +707,33 @@ class WalletEntry(Base):
     amount: Mapped[Decimal] = mapped_column(Numeric(12, 3))  # + credit / - spend
     kind: Mapped[str] = mapped_column(String(20))  # REFERRAL_INVITER | REFERRAL_INVITEE | REVOKED | SPEND
     ref_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
+
+
+class Translation(Base):
+    """UI text dictionary. `key` is the Arabic source text exactly as written in the app."""
+    __tablename__ = "translations"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    key: Mapped[str] = mapped_column(String(500), unique=True)
+    ar: Mapped[str] = mapped_column(Text, default="")
+    en: Mapped[str] = mapped_column(Text, default="")
+    updated_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow, onupdate=utcnow)
+
+
+class AppEvent(Base):
+    """Product analytics event sent by the apps (no personal data in props)."""
+    __tablename__ = "app_events"
+    __table_args__ = (Index("ix_app_events_name_created", "name", "created_at"),
+                      Index("ix_app_events_user_created", "user_id", "created_at"))
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    user_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    role: Mapped[str] = mapped_column(String(10), default="GUEST")
+    device_id: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    session_id: Mapped[str | None] = mapped_column(String(64), nullable=True, index=True)
+    name: Mapped[str] = mapped_column(String(60))
+    screen: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    props: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    app_version: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    platform: Mapped[str | None] = mapped_column(String(10), nullable=True)
+    client_ts: Mapped[datetime | None] = mapped_column(UTCDateTime, nullable=True)
     created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)

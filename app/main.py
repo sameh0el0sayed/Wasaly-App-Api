@@ -35,6 +35,7 @@ from .routers import (
     stream,
     subscriptions,
     v11,
+    v14,
 )
 from .security import hash_password, normalize_phone
 from .services.activity import sweep as activity_sweep
@@ -84,6 +85,11 @@ async def background_loop() -> None:
                 warn = time.time() - last_warn > 3600
                 await enforce_driver_documents(db, warn=warn)
                 await activity_sweep(db)
+                if warn:  # hourly checks; each runs once a day
+                    from .routers.v14 import cleanup_events
+                    from .services.license import daily_job
+                    await daily_job(db)
+                    await cleanup_events(db)
                 if warn:  # hourly
                     await subscriptions_sweep(db)
                 await db.commit()
@@ -97,6 +103,8 @@ async def background_loop() -> None:
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await bootstrap()
+    from .routers.v14 import seed_translations
+    await seed_translations()
     task = asyncio.create_task(background_loop()) if settings.run_background_tasks else None
     yield
     if task:
@@ -146,5 +154,5 @@ async def request_id_middleware(request: Request, call_next):
 
 for r in (auth.router, app_errors.router, app_errors.admin_router, profile.router, corrections.router, orders.router, driver.router, payments.webhook_router, payments.router,
           payments.admin_router, subscriptions.router, subscriptions.admin_router, subscriptions.driver_router,
-          airports.router, promo.router, stream.router, banners.router, places.router, account_deletion.router, account_deletion.admin_router, activity.router, activity.admin_router, ratings.router, v11.router, v11.admin_router, v11.public_router, admin.router):
+          airports.router, promo.router, stream.router, banners.router, places.router, account_deletion.router, account_deletion.admin_router, activity.router, activity.admin_router, ratings.router, v11.router, v11.admin_router, v11.public_router, v14.router, v14.admin_router, admin.router):
     app.include_router(r)

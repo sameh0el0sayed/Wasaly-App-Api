@@ -189,10 +189,12 @@ def mask_cpr(u: User) -> str:
 
 
 def user_public(u: User) -> dict:
+    from .services.license import verification
     return {"id": u.id, "full_name": u.full_name, "phone": u.phone, "role": u.role,
             "account_status": u.account_status, "status_reason": u.status_reason,
             "profile_photo": u.profile_photo, "must_change_password": u.must_change_password,
-            "cpr_masked": mask_cpr(u), "language": u.language or "ar"}
+            "cpr_masked": mask_cpr(u), "language": u.language or "ar",
+            "verification": verification(u)}
 
 
 def vehicle_full(v) -> dict | None:

@@ -94,7 +94,14 @@ async def _review(db, admin, c: ProfileChange | None, kind: str, body: ChangeRev
     await db.flush()
     await C.refresh_flag(db, u.id)
     audit(db, admin.id, f"{pre}_{body.status}", "user", u.id, body.reason, details={"field": c.field, "id": c.id})
-    await notify(db, u.id, f"{pre}_{body.status}", title, msg + (f" السبب: {body.reason}" if body.status == "REJECTED" else ""))
+    if c.field == "license":
+        if body.status == "ACCEPTED":
+            await notify(db, u.id, "LICENSE_RENEWED", "تم تجديد الرخصة", "تم اعتماد رخصتك الجديدة، ويمكنك استقبال الطلبات.")
+        else:
+            await notify(db, u.id, "LICENSE_RENEWAL_REJECTED", "تم رفض تجديد الرخصة", f"لم يتم اعتماد طلب تجديد الرخصة. السبب: {body.reason}",
+                         data={"reason": body.reason})
+    else:
+        await notify(db, u.id, f"{pre}_{body.status}", title, msg + (f" السبب: {body.reason}" if body.status == "REJECTED" else ""))
     await db.commit()
     return {**C.row_out(c), "user_id": u.id}
 

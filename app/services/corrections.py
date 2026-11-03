@@ -19,6 +19,8 @@ FIELDS: dict[str, tuple[str, str, bool]] = {
     "cpr_photo": ("صورة البطاقة", "file", False),
     "cpr_number": ("رقم البطاقة", "text", False),
     "phone": ("رقم الهاتف", "text", False),
+    "cpr_dates": ("تاريخا إصدار وانتهاء البطاقة", "text", False),
+    "license": ("تجديد الرخصة", "text", True),
     "license.photo_front": ("صورة الرخصة (الأمام)", "file", True),
     "license.photo_back": ("صورة الرخصة (الخلف)", "file", True),
     "license.number": ("رقم الرخصة", "text", True),
@@ -30,7 +32,7 @@ FIELDS: dict[str, tuple[str, str, bool]] = {
     "vehicle.photos.side": ("صورة السيارة (الجانب)", "file", True),
     "vehicle.photos.interior": ("صورة السيارة (من الداخل)", "file", True),
 }
-CORRECTABLE = [f for f in FIELDS if f != "phone"]
+CORRECTABLE = [f for f in FIELDS if f not in ("phone", "license", "cpr_dates")]
 
 
 def label(field: str) -> str:
@@ -57,6 +59,8 @@ def current_value(u: User, field: str) -> str | None:
         return "******" + (u.cpr_last3 or "")
     if field == "phone":
         return u.phone
+    if p and field == "license":
+        return p.license_expiry_date.isoformat()
     if p and field == "license.photo_front":
         return p.license_document
     if p and field == "license.photo_back":
@@ -114,10 +118,23 @@ async def apply(db: AsyncSession, u: User, c: ProfileChange) -> None:
         if (await db.execute(select(User.id).where(User.cpr_hash == h, User.id != u.id))).first():
             raise HTTPException(409, {"code": "CPR_EXISTS"})
         u.cpr_encrypted, u.cpr_hash, u.cpr_last3 = encrypt(val), h, val[-3:]
+    elif f == "cpr_dates":
+        import json
+        d = json.loads(val)
+        u.cpr_issue_date = date.fromisoformat(d["issue_date"]) if d.get("issue_date") else u.cpr_issue_date
+        u.cpr_expiry_date = date.fromisoformat(d["expiry_date"]) if d.get("expiry_date") else u.cpr_expiry_date
     elif f == "phone":
         if (await db.execute(select(User.id).where(User.phone == val, User.id != u.id))).first():
             raise HTTPException(409, {"code": "PHONE_EXISTS"})
         u.phone = val
+    elif p and f == "license":
+        import json
+        d = json.loads(val)
+        p.license_issue_date = date.fromisoformat(d["issue_date"]) if d.get("issue_date") else p.license_issue_date
+        p.license_expiry_date = date.fromisoformat(d["expiry_date"])
+        p.license_document = d["photo"]
+        if d.get("license_number"):
+            p.license_number_encrypted = encrypt(d["license_number"])
     elif p and f == "license.photo_front":
         p.license_document = val
     elif p and f == "license.photo_back":

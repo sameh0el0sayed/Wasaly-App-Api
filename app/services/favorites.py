@@ -1,4 +1,6 @@
 """Favourite drivers = drivers the customer's latest rating for was 4 or 5 stars (a later low rating removes the driver)."""
+from datetime import date
+
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -19,7 +21,8 @@ async def favorite_rows(db: AsyncSession, customer_id: int) -> list[tuple[User, 
         if stars < 4:
             continue
         d = await db.get(User, driver_id)
-        if not d or d.role != Role.DRIVER or d.account_status != AccountStatus.APPROVED or d.deleted_at or not d.vehicle:
+        if not d or d.role != Role.DRIVER or d.account_status != AccountStatus.APPROVED or d.deleted_at or not d.vehicle \
+                or (d.driver_profile and d.driver_profile.license_expiry_date < date.today()):
             continue
         trips = (await db.execute(select(func.count()).select_from(Order).where(
             Order.customer_id == customer_id, Order.driver_id == driver_id, Order.order_status == S.COMPLETED))).scalar_one()

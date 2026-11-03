@@ -19,10 +19,10 @@ from ..models import (
     VehicleDocument,
     utcnow,
 )
-from ..schemas import ComplaintIn, CprChangeIn, DeviceIn, DocumentIn, LicenseRenewIn, ProfilePatch, ReasonIn, SignIn
+from ..schemas import ComplaintIn, CprChangeIn, DeviceIn, DocumentIn, ProfilePatch, ReasonIn, SignIn
 from ..security import create_file_token, decode_file_token
 from ..serializers import driver_block, dt, user_public
-from ..services.dispatch import force_offline
+from ..services import settings_service
 from ..services.files import assert_owned, get_bytes, save_upload
 
 router = APIRouter(prefix="/api", tags=["profile"])
@@ -41,6 +41,9 @@ async def get_profile(user: User = Depends(current_user), db: AsyncSession = Dep
                             for c in rows if c.kind == C.CHANGE]
     if user.role == Role.DRIVER:
         d["driver"] = driver_block(user)
+        from ..services import license as L
+        wm = max(L.warn_days((await settings_service.get_all(db))["license_expiry_warn_days"]) or [30])
+        d["driver"]["license"] = L.info(user.driver_profile, any(c.field == "license" for c in rows if c.kind == C.CHANGE), warn_max=wm)
     return d
 
 
@@ -82,13 +85,19 @@ async def _queue_change(db: AsyncSession, user: User, field: str, value: str) ->
 async def request_cpr_change(body: CprChangeIn, user: User = Depends(current_user), db: AsyncSession = Depends(get_db),
                              lang: str = Depends(request_lang)):
     """CPR number / CPR card changes need admin approval. The current values keep working until an admin accepts."""
-    if not body.cpr_number and not body.cpr_photo:
+    if (body.cpr_number or body.cpr_photo) and not (body.cpr_issue_date and body.cpr_expiry_date):
+        raise HTTPException(422, {"code": "CPR_DATES_REQUIRED"})
+    if not body.cpr_number and not body.cpr_photo and not body.cpr_expiry_date:
         raise HTTPException(422, {"code": "NOTHING_TO_CHANGE"})
     if body.cpr_number:
         from ..security import cpr_hash
         if (await db.execute(select(User.id).where(User.cpr_hash == cpr_hash(body.cpr_number), User.id != user.id))).first():
             raise HTTPException(409, {"code": "CPR_EXISTS"})
         await _queue_change(db, user, "cpr_number", body.cpr_number)
+    if body.cpr_expiry_date or body.cpr_issue_date:
+        import json as _json
+        await _queue_change(db, user, "cpr_dates", _json.dumps({"issue_date": body.cpr_issue_date.isoformat() if body.cpr_issue_date else None,
+                                                                 "expiry_date": body.cpr_expiry_date.isoformat() if body.cpr_expiry_date else None}))
     if body.cpr_photo:
         await _queue_change(db, user, "cpr_photo", body.cpr_photo)
     await db.commit()
@@ -125,19 +134,6 @@ async def upload_document(body: DocumentIn, user: User = Depends(current_user), 
         user.driver_profile.driver_status = AccountStatus.PENDING_APPROVAL
     await db.commit()
     return {"id": doc.id, "review_status": doc.review_status}
-
-
-@router.post("/profile/license", status_code=200)
-async def renew_license(body: LicenseRenewIn, user: User = Depends(current_user), db: AsyncSession = Depends(get_db)):
-    if user.role != Role.DRIVER:
-        raise HTTPException(403, "Drivers only")
-    await assert_owned(db, user.id, body.license_document)
-    p = user.driver_profile
-    p.license_expiry_date, p.license_document = body.license_expiry_date, body.license_document
-    p.driver_status = AccountStatus.PENDING_APPROVAL  # re-approval needed
-    await force_offline(db, user.id)
-    await db.commit()
-    return {"driver_status": p.driver_status}
 
 
 # ---------- uploads / files ----------
@@ -199,7 +195,7 @@ async def list_notifications(unread_only: bool = False, page=Depends(paging), us
     unread = (await db.execute(select(func.count()).select_from(Notification).where(
         Notification.user_id == user.id, Notification.is_read.is_(False)))).scalar_one()
     return {"unread": unread, "items": [{"id": n.id, "type": n.notification_type, "title": n.title, "message": n.message,
-                                         "order_id": n.related_order_id, "is_read": n.is_read,
+                                         "order_id": n.related_order_id, "data": n.data or {}, "is_read": n.is_read,
                                          "created_at": dt(n.created_at)} for n in rows]}
 
 
