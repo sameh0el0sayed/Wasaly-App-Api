@@ -8,6 +8,8 @@ class Settings(BaseSettings):
     redis_url: str = ""  # e.g. redis://redis:6379/0 ; empty = no Redis (everything works from PostgreSQL)
     location_ttl_seconds: int = 120  # latest driver location in Redis
     location_db_flush_seconds: int = 15  # PostgreSQL gets the latest location at most this often per driver (when Redis is up)
+    passkey_rp_id: str = "phoenixsystems.online"  # PASSKEY_RP_ID
+    passkey_origins: str = "https://phoenixsystems.online"  # PASSKEY_ORIGINS, comma list (+ android:apk-key-hash:<base64url sha256>)
     db_pool_size: int = 5  # per process: keep (workers x (pool_size + max_overflow)) within the PostgreSQL budget
     db_max_overflow: int = 3
     db_statement_timeout_ms: int = 30000

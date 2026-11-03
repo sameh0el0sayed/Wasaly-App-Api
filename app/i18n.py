@@ -12,6 +12,9 @@ DEFAULT_LANGUAGE = "ar"
 
 # (arabic, english). Placeholders: {name}. Order does not matter: every entry is anchored (^...$).
 PAIRS: list[tuple[str, str]] = [
+    # v16 passkeys
+    ("أُضيف مفتاح مرور جديد إلى حسابك", "A new passkey was added to your account"),
+    ("مفتاح مرور جديد", "New passkey"),
     # v15 role switch
     ("طلب انضمام سائق", "Driver application"),
     ("قدّم {name} طلبًا ليصبح سائقًا.", "{name} applied to become a driver."),

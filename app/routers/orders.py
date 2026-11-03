@@ -6,6 +6,7 @@ from sqlalchemy import func, select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from ..config import settings as app_cfg
 from ..constants import CURRENCIES, CounterStatus, OfferStatus, Role
 from ..constants import OrderStatus as S
 from ..database import get_db
@@ -60,6 +61,7 @@ async def app_config(db: AsyncSession = Depends(get_db)):
             "languages": ["ar", "en"], "default_language": "ar",
             "i18n": {"version": int(s["i18n_version"] or 0), "languages": ["ar", "en"], "default": "ar"},
             "role_switch": {"enabled": s["role_switch_enabled"] == "true", "customer_to_driver": s["customer_to_driver_enabled"] == "true"},
+            "passkeys": {"enabled": s["passkeys_enabled"] == "true", "rp_id": app_cfg.passkey_rp_id},
             "analytics": {"enabled": s["analytics_enabled"] == "true", "batch_size": 20, "flush_seconds": 30},
             "promo_enabled": s["promo_enabled"] == "true",
             "customer_live_tracking_enabled": s["customer_live_tracking_enabled"] == "true",

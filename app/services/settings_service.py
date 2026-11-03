@@ -9,6 +9,7 @@ from ..constants import CURRENCIES
 from ..models import AppSetting
 
 DEFAULTS = {
+    "passkeys_enabled": "true",
     "role_switch_enabled": "true",
     "customer_to_driver_enabled": "true",
     "i18n_version": "0",
