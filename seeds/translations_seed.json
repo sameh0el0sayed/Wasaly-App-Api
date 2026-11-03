@@ -7208,5 +7208,90 @@
   "key": "v17.no_results",
   "ar": "لا توجد نتائج. جرّب اسمًا آخر أو حرّك الخريطة.",
   "en": "No results found. Try another name or move the map."
+ },
+ {
+  "key": "v18.scheduled_at",
+  "ar": "موعد الرحلة",
+  "en": "Scheduled for"
+ },
+ {
+  "key": "v18.delivered_at",
+  "ar": "وقت التسليم",
+  "en": "Delivered at"
+ },
+ {
+  "key": "v18.total",
+  "ar": "الإجمالي",
+  "en": "Total"
+ },
+ {
+  "key": "v18.driver",
+  "ar": "السائق والسيارة",
+  "en": "Driver & vehicle"
+ },
+ {
+  "key": "v18.extra.SCHEDULED",
+  "ar": "رسوم الحجز المسبق",
+  "en": "Scheduled booking fee"
+ },
+ {
+  "key": "v18.extra.AC",
+  "ar": "تكييف",
+  "en": "Air conditioning"
+ },
+ {
+  "key": "v18.extra.SMOKING_ALLOWED",
+  "ar": "مسموح بالتدخين",
+  "en": "Smoking allowed"
+ },
+ {
+  "key": "v18.extra.NON_SMOKING",
+  "ar": "بدون تدخين",
+  "en": "Non-smoking"
+ },
+ {
+  "key": "v18.extra.FEMALE_DRIVER",
+  "ar": "سائقة",
+  "en": "Female driver"
+ },
+ {
+  "key": "v18.extra.MALE_DRIVER",
+  "ar": "سائق ذكر",
+  "en": "Male driver"
+ },
+ {
+  "key": "v18.extra.LARGE_CAR",
+  "ar": "سيارة كبيرة",
+  "en": "Large car"
+ },
+ {
+  "key": "v18.extra.STOPS",
+  "ar": "محطات إضافية",
+  "en": "Extra stops"
+ },
+ {
+  "key": "v18.extra.NIGHT",
+  "ar": "رسوم الليل",
+  "en": "Night surcharge"
+ },
+ {
+  "key": "v19.trip_total",
+  "ar": "إجمالي الرحلة: {0}",
+  "en": "Trip total: {0}"
+ },
+ {
+  "key": "v19.wallet_used",
+  "ar": "خُصم من محفظتك: {0}",
+  "en": "Paid from your wallet: {0}"
+ },
+ {
+  "key": "v19.referral_discount",
+  "ar": "خصم الدعوة",
+  "en": "Invite discount"
+ },
+ {
+  "key": "v19.admin",
+  "ar": "الإدارة",
+  "en": "Admin"
  }
 ]
