@@ -7203,5 +7203,10 @@
   "key": "v16.set_passkeys",
   "ar": "السماح بالدخول بمفاتيح المرور",
   "en": "Allow passkey sign-in"
+ },
+ {
+  "key": "v17.no_results",
+  "ar": "لا توجد نتائج. جرّب اسمًا آخر أو حرّك الخريطة.",
+  "en": "No results found. Try another name or move the map."
  }
 ]
