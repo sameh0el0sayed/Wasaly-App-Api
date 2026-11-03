@@ -26,7 +26,8 @@ def doc_status(expiry: date | None, today: date | None = None, warn_max: int = 3
 
 def verification(u: User, warn_max: int = 30) -> dict:
     """Is the person verified? Approved account + ID card (CPR) not expired (+ driving licence not expired for drivers)."""
-    p = u.driver_profile
+    from ..serializers import rel
+    p = rel(u, "driver_profile")
     idc = {"issue_date": u.cpr_issue_date.isoformat() if u.cpr_issue_date else None,
            "expiry_date": u.cpr_expiry_date.isoformat() if u.cpr_expiry_date else None, "status": doc_status(u.cpr_expiry_date, warn_max=warn_max)}
     out = {"identity": idc}

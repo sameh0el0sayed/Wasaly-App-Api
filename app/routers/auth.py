@@ -1,3 +1,4 @@
+import logging
 from datetime import date, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException, Request
@@ -39,8 +40,15 @@ async def register(body: RegisterIn, db: AsyncSession = Depends(get_db), lang: s
     db.add(user)
     try:
         await db.flush()
-    except IntegrityError:
-        raise HTTPException(409, "Phone or CPR is already registered")
+    except IntegrityError as e:
+        await db.rollback()
+        msg = str(getattr(e, "orig", e)).lower()
+        if "cpr" in msg:
+            raise HTTPException(409, {"code": "CPR_EXISTS", "message": "Phone or CPR is already registered"})
+        if "phone" in msg:
+            raise HTTPException(409, {"code": "PHONE_EXISTS", "message": "Phone or CPR is already registered"})
+        logging.getLogger("auth").exception("register: unexpected integrity error")
+        raise HTTPException(500, "Could not create the account")
     keys = [body.profile_photo, body.cpr_photo]
     if body.role == "DRIVER":
         keys += [body.driver.license_document, *body.driver.vehicle.photos.values()]
@@ -65,6 +73,7 @@ async def register(body: RegisterIn, db: AsyncSession = Depends(get_db), lang: s
                              gender=d.gender, smoking_allowed=d.smoking_allowed))
         db.add(Vehicle(driver_id=user.id, **v.model_dump()))
     await db.commit()
+    await db.refresh(user, ["driver_profile", "vehicle", "driver_application"])  # new instance: load before user_public()
     return {"user": user_public(user), "access_token": create_access_token(user.id, user.token_version),
             "token_type": "bearer", "message": localize("حسابك قيد المراجعة من الإدارة", user.language)}
 

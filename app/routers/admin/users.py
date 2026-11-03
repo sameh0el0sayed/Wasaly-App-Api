@@ -217,4 +217,5 @@ async def create_admin(body: AdminCreateIn, admin: User = Depends(super_admin_us
         raise HTTPException(409, "Phone already registered")
     audit(db, admin.id, "ADMIN_CREATED", "user", u.id, details={"role": body.role})
     await db.commit()
+    await db.refresh(u, ["driver_profile", "vehicle", "driver_application"])
     return user_public(u)

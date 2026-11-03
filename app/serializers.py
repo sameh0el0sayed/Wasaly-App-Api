@@ -188,12 +188,19 @@ def mask_cpr(u: User) -> str:
     return f"******{u.cpr_last3}" if u.cpr_last3 else ""
 
 
+def rel(u, name: str):
+    """A relationship only if it is already loaded (async code must never lazy-load); None otherwise."""
+    from sqlalchemy import inspect
+    return None if name in inspect(u).unloaded else getattr(u, name)
+
+
 def roles_of(u: User) -> list[str]:
     """Roles the account holds (the active one is `u.role`). A driver profile means DRIVER; every non-admin may act as CUSTOMER."""
     if u.role not in ("CUSTOMER", "DRIVER"):
         return [u.role]
     r = set(u.roles or []) | {u.role}
-    if u.driver_profile and u.driver_profile.driver_status == "APPROVED":
+    dp = rel(u, "driver_profile")
+    if dp and dp.driver_status == "APPROVED":
         r |= {"DRIVER", "CUSTOMER"}
     return sorted(r)
 
@@ -206,8 +213,8 @@ def user_public(u: User) -> dict:
             "cpr_masked": mask_cpr(u), "language": u.language or "ar",
             "verification": verification(u),
             "roles": roles_of(u), "active_role": u.role,
-            "driver_application": ({"id": u.driver_application.id, "status": u.driver_application.status, "reason": u.driver_application.reason,
-                                    "created_at": dt(u.driver_application.created_at)} if u.driver_application else None)}
+            "driver_application": ({"id": da.id, "status": da.status, "reason": da.reason, "created_at": dt(da.created_at)}
+                                    if (da := rel(u, "driver_application")) else None)}
 
 
 def vehicle_full(v) -> dict | None:
