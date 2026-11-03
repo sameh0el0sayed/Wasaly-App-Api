@@ -196,9 +196,9 @@ def rel(u, name: str):
 
 def roles_of(u: User) -> list[str]:
     """Roles the account holds (the active one is `u.role`). A driver profile means DRIVER; every non-admin may act as CUSTOMER."""
-    if u.role not in ("CUSTOMER", "DRIVER"):
-        return [u.role]
     r = set(u.roles or []) | {u.role}
+    if r & {"ADMIN", "SUPER_ADMIN"}:
+        r.add("CUSTOMER")  # an admin account may also act as a customer
     dp = rel(u, "driver_profile")
     if dp and dp.driver_status == "APPROVED":
         r |= {"DRIVER", "CUSTOMER"}

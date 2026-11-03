@@ -10,7 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from ..constants import AccountStatus, Role
 from ..constants import OrderStatus as S
 from ..database import get_db
-from ..deps import admin_user, current_user, customer_user
+from ..deps import admin_user, approved_user, current_user
 from ..models import DriverApplication, DriverProfile, Order, User, Vehicle, utcnow
 from ..schemas import DriverRegIn
 from ..security import create_access_token, encrypt
@@ -28,7 +28,7 @@ PENDING, APPROVED, REJECTED, CORRECTION = "PENDING_REVIEW", "APPROVED", "REJECTE
 
 
 class SwitchIn(BaseModel):
-    role: str = Field(pattern="^(CUSTOMER|DRIVER)$")
+    role: str = Field(pattern="^(CUSTOMER|DRIVER|ADMIN|SUPER_ADMIN)$")
 
 
 class ReasonBody(BaseModel):
@@ -42,13 +42,16 @@ def app_out(a: DriverApplication | None) -> dict | None:
 # ---------------- switch ----------------
 @router.post("/profile/switch-role")
 async def switch_role(body: SwitchIn, user: User = Depends(current_user), db: AsyncSession = Depends(get_db)):
-    if user.role not in (Role.CUSTOMER, Role.DRIVER):
-        raise HTTPException(403, "Not available for admins")
+    held_admin = ({user.role} | set(user.roles or [])) & Role.ADMINS  # admin roles this account really holds (server-written only)
     s = await settings_service.get_all(db)
-    if s["role_switch_enabled"] != "true":
+    if s["role_switch_enabled"] != "true" and body.role not in Role.ADMINS:  # going back to the admin role is always allowed
         raise HTTPException(403, {"code": "ROLE_SWITCH_DISABLED"})
     if body.role == user.role:
         raise HTTPException(422, {"code": "SAME_ROLE"})
+    if body.role in Role.ADMINS and body.role not in held_admin:
+        raise HTTPException(403, {"code": "ROLE_NOT_GRANTED"})
+    if body.role == Role.CUSTOMER and user.role not in Role.ADMINS and user.role != Role.DRIVER:
+        raise HTTPException(403, {"code": "ROLE_NOT_GRANTED"})
     if body.role == Role.DRIVER:
         p = user.driver_profile
         if not p or p.driver_status != AccountStatus.APPROVED or not user.vehicle:
@@ -58,7 +61,7 @@ async def switch_role(body: SwitchIn, user: User = Depends(current_user), db: As
         busy = (await db.execute(select(Order.id).where(Order.driver_id == user.id, Order.order_status.in_(S.DRIVER_BUSY)).limit(1))).scalar()
         if busy:
             raise HTTPException(409, {"code": "SWITCH_BLOCKED_ACTIVE_TRIP", "order_id": busy})
-    else:
+    elif user.role == Role.CUSTOMER:
         busy = (await db.execute(select(Order.id).where(Order.customer_id == user.id, Order.order_status.in_(S.SEARCHING | S.DRIVER_BUSY)).limit(1))).scalar()
         if busy:
             raise HTTPException(409, {"code": "SWITCH_BLOCKED_ACTIVE_ORDER", "order_id": busy})
@@ -95,7 +98,9 @@ async def _save(db: AsyncSession, user: User, body: DriverRegIn) -> DriverApplic
 
 
 @router.post("/profile/driver-application", status_code=202)
-async def apply_driver(body: DriverRegIn, user: User = Depends(customer_user), db: AsyncSession = Depends(get_db)):
+async def apply_driver(body: DriverRegIn, user: User = Depends(approved_user), db: AsyncSession = Depends(get_db)):
+    if user.role not in (Role.CUSTOMER, Role.ADMIN, Role.SUPER_ADMIN):
+        raise HTTPException(403, "Switch to customer mode first")
     if (await settings_service.get_all(db))["customer_to_driver_enabled"] != "true":
         raise HTTPException(403, {"code": "CUSTOMER_TO_DRIVER_DISABLED"})
     a = user.driver_application
@@ -114,7 +119,7 @@ async def get_application(user: User = Depends(current_user)):
 
 
 @router.patch("/profile/driver-application", status_code=202)
-async def resubmit_application(body: DriverRegIn, user: User = Depends(customer_user), db: AsyncSession = Depends(get_db)):
+async def resubmit_application(body: DriverRegIn, user: User = Depends(approved_user), db: AsyncSession = Depends(get_db)):
     a = user.driver_application
     if not a:
         raise HTTPException(404, "Not found")
