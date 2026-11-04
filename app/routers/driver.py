@@ -315,6 +315,10 @@ async def arrived_at_destination(order_id: int, body: ArrivedIn = ArrivedIn(), u
     o.trip_arrived_at = now
     secs = duration_seconds(o.trip_started_at, now)
     units, base = calc_price(secs, o.unit_duration_seconds, o.price_per_unit, o.min_price, o.currency_decimals)
+    if o.est_duration_min:  # never bill less than the estimate shown to the customer: the higher of actual time and estimate wins
+        e_units, e_base = calc_price(o.est_duration_min * 60, o.unit_duration_seconds, o.price_per_unit, o.min_price, o.currency_decimals)
+        if e_base > base:
+            units, base = e_units, e_base
     night = bool(o.night_enabled) and is_night_start(o.trip_started_at, ZoneInfo(settings.timezone), o.night_start, o.night_end)
     surcharge = night_surcharge(base, o.night_percent, o.currency_decimals) if night else base - base
     increase = increase_amount(base + surcharge, o.price_increase_percent, o.currency_decimals)  # accepted raise / counter-offer
