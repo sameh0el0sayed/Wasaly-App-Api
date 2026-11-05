@@ -118,6 +118,8 @@ async def _set_status(db, admin, u: User, status: str, reason: str | None, actio
 @router.post("/users/{user_id}/approve")
 async def approve(user_id: int, body: ApproveIn = ApproveIn(), admin: User = Depends(ai_review_user), db: AsyncSession = Depends(get_db)):
     u = await _target(db, user_id)
+    if not u.phone_verified:
+        raise HTTPException(409, {"code": "PHONE_NOT_VERIFIED"})
     if admin.role == Role.AI and u.account_status != AccountStatus.PENDING_APPROVAL:
         raise HTTPException(409, {"code": "AI_REVIEW_ONLY_PENDING_USERS"})
     await _set_status(db, admin, u, AccountStatus.APPROVED, None, "ACCOUNT_APPROVED", "تمت الموافقة", "تمت الموافقة على حسابك.")

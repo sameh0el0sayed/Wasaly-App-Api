@@ -1,7 +1,7 @@
 # Bahrain Transport & Delivery API (FastAPI)
 
 Backend for the customer app, driver app and admin dashboard described in the spec.
-No OTP, no live tracking, all prices/times/permissions enforced on the server.
+WhatsApp reverse-OTP verifies new phone registrations; no OTP is sent by the backend. All prices/times/permissions are enforced on the server.
 
 ## Run
 
@@ -20,7 +20,7 @@ Production: use PostgreSQL and Alembic (`alembic revision --autogenerate -m init
 
 | Rule | Implementation |
 |---|---|
-| No OTP | Phone + password only. Recovery = `POST /api/auth/forgot-password` -> admin `reset-password` |
+| Phone verification | New registrations must send a reverse-OTP through WhatsApp before login/JWT issuance; existing accounts are retained as phone-verified by migration |
 | Account review | `PENDING_APPROVAL` until admin approves; `approved_user` dependency returns 403 `ACCOUNT_NOT_APPROVED` |
 | Billing window | `trip_started_at` set on `start-trip`, `trip_arrived_at` on `arrived-at-destination`, server clock only |
 | Price | `services/pricing.py`: `ceil(seconds/unit_seconds) x unit_price`, min `min_price`, integer math, `Decimal`. Defaults: 300 s, 0.500, 0.500 |
@@ -136,7 +136,7 @@ There is no routing engine: distance = straight line x `estimate_road_factor` (1
 
 | Area | Endpoints |
 |---|---|
-| Auth | `POST /api/auth/register, login, logout, change-password, forgot-password`, `GET /api/account/status` |
+| Auth | `POST /api/auth/register, login, logout, change-password, forgot-password`, `POST /api/auth/whatsapp/request`, `GET /api/auth/whatsapp/status`, `GET /api/account/status`; inbound webhook `GET/POST /webhooks/whatsapp` |
 | Profile | `GET/PATCH /api/profile`, `POST /api/profile/documents, license, deletion-request, sensitive-change-request` |
 | Uploads | `POST /api/uploads/registration` (anonymous, claimed on register), `POST /api/uploads`, `POST /api/files/sign` |
 | Customer orders | `POST /api/orders`, `GET /api/orders/my-orders, {id}, {id}/status-history`, `POST {id}/cancel, retry, dispute`, `GET /api/pricing` |
@@ -147,9 +147,18 @@ There is no routing engine: distance = straight line x `estimate_road_factor` (1
 | Misc | `GET /api/notifications`, `POST /api/devices` (FCM token), `POST /api/complaints`, `GET /health` |
 
 ## Registration flow (mobile)
-1. Upload photos/docs with `POST /api/uploads/registration` -> `file_key`s.
-2. `POST /api/auth/register` with the keys (driver: license + vehicle block). Returns a token with status `PENDING_APPROVAL`.
-3. The app polls `GET /api/account/status`; approved-only endpoints return 403 until approved.
+1. Call `POST /api/auth/whatsapp/request` with the phone number entered by the user. Open the returned `whatsapp_url`; the user manually sends the prefilled `VERIFY 123456` message to Wasaly's WhatsApp Business number.
+2. Poll `GET /api/auth/whatsapp/status?verification_id=<verification_id>`. For an unregistered number, success returns `verified=true` and `requires_registration=true`.
+3. Upload photos/docs with `POST /api/uploads/registration` -> `file_key`s, then call `POST /api/auth/register` with the verified `whatsapp_verification_id` and registration fields (driver: license + vehicle block). The account is created `phone_verified=true` and the response returns a bearer JWT.
+4. If a previously-created account is awaiting phone verification, its status response returns a bearer JWT after webhook verification; if that response is lost, the user can log in with the registered phone and password.
+5. Phone verification does not replace the existing admin account review. The new account remains `PENDING_APPROVAL` until an admin approves it.
+
+### WhatsApp webhook setup (incoming messages only)
+- Configure Meta WhatsApp Cloud API webhook callback as `https://<public-host>/wasaly-api/webhooks/whatsapp` and subscribe to the `messages` field.
+- Set `WHATSAPP_BUSINESS_NUMBER` (international digits, no `+`), `WHATSAPP_WEBHOOK_VERIFY_TOKEN` (same value entered in Meta webhook setup), and `WHATSAPP_APP_SECRET` (Meta app secret) in `.env`.
+- The backend validates `X-Hub-Signature-256`, accepts only messages from the pending registration phone, stores only a keyed OTP hash, expires codes after 180 seconds, allows five attempts, and deduplicates provider message IDs.
+- The backend does not send WhatsApp messages and does not need a WhatsApp access token for this inbound-only flow. The Flutter app launches WhatsApp for the user to send the message manually.
+- Apply the migration with `docker compose exec api alembic upgrade head` (revision `0014`).
 
 ## Notes and open decisions (spec section 23)
 - Push: real FCM through the Firebase Admin SDK (`services/notifications.py`). Set `FIREBASE_CREDENTIALS` to the service-account JSON path; empty = push disabled (in-app list still works). Device tokens come from `POST /api/devices`; dead tokens are deleted automatically. Push is fire-and-forget and only a hint: the app re-fetches state from the API.

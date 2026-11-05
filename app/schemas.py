@@ -49,6 +49,7 @@ class DriverRegIn(BaseModel):
 
 class RegisterIn(BaseModel):
     role: Literal["CUSTOMER", "DRIVER"]
+    whatsapp_verification_id: str = Field(min_length=36, max_length=36)
     language: Literal["ar", "en"] | None = None  # default: Accept-Language header, else ar
     full_name: str = Field(min_length=2, max_length=120)
     phone: str
@@ -81,6 +82,12 @@ class LoginIn(BaseModel):
     phone: str
     password: str
     device_id: str | None = Field(default=None, max_length=100)
+    v_phone = field_validator("phone")(lambda cls, v: normalize_phone(v))
+
+
+class WhatsAppVerificationRequestIn(BaseModel):
+    phone: str
+
     v_phone = field_validator("phone")(lambda cls, v: normalize_phone(v))
 
 

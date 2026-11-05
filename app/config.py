@@ -76,6 +76,9 @@ class Settings(BaseSettings):
     ai_service_base_url: str = "http://127.0.0.1:8000"
     ai_review_interval_seconds: int = 600
     ai_review_batch_size: int = 20
+    whatsapp_business_number: str = ""  # digits only, international format, e.g. 973XXXXXXXX
+    whatsapp_webhook_verify_token: str = ""
+    whatsapp_app_secret: str = ""  # used only to validate incoming webhook signatures
 
 
 settings = Settings()

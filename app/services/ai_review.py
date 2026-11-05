@@ -244,7 +244,8 @@ def _name_matches(candidate: str | None, expected: str | None) -> bool:
 async def review_user(user_id: int, token: str) -> bool:
     async with SessionLocal() as db:
         user = await db.get(User, user_id)
-        if not user or user.role not in {Role.CUSTOMER, Role.DRIVER} or user.account_status != AccountStatus.PENDING_APPROVAL:
+        if (not user or user.role not in {Role.CUSTOMER, Role.DRIVER}
+                or user.account_status != AccountStatus.PENDING_APPROVAL or not user.phone_verified):
             await _write_worker_audit("AI_IDENTITY_REVIEW", {
                 "user_id": user_id, "result": "not_approved", "reason_codes": ["USER_NOT_PENDING_REVIEW"],
             }, entity_type="user", entity_id=str(user_id))
@@ -559,7 +560,8 @@ async def run_review_cycle() -> dict:
             if reviewer_id is None:
                 raise RuntimeError("AI review account not found in the database")
             user_ids = list((await db.execute(select(User.id).where(
-                User.role.in_([Role.CUSTOMER, Role.DRIVER]), User.account_status == AccountStatus.PENDING_APPROVAL
+                User.role.in_([Role.CUSTOMER, Role.DRIVER]), User.account_status == AccountStatus.PENDING_APPROVAL,
+                User.phone_verified.is_(True),
             ).order_by(User.created_at).limit(settings.ai_review_batch_size))).scalars())
             payment_ids = list((await db.execute(select(Payment.id).where(
                 Payment.payment_method == "BENEFITPAY", Payment.payment_status == "PENDING_VERIFICATION"

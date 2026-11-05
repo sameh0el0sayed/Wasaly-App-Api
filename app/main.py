@@ -129,7 +129,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="Bahrain Transport & Delivery API", version="1.0.0", lifespan=lifespan, root_path="/wasaly-api",
-              description="Backend for customer app, driver app and admin dashboard. No OTP. Driver LIVE mode shares location only with consent. "
+              description="Backend for customer app, driver app and admin dashboard. New registrations use WhatsApp reverse-OTP; the backend does not send OTP messages. Driver LIVE mode shares location only with consent. "
                           "All prices, times and permissions are enforced server-side.")
 app.add_middleware(CORSMiddleware, allow_origins=settings.cors_origins, allow_methods=["*"], allow_headers=["*"])
 
@@ -167,7 +167,7 @@ async def request_id_middleware(request: Request, call_next):
     return response
 
 
-for r in (auth.router, app_errors.router, app_errors.admin_router, profile.router, corrections.router, chat.router, orders.router, driver.router, payments.webhook_router, payments.router,
+for r in (auth.router, auth.whatsapp_webhook_router, app_errors.router, app_errors.admin_router, profile.router, corrections.router, chat.router, orders.router, driver.router, payments.webhook_router, payments.router,
           payments.admin_router, subscriptions.router, subscriptions.admin_router, subscriptions.driver_router,
           airports.router, promo.router, stream.router, banners.router, places.router, account_deletion.router, account_deletion.admin_router, activity.router, activity.admin_router, ratings.router, v11.router, v11.admin_router, v11.public_router, v14.router, v14.admin_router, v15.router, v15.admin_router, v16.router, admin.router):
     app.include_router(r)

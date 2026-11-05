@@ -16,6 +16,7 @@ from sqlalchemy import (
     Text,
     UniqueConstraint,
     false,
+    true,
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.types import TypeDecorator
@@ -61,6 +62,7 @@ class User(Base):
     password_hash: Mapped[str] = mapped_column(String(255))
     role: Mapped[str] = mapped_column(String(20), index=True)
     account_status: Mapped[str] = mapped_column(String(30), index=True, default=AccountStatus.PENDING_APPROVAL)
+    phone_verified: Mapped[bool] = mapped_column(Boolean, default=True, server_default=true(), nullable=False)
     status_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
     profile_photo: Mapped[str | None] = mapped_column(String(255), nullable=True)
     cpr_photo: Mapped[str | None] = mapped_column(String(255), nullable=True)
@@ -786,6 +788,29 @@ class Passkey(Base):
     device_name: Mapped[str | None] = mapped_column(String(100), nullable=True)
     created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
     last_used_at: Mapped[datetime | None] = mapped_column(UTCDateTime, nullable=True)
+
+
+class WhatsAppVerification(Base):
+    __tablename__ = "whatsapp_verifications"
+    __table_args__ = (Index("ix_whatsapp_verifications_phone_status_expiry", "phone", "status", "expires_at"),)
+
+    verification_id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    user_id: Mapped[int | None] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True, nullable=True)
+    phone: Mapped[str] = mapped_column(String(20), index=True)
+    otp_hash: Mapped[str] = mapped_column(String(64))
+    expires_at: Mapped[datetime] = mapped_column(UTCDateTime, index=True)
+    status: Mapped[str] = mapped_column(String(16), default="PENDING", index=True)
+    attempts: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
+    verified_at: Mapped[datetime | None] = mapped_column(UTCDateTime, nullable=True)
+    token_issued_at: Mapped[datetime | None] = mapped_column(UTCDateTime, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow, index=True)
+
+
+class WhatsAppWebhookEvent(Base):
+    __tablename__ = "whatsapp_webhook_events"
+
+    provider_message_id: Mapped[str] = mapped_column(String(255), primary_key=True)
+    received_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
 
 
 class ChatConversation(Base):
