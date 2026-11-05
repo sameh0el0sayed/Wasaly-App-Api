@@ -14,8 +14,9 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..config import settings
+from ..constants import Role
 from ..database import get_db
-from ..deps import ai_review_user, current_user, customer_user
+from ..deps import ai_review_user, approved_user, current_user
 from ..models import ChatConversation, ChatMessage, User, utcnow
 
 router = APIRouter(tags=["AI chatbot"])
@@ -63,7 +64,9 @@ def _is_ai_admin(user: User) -> bool:
 
 
 @router.post("/api/chat")
-async def chat(body: ChatRequest, user: User = Depends(customer_user), db: AsyncSession = Depends(get_db)):
+async def chat(body: ChatRequest, user: User = Depends(approved_user), db: AsyncSession = Depends(get_db)):
+    if user.role not in {Role.CUSTOMER, Role.DRIVER}:
+        raise HTTPException(403, detail={"code": "CHAT_ROLE_NOT_ALLOWED"})
     if not await _allow(user.id):
         raise HTTPException(429, detail={"code": "RATE_LIMITED", "message": "Try again in a minute"}, headers={"Retry-After": "60"})
     if not settings.gemini_api_key:
