@@ -96,7 +96,30 @@ async def _gemini_json(prompt: str, files: list[tuple[str, bytes]]) -> dict:
     payload = {"contents": [{"role": "user", "parts": parts}], "generationConfig": generation}
     url = f"https://generativelanguage.googleapis.com/v1beta/models/{settings.gemini_model}:generateContent"
     async with httpx.AsyncClient(timeout=httpx.Timeout(settings.gemini_timeout_seconds)) as client:
-        response = await client.post(url, headers={"x-goog-api-key": settings.gemini_api_key}, json=payload)
+        for attempt in range(3):
+            try:
+                response = await client.post(
+                    url, headers={"x-goog-api-key": settings.gemini_api_key}, json=payload,
+                )
+                if response.status_code not in {429, 500, 502, 503, 504}:
+                    response.raise_for_status()
+                    break
+                if attempt == 2:
+                    response.raise_for_status()
+                retry_after = response.headers.get("Retry-After")
+                try:
+                    delay = min(30.0, max(1.0, float(retry_after))) if retry_after else 2.0 ** (attempt + 1)
+                except ValueError:
+                    delay = 2.0 ** (attempt + 1)
+                log.warning("Gemini transient HTTP %s; retry %s/2 in %.1fs",
+                            response.status_code, attempt + 1, delay)
+                await asyncio.sleep(delay)
+            except httpx.TransportError:
+                if attempt == 2:
+                    raise
+                delay = 2.0 ** (attempt + 1)
+                log.warning("Gemini transport error; retry %s/2 in %.1fs", attempt + 1, delay)
+                await asyncio.sleep(delay)
     response.raise_for_status()
     text = "".join(part.get("text", "") for part in response.json()["candidates"][0]["content"]["parts"] if "text" in part)
     result = json.loads(text)
