@@ -4,6 +4,7 @@ import base64
 import json
 import logging
 import re
+from datetime import datetime, timedelta, timezone
 from decimal import Decimal, InvalidOperation
 from difflib import SequenceMatcher
 
@@ -13,7 +14,7 @@ from sqlalchemy import select
 from ..config import settings
 from ..constants import AccountStatus, Role
 from ..database import SessionLocal
-from ..models import DriverProfile, Order, Payment, User, UploadedFile
+from ..models import AdminAuditLog, DriverProfile, Order, Payment, User, UploadedFile
 from ..security import decrypt
 from ..services import settings_service
 from ..services.files import get_bytes
@@ -135,6 +136,21 @@ async def _admin_post(token: str, path: str, body: dict | None = None) -> None:
     response.raise_for_status()
 
 
+async def _write_worker_audit(action: str, details: dict) -> None:
+    try:
+        async with SessionLocal() as db:
+            db.add(AdminAuditLog(
+                admin_id=None,
+                action=action,
+                entity_type="system",
+                entity_id="ai-review-worker",
+                details=details,
+            ))
+            await db.commit()
+    except Exception:
+        log.exception("Could not write AI worker audit action=%s", action)
+
+
 async def review_payment(payment_id: int, token: str) -> bool:
     async with SessionLocal() as db:
         payment = await db.get(Payment, payment_id)
@@ -167,6 +183,12 @@ async def review_payment(payment_id: int, token: str) -> bool:
     accepted, reasons = compare_receipt_fields(extracted, target_account, expected_amount, currency, decimals)
     if not accepted:
         log.info("AI receipt field mismatch payment_id=%s codes=%s", payment_id, ",".join(reasons))
+        await _write_worker_audit("AI_RECEIPT_REVIEW", {
+            "payment_id": payment_id,
+            "result": "not_confirmed",
+            "reason_codes": reasons,
+            "reference": extracted.get("reference"),
+        })
         return False
     review_notes = {
         "beneficiary_account": extracted.get("beneficiary_account"),
@@ -182,6 +204,11 @@ async def review_payment(payment_id: int, token: str) -> bool:
     }
     await _admin_post(token, f"/api/admin/payments/{payment_id}/confirm", {
         "reference": extracted["reference"], "review_notes": review_notes,
+    })
+    await _write_worker_audit("AI_RECEIPT_REVIEW", {
+        "payment_id": payment_id,
+        "result": "confirmed",
+        "review_notes": review_notes,
     })
     log.info("AI receipt field match payment_id=%s", payment_id)
     return True
@@ -251,38 +278,86 @@ async def review_user(user_id: int, token: str) -> bool:
     return True
 
 
-async def run_review_cycle() -> None:
+async def run_review_cycle() -> dict:
+    summary = {
+        "status": "completed",
+        "users_checked": 0,
+        "users_approved": [],
+        "users_not_approved": [],
+        "users_errors": [],
+        "payments_checked": 0,
+        "payments_confirmed": [],
+        "payments_not_confirmed": [],
+        "payments_errors": [],
+    }
     if not settings.ai_service_phone or not settings.ai_service_password or not settings.gemini_api_key:
         log.warning("AI review disabled: configure AI_SERVICE_PHONE, AI_SERVICE_PASSWORD, GEMINI_API_KEY")
-        return
-    async with httpx.AsyncClient(timeout=20) as client:
-        token = await _ai_token(client)
-    async with SessionLocal() as db:
-        user_ids = list((await db.execute(select(User.id).where(
-            User.role.in_([Role.CUSTOMER, Role.DRIVER]), User.account_status == AccountStatus.PENDING_APPROVAL
-        ).order_by(User.created_at).limit(settings.ai_review_batch_size))).scalars())
-        payment_ids = list((await db.execute(select(Payment.id).where(
-            Payment.payment_method == "BENEFITPAY", Payment.payment_status == "PENDING_VERIFICATION"
-        ).order_by(Payment.created_at).limit(settings.ai_review_batch_size))).scalars())
+        summary["status"] = "disabled_missing_configuration"
+        await _write_worker_audit("AI_REVIEW_CYCLE", summary)
+        return summary
+    try:
+        async with httpx.AsyncClient(timeout=20) as client:
+            token = await _ai_token(client)
+        async with SessionLocal() as db:
+            user_ids = list((await db.execute(select(User.id).where(
+                User.role.in_([Role.CUSTOMER, Role.DRIVER]), User.account_status == AccountStatus.PENDING_APPROVAL
+            ).order_by(User.created_at).limit(settings.ai_review_batch_size))).scalars())
+            payment_ids = list((await db.execute(select(Payment.id).where(
+                Payment.payment_method == "BENEFITPAY", Payment.payment_status == "PENDING_VERIFICATION"
+            ).order_by(Payment.created_at).limit(settings.ai_review_batch_size))).scalars())
+    except Exception as exc:
+        log.exception("AI review cycle could not start")
+        summary.update(status="start_error", error=type(exc).__name__)
+        await _write_worker_audit("AI_REVIEW_CYCLE", summary)
+        return summary
+
+    summary["users_checked"] = len(user_ids)
+    summary["payments_checked"] = len(payment_ids)
     for user_id in user_ids:
         try:
-            await review_user(user_id, token)
-        except Exception:
+            (summary["users_approved"] if await review_user(user_id, token)
+             else summary["users_not_approved"]).append(user_id)
+        except Exception as exc:
             log.exception("AI identity review failed user_id=%s", user_id)
+            summary["users_errors"].append({"id": user_id, "error": type(exc).__name__})
+            await _write_worker_audit("AI_IDENTITY_REVIEW", {
+                "user_id": user_id, "result": "error", "error": type(exc).__name__,
+            })
     for payment_id in payment_ids:
         try:
-            await review_payment(payment_id, token)
-        except Exception:
+            (summary["payments_confirmed"] if await review_payment(payment_id, token)
+             else summary["payments_not_confirmed"]).append(payment_id)
+        except Exception as exc:
             log.exception("AI receipt review failed payment_id=%s", payment_id)
+            summary["payments_errors"].append({"id": payment_id, "error": type(exc).__name__})
+            await _write_worker_audit("AI_RECEIPT_REVIEW", {
+                "payment_id": payment_id, "result": "error", "error": type(exc).__name__,
+            })
+    if summary["users_errors"] or summary["payments_errors"]:
+        summary["status"] = "completed_with_errors"
+    await _write_worker_audit("AI_REVIEW_CYCLE", summary)
+    return summary
 
 
 async def review_loop() -> None:
     interval = max(60, settings.ai_review_interval_seconds)
+    log.info("AI review worker started interval_seconds=%s background_tasks_enabled=true", interval)
+    result = await run_review_cycle()
+    log.info("AI review attempt completed details=%s", json.dumps(result, ensure_ascii=False, sort_keys=True))
+    next_review = asyncio.get_running_loop().time() + interval
     while True:
-        try:
-            await run_review_cycle()
-        except asyncio.CancelledError:
-            raise
-        except Exception:
-            log.exception("AI review cycle failed")
-        await asyncio.sleep(interval)
+        remaining = max(0, int(next_review - asyncio.get_running_loop().time()))
+        if remaining == 0:
+            log.info("AI review attempt starting after %s second interval", interval)
+            result = await run_review_cycle()
+            log.info("AI review attempt completed details=%s", json.dumps(result, ensure_ascii=False, sort_keys=True))
+            next_review += interval
+            while next_review <= asyncio.get_running_loop().time():
+                next_review += interval
+            continue
+
+        next_at = (datetime.now(timezone.utc) + timedelta(seconds=remaining)).isoformat()
+        heartbeat = {"status": "alive", "next_review_in_seconds": remaining, "next_review_at": next_at}
+        log.info("AI review worker alive; next attempt in %s seconds at %s", remaining, next_at)
+        await _write_worker_audit("AI_REVIEW_HEARTBEAT", heartbeat)
+        await asyncio.sleep(min(60, remaining))

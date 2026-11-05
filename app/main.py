@@ -110,9 +110,12 @@ async def lifespan(app: FastAPI):
     await seed_translations()
     tasks = []
     if settings.run_background_tasks:
+        log.info("Background tasks enabled; AI review interval_seconds=%s", settings.ai_review_interval_seconds)
         tasks.append(asyncio.create_task(background_loop()))
         from .services.ai_review import review_loop
         tasks.append(asyncio.create_task(review_loop()))
+    else:
+        log.warning("Background tasks disabled; AI review worker will not start")
     yield
     for task in tasks:
         task.cancel()
