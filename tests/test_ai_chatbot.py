@@ -56,12 +56,16 @@ async def test_chat_uses_gemini_and_blocks_other_users_conversation(client, monk
             pass
 
         async def post(self, url, headers, json):
-            assert "gemini-2.5-flash:generateContent" in url
+            assert "gemini-3.8-flash:generateContent" in url
             assert headers["x-goog-api-key"] == "test-key"
-            assert json["generationConfig"] == {"temperature": 0.4, "maxOutputTokens": 1024}
+            assert json["generationConfig"] == {
+                "maxOutputTokens": 1024,
+                "thinkingConfig": {"thinkingLevel": "low"},
+            }
             return FakeResponse()
 
     monkeypatch.setattr(chat_module.settings, "gemini_api_key", "test-key")
+    monkeypatch.setattr(chat_module.settings, "gemini_model", "gemini-3.8-flash")
     monkeypatch.setattr(chat_module.httpx, "AsyncClient", lambda **kwargs: FakeClient())
     first = await client.post("/api/chat", headers=auth(token), json={"message": "كم السعر؟"})
     assert first.status_code == 200 and first.json()["success"] is True

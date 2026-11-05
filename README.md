@@ -232,7 +232,7 @@ Create a dedicated reviewer from a super-admin session with `POST /api/admin/adm
 
 Customers can use `POST /api/chat` only after their account is approved. Send `Authorization: Bearer <access_token>` and JSON `{ "message": "كيف أطلب رحلة؟", "conversation_id": null }`. Response: `{ "success": true, "conversation_id": "<uuid>", "reply": "..." }`. Send the returned conversation ID on later messages; conversation ownership is enforced. Requests allow 1–4000 characters, preserve the last 20 messages as context, and are limited to `CHATBOT_RATE_LIMIT` requests per user per minute (default 10; in-process per API worker).
 
-Set `GEMINI_API_KEY` on the backend only. Optional settings: `GEMINI_MODEL` (default `gemini-2.5-flash`), `GEMINI_TIMEOUT_SECONDS` (30), and `CHATBOT_RATE_LIMIT` (10). Run `alembic upgrade head` before production deploy. The knowledge base lives at `app/data/wasaly_knowledge.json` and is loaded for each request. AI role and super admins can read/update it via `GET`/`PUT /api/admin/ai/knowledge`; PUT accepts `{ "content": { ... } }` and the file update is atomic.
+Set `GEMINI_API_KEY` on the backend only. Optional settings: `GEMINI_MODEL` (default `gemini-3.7-flash`), `GEMINI_TIMEOUT_SECONDS` (30), `GEMINI_THINKING_LEVEL` (`low` for Gemini 3 models), and `CHATBOT_RATE_LIMIT` (10). Gemini 3 requests use `thinkingLevel` and omit temperature for lower-latency generation; Gemini 2.x uses temperature 0.4. Run `alembic upgrade head` before production deploy. The knowledge base lives at `app/data/wasaly_knowledge.json` and is loaded for each request. AI role and super admins can read/update it via `GET`/`PUT /api/admin/ai/knowledge`; PUT accepts `{ "content": { ... } }` and the file update is atomic.
 
 Flutter example using `package:http`:
 
