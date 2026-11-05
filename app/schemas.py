@@ -216,7 +216,7 @@ class ReasonIn(BaseModel):
 
 class PaymentConfirmIn(BaseModel):
     reference: str | None = Field(default=None, min_length=1, max_length=100)
-    review_notes: dict[str, str | None] | None = None
+    review_notes: dict[str, str | bool | None] | None = None
 
 
 class OptionalReasonIn(BaseModel):
