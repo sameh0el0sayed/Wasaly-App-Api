@@ -91,6 +91,13 @@ async def admin_user(user: User = Depends(approved_user)) -> User:
     return user
 
 
+async def ai_review_user(user: User = Depends(approved_user)) -> User:
+    """AI role can review account documents and BenefitPay proofs, with no general admin access."""
+    if user.role not in {Role.AI, Role.ADMIN, Role.SUPER_ADMIN}:
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "AI review permission required")
+    return user
+
+
 async def super_admin_user(user: User = Depends(admin_user)) -> User:
     if user.role != Role.SUPER_ADMIN:
         raise HTTPException(status.HTTP_403_FORBIDDEN, "Super admin permission required")

@@ -220,3 +220,40 @@ Events are published **after the database commit** (never on rollback). In-proce
 - Error messages, notes and `message` fields follow the request header `Accept-Language: en|ar` (default `ar`). Error `code`s never change.
 - All texts live in `app/i18n.py` (`PAIRS`: Arabic -> English, with `{placeholders}`); unknown or user-written text passes through unchanged. A new language = a new column there + `LANGUAGES`.
 - Migration `0004` adds `users.language`. If the server has an untracked `0003_*` file, delete it before `alembic upgrade head` (two heads otherwise).
+
+## AI review role and chatbot
+
+Create a dedicated reviewer from a super-admin session with `POST /api/admin/admins` and `role: "AI"`. This role is limited to pending account review, BenefitPay receipt review, and chatbot knowledge-base maintenance; it does not grant general admin access.
+
+- `GET /api/admin/ai/users` lists up to 100 pending customer/driver registrations.
+- `GET /api/admin/ai/users/{user_id}` returns review data and document file keys. Sign each file with `POST /api/files/sign` using `{ "file_key": "..." }`, then load the returned relative URL with the same bearer token.
+- Approve/reject with `POST /api/admin/users/{user_id}/approve` (optional `{ "approve_pending_documents": true }`) or `/reject` with `{ "reason": "..." }`.
+- BenefitPay receipts: `GET /api/admin/payments?status=PENDING_VERIFICATION&method=BENEFITPAY`, then `GET /api/admin/payments/{payment_id}` to inspect the signed proof URL and expected amount. Confirm using `POST /api/admin/payments/{payment_id}/confirm`, or reject with `/reject` and a reason. Confirmation uses the existing payment finalization and payout logic.
+
+Customers can use `POST /api/chat` only after their account is approved. Send `Authorization: Bearer <access_token>` and JSON `{ "message": "كيف أطلب رحلة؟", "conversation_id": null }`. Response: `{ "success": true, "conversation_id": "<uuid>", "reply": "..." }`. Send the returned conversation ID on later messages; conversation ownership is enforced. Requests allow 1–4000 characters, preserve the last 20 messages as context, and are limited to `CHATBOT_RATE_LIMIT` requests per user per minute (default 10; in-process per API worker).
+
+Set `GEMINI_API_KEY` on the backend only. Optional settings: `GEMINI_MODEL` (default `gemini-2.5-flash`), `GEMINI_TIMEOUT_SECONDS` (30), and `CHATBOT_RATE_LIMIT` (10). Run `alembic upgrade head` before production deploy. The knowledge base lives at `app/data/wasaly_knowledge.json` and is loaded for each request. AI role and super admins can read/update it via `GET`/`PUT /api/admin/ai/knowledge`; PUT accepts `{ "content": { ... } }` and the file update is atomic.
+
+Flutter example using `package:http`:
+
+```dart
+final response = await http.post(
+  Uri.parse('$baseUrl/api/chat'),
+  headers: {
+    'Authorization': 'Bearer $accessToken',
+    'Content-Type': 'application/json',
+    'Accept-Language': 'ar',
+  },
+  body: jsonEncode({'message': message, 'conversation_id': conversationId}),
+);
+if (response.statusCode == 200) {
+  final data = jsonDecode(response.body) as Map<String, dynamic>;
+  conversationId = data['conversation_id'] as String;
+  final reply = data['reply'] as String;
+  // Display reply and clear the loading state.
+} else {
+  // Display a retry/support state; 401 requires re-authentication,
+  // 403 means the account is not approved, 429 means wait and retry,
+  // 502/503/504 are temporary AI service errors.
+}
+```

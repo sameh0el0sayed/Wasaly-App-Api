@@ -3,6 +3,7 @@ class Role:
     DRIVER = "DRIVER"
     ADMIN = "ADMIN"
     SUPER_ADMIN = "SUPER_ADMIN"
+    AI = "AI"  # Limited account/payment review and chatbot knowledge-base access.
     ADMINS = {"ADMIN", "SUPER_ADMIN"}
 
 

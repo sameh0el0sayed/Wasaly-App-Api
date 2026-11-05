@@ -1,0 +1,21 @@
+{
+  "application": {
+    "name": "Wasaly",
+    "description": "تطبيق بحريني للنقل والتوصيل. تتوفر خدمات العملاء والسائقين في التطبيق. / A Bahrain transport and delivery application for customers and drivers."
+  },
+  "services": [
+    "رحلات نقل الأشخاص / Passenger transport trips",
+    "خدمات التوصيل / Delivery services",
+    "اشتراكات الرحلات المجدولة / Scheduled trip subscriptions"
+  ],
+  "booking": "يتم إنشاء الطلب من التطبيق باختيار موقع الانطلاق والوجهة ونوع الخدمة، ويمكن عرض تقدير السعر قبل الإرسال. / Create an order in the app by selecting pickup, destination and service; an estimate can be requested before submission.",
+  "pricing": "تعتمد الأسعار على تقدير الخادم وإعدادات المشرف الحالية؛ لا تذكر سعراً ثابتاً غير ظاهر للمستخدم في التطبيق. / Prices are calculated by the server using current admin settings; do not quote a fixed price that is not shown in the app.",
+  "payment_methods": ["Tap", "BenefitPay"],
+  "cancellation": "تختلف إمكانية الإلغاء بحسب حالة الطلب وإعدادات الخدمة. لا تعد المستخدم باسترداد تلقائي؛ تحقق من تفاصيل الطلب أو وجّهه إلى الدعم.",
+  "support": "للمساعدة في حالة الحساب أو الدفع أو الطلب، استخدم قسم الدعم/الشكاوى داخل التطبيق أو معلومات التواصل المعروضة في إعدادات التطبيق.",
+  "faqs": [
+    {"question": "كيف أعرف السعر؟ / How do I know the price?", "answer": "استخدم تقدير السعر في التطبيق قبل تأكيد الطلب. / Use the in-app estimate before confirming."},
+    {"question": "ما طرق الدفع؟ / What payment methods are available?", "answer": "يدعم النظام Tap وBenefitPay بحسب تفعيلهما وإتاحتهما للطلب. / Tap and BenefitPay are supported subject to current availability and enablement."}
+  ],
+  "fallback": "لا أملك معلومة مؤكدة عن ذلك. تواصل مع دعم Wasaly عبر التطبيق للحصول على إجابة دقيقة. / I don't have verified information about that. Please contact Wasaly support through the app for an accurate answer."
+}

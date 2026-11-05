@@ -10,7 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..config import settings
 from ..database import get_db
-from ..deps import admin_user, customer_user, paging
+from ..deps import admin_user, ai_review_user, customer_user, paging
 from ..models import DriverPayout, Order, Payment, Subscription, User, utcnow
 from ..schemas import BenefitPayIn, MarkTransferredIn, ReasonIn
 from ..security import create_file_token, decrypt
@@ -219,9 +219,11 @@ async def admin_payout_view(db: AsyncSession, r: DriverPayout) -> dict:
 
 @admin_router.get("/payments")
 async def admin_payments(status: str | None = None, method: str | None = None, kind: str | None = None,
-                         page=Depends(paging), admin: User = Depends(admin_user), db: AsyncSession = Depends(get_db)):
+                         page=Depends(paging), admin: User = Depends(ai_review_user), db: AsyncSession = Depends(get_db)):
     limit, offset = page
     q = select(Payment)
+    if admin.role == "AI":
+        q = q.where(Payment.payment_method == "BENEFITPAY", Payment.payment_status == "PENDING_VERIFICATION")
     for col, val in ((Payment.payment_status, status), (Payment.payment_method, method), (Payment.kind, kind)):
         if val:
             q = q.where(col == val)
@@ -231,15 +233,17 @@ async def admin_payments(status: str | None = None, method: str | None = None, k
 
 
 @admin_router.get("/payments/{payment_id}")
-async def admin_payment_detail(payment_id: int, admin: User = Depends(admin_user), db: AsyncSession = Depends(get_db)):
+async def admin_payment_detail(payment_id: int, admin: User = Depends(ai_review_user), db: AsyncSession = Depends(get_db)):
     p = await db.get(Payment, payment_id)
     if not p:
+        raise HTTPException(404, "Payment not found")
+    if admin.role == "AI" and (p.payment_method != "BENEFITPAY" or p.payment_status != "PENDING_VERIFICATION"):
         raise HTTPException(404, "Payment not found")
     return await admin_payment_view(db, p)
 
 
 @admin_router.post("/payments/{payment_id}/confirm")
-async def confirm_payment(payment_id: int, admin: User = Depends(admin_user), db: AsyncSession = Depends(get_db)):
+async def confirm_payment(payment_id: int, admin: User = Depends(ai_review_user), db: AsyncSession = Depends(get_db)):
     """BenefitPay only: after checking the screenshot against the company account. Triggers the driver payout."""
     p = await db.get(Payment, payment_id)
     if not p:
@@ -254,10 +258,12 @@ async def confirm_payment(payment_id: int, admin: User = Depends(admin_user), db
 
 
 @admin_router.post("/payments/{payment_id}/reject")
-async def reject_payment(payment_id: int, body: ReasonIn, admin: User = Depends(admin_user), db: AsyncSession = Depends(get_db)):
+async def reject_payment(payment_id: int, body: ReasonIn, admin: User = Depends(ai_review_user), db: AsyncSession = Depends(get_db)):
     from ..services.notifications import notify
     p = await db.get(Payment, payment_id)
     if not p:
+        raise HTTPException(404, "Payment not found")
+    if admin.role == "AI" and p.payment_method != "BENEFITPAY":
         raise HTTPException(404, "Payment not found")
     if p.payment_status != "PENDING_VERIFICATION":
         raise HTTPException(409, {"code": "NOT_AWAITING_CONFIRMATION", "status": p.payment_status})

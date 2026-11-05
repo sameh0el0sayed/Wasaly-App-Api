@@ -66,6 +66,10 @@ class Settings(BaseSettings):
     payout_provider: str = "none"  # simulated | none | http  (see services/payouts.py); "none" = admin transfers manually and marks it done
     payout_http_url: str = ""
     payout_http_token: str = ""
+    gemini_api_key: str = ""
+    gemini_model: str = "gemini-2.5-flash"
+    gemini_timeout_seconds: float = 30.0
+    chatbot_rate_limit: int = 10  # requests per user per minute
 
 
 settings = Settings()

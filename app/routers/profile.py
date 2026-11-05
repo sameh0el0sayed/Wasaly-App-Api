@@ -12,10 +12,13 @@ from ..models import (
     Banner,
     Complaint,
     DeviceToken,
+    DriverProfile,
     Notification,
     Order,
+    Payment,
     UploadedFile,
     User,
+    Vehicle,
     VehicleDocument,
     utcnow,
 )
@@ -161,6 +164,27 @@ async def sign_file(body: SignIn, user: User = Depends(current_user), db: AsyncS
     if not row:
         raise HTTPException(404, "File not found")
     if row.owner_id != user.id and user.role not in Role.ADMINS:
+        if user.role == Role.AI:
+            pending_user_file = (await db.execute(select(User.id).where(
+                User.id == row.owner_id, User.account_status == AccountStatus.PENDING_APPROVAL,
+                ((User.cpr_photo == body.file_key) | (User.profile_photo == body.file_key))
+            ).limit(1))).first()
+            pending_driver_document = (await db.execute(select(VehicleDocument.id).join(
+                Vehicle, Vehicle.id == VehicleDocument.vehicle_id
+            ).join(User, User.id == Vehicle.driver_id).where(
+                User.account_status == AccountStatus.PENDING_APPROVAL,
+                VehicleDocument.file_path == body.file_key
+            ).limit(1))).first()
+            pending_license_file = (await db.execute(select(DriverProfile.id).join(
+                User, User.id == DriverProfile.user_id
+            ).where(User.account_status == AccountStatus.PENDING_APPROVAL,
+                    DriverProfile.license_document == body.file_key).limit(1))).first()
+            pending_payment_file = (await db.execute(select(Payment.id).where(
+                Payment.proof_file == body.file_key, Payment.payment_method == "BENEFITPAY",
+                Payment.payment_status == "PENDING_VERIFICATION"
+            ).limit(1))).first()
+            if pending_user_file or pending_driver_document or pending_license_file or pending_payment_file:
+                return {"url": f"/api/files/download/{create_file_token(body.file_key)}", "expires_in_seconds": 300}
         proof = (await db.execute(select(Order.id).where(
             (Order.pickup_photo == body.file_key) | (Order.delivery_photo == body.file_key),
             (Order.customer_id == user.id) | (Order.driver_id == user.id)).limit(1))).first()

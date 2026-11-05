@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from ...constants import AccountStatus, ReviewStatus, Role
 from ...database import get_db
-from ...deps import admin_user, paging, super_admin_user
+from ...deps import admin_user, ai_review_user, paging, super_admin_user
 from ...models import AdminAuditLog, DriverProfile, DriverServiceArea, Order, Rating, User, utcnow
 from ...schemas import AdminCreateIn, ApproveIn, DebtSettleIn, ReasonIn, ReinstateIn, ResetPasswordIn
 from ...security import cpr_hash, decrypt, hash_password
@@ -116,8 +116,10 @@ async def _set_status(db, admin, u: User, status: str, reason: str | None, actio
 
 
 @router.post("/users/{user_id}/approve")
-async def approve(user_id: int, body: ApproveIn = ApproveIn(), admin: User = Depends(admin_user), db: AsyncSession = Depends(get_db)):
+async def approve(user_id: int, body: ApproveIn = ApproveIn(), admin: User = Depends(ai_review_user), db: AsyncSession = Depends(get_db)):
     u = await _target(db, user_id)
+    if admin.role == Role.AI and u.account_status != AccountStatus.PENDING_APPROVAL:
+        raise HTTPException(409, {"code": "AI_REVIEW_ONLY_PENDING_USERS"})
     await _set_status(db, admin, u, AccountStatus.APPROVED, None, "ACCOUNT_APPROVED", "تمت الموافقة", "تمت الموافقة على حسابك.")
     u.approved_at, u.approved_by = utcnow(), admin.id
     if u.vehicle:
@@ -131,8 +133,10 @@ async def approve(user_id: int, body: ApproveIn = ApproveIn(), admin: User = Dep
 
 
 @router.post("/users/{user_id}/reject")
-async def reject(user_id: int, body: ReasonIn, admin: User = Depends(admin_user), db: AsyncSession = Depends(get_db)):
+async def reject(user_id: int, body: ReasonIn, admin: User = Depends(ai_review_user), db: AsyncSession = Depends(get_db)):
     u = await _target(db, user_id)
+    if admin.role == Role.AI and u.account_status != AccountStatus.PENDING_APPROVAL:
+        raise HTTPException(409, {"code": "AI_REVIEW_ONLY_PENDING_USERS"})
     await _set_status(db, admin, u, AccountStatus.REJECTED, body.reason, "ACCOUNT_REJECTED", "تم رفض الحساب", "تم رفض حسابك.")
     await db.commit()
     return user_public(u)

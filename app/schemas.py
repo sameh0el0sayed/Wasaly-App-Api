@@ -542,7 +542,7 @@ class AdminCreateIn(BaseModel):
     full_name: str = Field(min_length=2, max_length=120)
     phone: str
     password: str = Field(min_length=8, max_length=128)
-    role: Literal["ADMIN", "SUPER_ADMIN"] = "ADMIN"
+    role: Literal["ADMIN", "SUPER_ADMIN", "AI"] = "ADMIN"
     v_phone = field_validator("phone")(lambda cls, v: normalize_phone(v))
 
 
