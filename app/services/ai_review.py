@@ -4,10 +4,8 @@ import base64
 import json
 import logging
 import re
-from datetime import UTC, datetime
 from decimal import Decimal, InvalidOperation
 from difflib import SequenceMatcher
-from zoneinfo import ZoneInfo
 
 import httpx
 from sqlalchemy import select
@@ -34,18 +32,6 @@ def _normalize_name(value: str | None) -> str:
     return " ".join(re.findall(r"[^\W_]", value, flags=re.UNICODE))
 
 
-def _normalize_date(value: str | None) -> str | None:
-    value = (value or "").strip()
-    if not value:
-        return None
-    for fmt in ("%Y-%m-%d", "%d/%m/%Y", "%d-%m-%Y", "%d.%m.%Y"):
-        try:
-            return datetime.strptime(value, fmt).date().isoformat()
-        except ValueError:
-            continue
-    return None
-
-
 def _account_matches(receipt_account: str | None, registered_account: str | None) -> bool:
     receipt_raw = (receipt_account or "").translate(_DIGIT_TRANSLATION).upper().strip()
     expected = _normalize_alnum(registered_account)
@@ -67,20 +53,18 @@ def _amount_matches(receipt_amount, expected_amount, decimals: int) -> bool:
         return False
 
 
-def compare_receipt_fields(extracted: dict, expected_date: str, expected_account: str,
-                           expected_amount, currency: str, decimals: int,
-                           latest_date: str | None = None) -> tuple[bool, list[str]]:
+def compare_receipt_fields(extracted: dict, expected_account: str,
+                           expected_amount, currency: str, decimals: int) -> tuple[bool, list[str]]:
     """Decide only from server-side comparisons; never trust a model-provided pass/fail field."""
     reasons = []
-    receipt_date = _normalize_date(extracted.get("transfer_date"))
-    if not receipt_date or receipt_date < expected_date or (latest_date and receipt_date > latest_date):
-        reasons.append("DATE_MISMATCH")
     if not _account_matches(extracted.get("beneficiary_account"), expected_account):
         reasons.append("ACCOUNT_MISMATCH")
     if not _amount_matches(extracted.get("amount"), expected_amount, decimals):
         reasons.append("AMOUNT_MISMATCH")
     if (extracted.get("currency") or "").upper() != currency.upper():
         reasons.append("CURRENCY_MISMATCH")
+    if not _normalize_alnum(extracted.get("reference")):
+        reasons.append("REFERENCE_MISSING")
     return not reasons, reasons
 
 
@@ -137,36 +121,45 @@ async def review_payment(payment_id: int, token: str) -> bool:
             return False
         order = await db.get(Order, payment.order_id)
         proof = await db.get(UploadedFile, payment.proof_file)
-        if not order or not order.completed_at or not proof or proof.content_type not in {
+        if not order or not proof or proof.content_type not in {
                 "image/jpeg", "image/png", "image/webp", "application/pdf"}:
             return False
         app_settings = await settings_service.get_all(db)
         target_account = app_settings.get("benefitpay_account_number", "")
         if not target_account:
             return False
-        trip_at = order.completed_at
-        if trip_at.tzinfo is None:
-            trip_at = trip_at.replace(tzinfo=UTC)
-        expected_date = trip_at.astimezone(ZoneInfo(settings.timezone)).date().isoformat()
-        latest_date = datetime.now(ZoneInfo(settings.timezone)).date().isoformat()
         expected_amount = Decimal(payment.amount) - Decimal(payment.wallet_amount or 0)
         currency, decimals = payment.currency, payment.currency_decimals
         proof_key, content_type = payment.proof_file, proof.content_type
 
     extracted = await _gemini_json(
-        "Read the attached BenefitPay transfer receipt. Extract only fields visibly present. "
-        "Return strict JSON with transfer_date as YYYY-MM-DD, beneficiary_account as the visible account string "
-        "(preserve masking characters), amount as a decimal number, and currency as ISO 4217 code. "
-        "Use null for unclear or missing fields. Do not infer missing digits, dates, currency, or values. "
-        "Do not decide whether payment is valid. JSON keys: transfer_date, beneficiary_account, amount, currency.",
+        "Read the attached BenefitPay transfer receipt. Extract only fields visibly present: transfer reference/Ref#, "
+        "beneficiary account, transferred amount, and currency. Ignore dates completely. "
+        "Return strict JSON with reference as the exact visible reference string, beneficiary_account as the visible "
+        "account string (preserve masking characters), amount as a decimal number, and currency as ISO 4217 code. "
+        "Use null for unclear or missing fields. Do not infer missing digits, reference characters, currency, or values. "
+        "Do not decide whether payment is valid. JSON keys: reference, beneficiary_account, amount, currency.",
         [(content_type, await get_bytes(proof_key))],
     )
-    accepted, reasons = compare_receipt_fields(extracted, expected_date, target_account,
-                                               expected_amount, currency, decimals, latest_date)
+    accepted, reasons = compare_receipt_fields(extracted, target_account, expected_amount, currency, decimals)
     if not accepted:
         log.info("AI receipt field mismatch payment_id=%s codes=%s", payment_id, ",".join(reasons))
         return False
-    await _admin_post(token, f"/api/admin/payments/{payment_id}/confirm")
+    review_notes = {
+        "beneficiary_account": extracted.get("beneficiary_account"),
+        "amount": str(extracted.get("amount")) if extracted.get("amount") is not None else None,
+        "currency": extracted.get("currency"),
+        "reference": extracted.get("reference"),
+        "expected_account": target_account,
+        "expected_amount": str(expected_amount),
+        "expected_currency": currency,
+        "account_match": True,
+        "amount_match": True,
+        "currency_match": True,
+    }
+    await _admin_post(token, f"/api/admin/payments/{payment_id}/confirm", {
+        "reference": extracted["reference"], "review_notes": review_notes,
+    })
     log.info("AI receipt field match payment_id=%s", payment_id)
     return True
 

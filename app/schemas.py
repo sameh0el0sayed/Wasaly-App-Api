@@ -214,6 +214,11 @@ class ReasonIn(BaseModel):
     reason: str = Field(min_length=2, max_length=1000)
 
 
+class PaymentConfirmIn(BaseModel):
+    reference: str | None = Field(default=None, min_length=1, max_length=100)
+    review_notes: dict[str, str | None] | None = None
+
+
 class OptionalReasonIn(BaseModel):
     reason: str | None = Field(default=None, max_length=1000)
 

@@ -11,8 +11,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from ..config import settings
 from ..database import get_db
 from ..deps import admin_user, ai_review_user, customer_user, paging
-from ..models import DriverPayout, Order, Payment, Subscription, User, utcnow
-from ..schemas import BenefitPayIn, MarkTransferredIn, ReasonIn
+from ..models import AdminAuditLog, DriverPayout, Order, Payment, Subscription, User, utcnow
+from ..schemas import BenefitPayIn, MarkTransferredIn, PaymentConfirmIn, ReasonIn
 from ..security import create_file_token, decrypt
 from ..serializers import dt, money, payment_out, payout_out
 from ..services import settings_service, tap
@@ -184,6 +184,11 @@ async def admin_payment_view(db: AsyncSession, p: Payment, s: dict | None = None
     out["customer"] = _person(await db.get(User, p.customer_id))
     out["driver"] = _person(await db.get(User, p.driver_id)) if p.driver_id else None
     out["verified_by_name"] = (await db.get(User, p.verified_by)).full_name if p.verified_by else None
+    review_log = (await db.execute(select(AdminAuditLog).where(
+        AdminAuditLog.entity_type == "payment", AdminAuditLog.entity_id == str(p.id),
+        AdminAuditLog.action == "PAYMENT_CONFIRMED",
+    ).order_by(AdminAuditLog.id.desc()).limit(1))).scalar_one_or_none()
+    out["review_notes"] = (review_log.details or {}).get("review_notes") if review_log else None
     out["expected_amount"] = money(p.amount - (p.wallet_amount or 0), p.currency_decimals)
     out["company_account"] = {"name": s.get("benefitpay_account_name"), "number": s.get("benefitpay_account_number")}
     out["order"] = None
@@ -243,7 +248,8 @@ async def admin_payment_detail(payment_id: int, admin: User = Depends(ai_review_
 
 
 @admin_router.post("/payments/{payment_id}/confirm")
-async def confirm_payment(payment_id: int, admin: User = Depends(ai_review_user), db: AsyncSession = Depends(get_db)):
+async def confirm_payment(payment_id: int, body: PaymentConfirmIn | None = None,
+                          admin: User = Depends(ai_review_user), db: AsyncSession = Depends(get_db)):
     """BenefitPay only: after checking the screenshot against the company account. Triggers the driver payout."""
     p = await db.get(Payment, payment_id)
     if not p:
@@ -252,7 +258,12 @@ async def confirm_payment(payment_id: int, admin: User = Depends(ai_review_user)
         raise HTTPException(409, {"code": "NOT_AWAITING_CONFIRMATION", "status": p.payment_status})
     if not await finalize_paid(db, p, admin.id):
         raise HTTPException(409, "Already paid")
-    audit(db, admin.id, "PAYMENT_CONFIRMED", "payment", p.id)
+    details = None
+    if body and body.reference:
+        p.transaction_reference = body.reference.strip()
+    if body and body.review_notes:
+        details = {"review_notes": body.review_notes}
+    audit(db, admin.id, "PAYMENT_CONFIRMED", "payment", p.id, details=details)
     await db.commit()
     return await admin_payment_view(db, p)
 
