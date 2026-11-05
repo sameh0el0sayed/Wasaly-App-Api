@@ -14,13 +14,20 @@ from sqlalchemy import select
 from ..config import settings
 from ..constants import AccountStatus, Role
 from ..database import SessionLocal
-from ..models import AdminAuditLog, DriverProfile, Order, Payment, User, UploadedFile
-from ..security import decrypt
+from ..models import AdminAuditLog, DriverProfile, Order, Payment, ProfileChange, User, UploadedFile
+from ..security import decrypt, normalize_phone
 from ..services import settings_service
 from ..services.files import get_bytes
+from ..services import corrections as correction_service
+from ..services.audit import audit
+from ..services.notifications import notify
 
 log = logging.getLogger("ai-review")
 _DIGIT_TRANSLATION = str.maketrans("٠١٢٣٤٥٦٧٨٩۰۱۲۳۴۵۶۷۸۹", "01234567890123456789")
+_SENSITIVE_CORRECTION_FIELDS = {
+    "cpr_photo", "cpr_number", "cpr_dates", "license", "license.photo_front",
+    "license.photo_back", "license.number", "license.expiry_date",
+}
 
 
 def _normalize_alnum(value: str | None) -> str:
@@ -344,6 +351,183 @@ async def review_user(user_id: int, token: str) -> bool:
     return True
 
 
+async def _sensitive_correction_match(field: str, value: str, expected: dict,
+                                      proof: tuple[str, bytes] | None) -> tuple[bool, list[str], dict]:
+    matches: dict[str, bool] = {}
+    if field == "cpr_number":
+        matches["cpr_number_match"] = _normalize_alnum(value) == _normalize_alnum(expected.get("cpr"))
+    elif field == "cpr_dates":
+        try:
+            supplied = json.loads(value)
+        except (TypeError, ValueError):
+            supplied = {}
+        if supplied.get("issue_date"):
+            matches["cpr_issue_date_match"] = supplied["issue_date"] == expected.get("cpr_issue_date")
+        if supplied.get("expiry_date"):
+            matches["cpr_expiry_date_match"] = supplied["expiry_date"] == expected.get("cpr_expiry_date")
+        if not matches:
+            return False, ["NO_CPR_DATES_TO_COMPARE"], matches
+    elif field == "license.number":
+        matches["license_number_match"] = _normalize_alnum(value) == _normalize_alnum(expected.get("license_number"))
+    elif field == "license.expiry_date":
+        matches["license_expiry_date_match"] = value == expected.get("license_expiry_date")
+    elif field == "license":
+        try:
+            supplied = json.loads(value)
+        except (TypeError, ValueError):
+            return False, ["INVALID_LICENSE_CORRECTION"], matches
+        if supplied.get("license_number"):
+            matches["license_number_match"] = (
+                _normalize_alnum(supplied["license_number"]) == _normalize_alnum(expected.get("license_number"))
+            )
+        if supplied.get("expiry_date"):
+            matches["license_expiry_date_match"] = supplied["expiry_date"] == expected.get("license_expiry_date")
+        if supplied.get("issue_date"):
+            matches["license_issue_date_match"] = supplied["issue_date"] == expected.get("license_issue_date")
+        if proof:
+            extracted = await _gemini_json(
+                "Read this Bahrain driving license image. Return JSON only with license_number, "
+                "license_expiry_date (YYYY-MM-DD), confidence (high/medium/low). Copy only visible values; "
+                "use null if unclear.", [proof],
+            )
+            matches["license_photo_number_match"] = (
+                _normalize_alnum(extracted.get("license_number")) == _normalize_alnum(expected.get("license_number"))
+            )
+            matches["license_photo_expiry_match"] = (
+                extracted.get("license_expiry_date") == expected.get("license_expiry_date")
+            )
+            matches["license_photo_confidence_high"] = extracted.get("confidence") == "high"
+        if not matches:
+            return False, ["NO_LICENSE_DATA_TO_COMPARE"], matches
+    elif field in {"cpr_photo", "license.photo_front", "license.photo_back"}:
+        if not proof:
+            return False, ["CORRECTION_DOCUMENT_MISSING"], matches
+        if field == "cpr_photo":
+            extracted = await _gemini_json(
+                "Read this Bahrain CPR card. Return JSON only with cpr_name, cpr_number, cpr_issue_date, "
+                "cpr_expiry_date (dates YYYY-MM-DD), confidence (high/medium/low). Copy only visible values; "
+                "use null if unclear.", [proof],
+            )
+            matches = {
+                "confidence_high": extracted.get("confidence") == "high",
+                "cpr_name_match": _name_matches(extracted.get("cpr_name"), expected.get("name")),
+                "cpr_number_match": _normalize_alnum(extracted.get("cpr_number")) == _normalize_alnum(expected.get("cpr")),
+                "cpr_issue_date_match": extracted.get("cpr_issue_date") == expected.get("cpr_issue_date"),
+                "cpr_expiry_date_match": extracted.get("cpr_expiry_date") == expected.get("cpr_expiry_date"),
+            }
+        else:
+            extracted = await _gemini_json(
+                "Read this Bahrain driving license. Return JSON only with license_number, "
+                "license_expiry_date (YYYY-MM-DD), confidence (high/medium/low). Copy only visible values; "
+                "use null if unclear.", [proof],
+            )
+            matches = {
+                "confidence_high": extracted.get("confidence") == "high",
+                "license_number_match": _normalize_alnum(extracted.get("license_number")) == _normalize_alnum(expected.get("license_number")),
+                "license_expiry_date_match": extracted.get("license_expiry_date") == expected.get("license_expiry_date"),
+            }
+    reasons = [code for code, matched in matches.items() if not matched]
+    return not reasons, reasons, matches
+
+
+async def review_correction(change_id: int, reviewer_id: int) -> str:
+    async with SessionLocal() as db:
+        change = await db.get(ProfileChange, change_id)
+        if not change or change.kind != correction_service.CORRECTION or change.status != correction_service.SUBMITTED:
+            return "skipped"
+        user = await db.get(User, change.user_id)
+        field, value, user_id = change.field, change.new_value or "", change.user_id
+        sensitive = field in _SENSITIVE_CORRECTION_FIELDS
+        expected: dict = {}
+        proof: tuple[str, bytes] | None = None
+        if sensitive and user:
+            if user.cpr_encrypted:
+                expected.update({
+                    "cpr": decrypt(user.cpr_encrypted), "name": user.full_name,
+                    "cpr_issue_date": user.cpr_issue_date.isoformat() if user.cpr_issue_date else None,
+                    "cpr_expiry_date": user.cpr_expiry_date.isoformat() if user.cpr_expiry_date else None,
+                })
+            driver = (await db.execute(select(DriverProfile).where(DriverProfile.user_id == user.id))).scalar_one_or_none()
+            if driver:
+                expected.update({
+                    "license_number": decrypt(driver.license_number_encrypted) if driver.license_number_encrypted else None,
+                    "license_issue_date": driver.license_issue_date.isoformat() if driver.license_issue_date else None,
+                    "license_expiry_date": driver.license_expiry_date.isoformat() if driver.license_expiry_date else None,
+                })
+        if sensitive:
+            proof_key = value if correction_service.is_file(field) else None
+            if field == "license":
+                try:
+                    proof_key = json.loads(value).get("photo")
+                except (TypeError, ValueError):
+                    proof_key = None
+            if proof_key:
+                file_row = await db.get(UploadedFile, proof_key)
+                if file_row:
+                    proof = (file_row.content_type, await get_bytes(proof_key))
+
+    if not user:
+        return "skipped"
+    if sensitive:
+        matched, reasons, field_matches = await _sensitive_correction_match(field, value, expected, proof)
+    else:
+        matched, reasons, field_matches = True, [], {"sensitive_match_required": False}
+
+    async with SessionLocal() as db:
+        change = await db.get(ProfileChange, change_id)
+        user = await db.get(User, user_id)
+        if not change or not user or change.status != correction_service.SUBMITTED:
+            return "skipped"
+        if not matched:
+            reason_labels = {
+                "confidence_high": "وضوح صورة المستند غير كافٍ",
+                "cpr_name_match": "الاسم في البطاقة لا يطابق الاسم المسجل",
+                "cpr_number_match": "رقم البطاقة لا يطابق الرقم المسجل",
+                "cpr_issue_date_match": "تاريخ إصدار البطاقة لا يطابق البيانات المسجلة",
+                "cpr_expiry_date_match": "تاريخ انتهاء البطاقة لا يطابق البيانات المسجلة",
+                "license_number_match": "رقم الرخصة لا يطابق الرقم المسجل",
+                "license_expiry_date_match": "تاريخ انتهاء الرخصة لا يطابق البيانات المسجلة",
+                "license_issue_date_match": "تاريخ إصدار الرخصة لا يطابق البيانات المسجلة",
+                "license_photo_number_match": "رقم الرخصة في الصورة لا يطابق الرقم المسجل",
+                "license_photo_expiry_match": "تاريخ الرخصة في الصورة لا يطابق البيانات المسجلة",
+                "license_photo_confidence_high": "صورة الرخصة غير واضحة بما يكفي للتحقق",
+                "CORRECTION_DOCUMENT_MISSING": "ملف المستند المطلوب غير موجود",
+                "NO_CPR_DATES_TO_COMPARE": "لم تُرسل تواريخ البطاقة للمقارنة",
+                "NO_LICENSE_DATA_TO_COMPARE": "لم تُرسل بيانات الرخصة للمقارنة",
+                "INVALID_LICENSE_CORRECTION": "بيانات تصحيح الرخصة غير صالحة",
+            }
+            reason = "لم يتم قبول التصحيح: " + "؛ ".join(reason_labels.get(code, code) for code in reasons)
+            change.status, change.new_value, change.submitted_at, change.reason = (
+                correction_service.OPEN, None, None, reason[:500]
+            )
+            correction_service.touch(change, reviewer_id)
+            audit(db, reviewer_id, "AI_CORRECTION_REJECTED", "user", user.id,
+                  reason, details={"correction_id": change.id, "field": field, "reason_codes": reasons})
+            await notify(db, user.id, "CORRECTION_REJECTED", "تعذر قبول التصحيح", reason)
+            await db.commit()
+            await _write_worker_audit("AI_CORRECTION_REVIEW", {
+                "correction_id": change_id, "user_id": user_id, "field": field,
+                "result": "rejected_for_resubmission", "reason_codes": reasons,
+                "field_matches": field_matches, "reason": reason,
+            }, entity_type="correction", entity_id=str(change_id))
+            return "rejected"
+
+        await correction_service.apply(db, user, change)
+        change.status = correction_service.ACCEPTED
+        correction_service.touch(change, reviewer_id)
+        await correction_service.refresh_flag(db, user.id)
+        audit(db, reviewer_id, "AI_CORRECTION_ACCEPTED", "user", user.id,
+              details={"correction_id": change.id, "field": field, "matched_sensitive_data": sensitive})
+        await notify(db, user.id, "CORRECTION_ACCEPTED", "تم قبول التصحيح", "تم قبول البيانات المرسلة.")
+        await db.commit()
+        await _write_worker_audit("AI_CORRECTION_REVIEW", {
+            "correction_id": change_id, "user_id": user_id, "field": field,
+            "result": "accepted", "matched_sensitive_data": sensitive,
+            "field_matches": field_matches,
+        }, entity_type="correction", entity_id=str(change_id))
+        return "accepted"
+
+
 async def run_review_cycle() -> dict:
     summary = {
         "status": "completed",
@@ -355,6 +539,10 @@ async def run_review_cycle() -> dict:
         "payments_confirmed": [],
         "payments_not_confirmed": [],
         "payments_errors": [],
+        "corrections_checked": 0,
+        "corrections_accepted": [],
+        "corrections_rejected": [],
+        "corrections_errors": [],
     }
     if not settings.ai_service_phone or not settings.ai_service_password or not settings.gemini_api_key:
         log.warning("AI review disabled: configure AI_SERVICE_PHONE, AI_SERVICE_PASSWORD, GEMINI_API_KEY")
@@ -365,12 +553,21 @@ async def run_review_cycle() -> dict:
         async with httpx.AsyncClient(timeout=20) as client:
             token = await _ai_token(client)
         async with SessionLocal() as db:
+            reviewer_id = (await db.execute(select(User.id).where(
+                User.phone == normalize_phone(settings.ai_service_phone)
+            ))).scalar_one_or_none()
+            if reviewer_id is None:
+                raise RuntimeError("AI review account not found in the database")
             user_ids = list((await db.execute(select(User.id).where(
                 User.role.in_([Role.CUSTOMER, Role.DRIVER]), User.account_status == AccountStatus.PENDING_APPROVAL
             ).order_by(User.created_at).limit(settings.ai_review_batch_size))).scalars())
             payment_ids = list((await db.execute(select(Payment.id).where(
                 Payment.payment_method == "BENEFITPAY", Payment.payment_status == "PENDING_VERIFICATION"
             ).order_by(Payment.created_at).limit(settings.ai_review_batch_size))).scalars())
+            correction_ids = list((await db.execute(select(ProfileChange.id).where(
+                ProfileChange.kind == correction_service.CORRECTION,
+                ProfileChange.status == correction_service.SUBMITTED,
+            ).order_by(ProfileChange.submitted_at).limit(settings.ai_review_batch_size))).scalars())
     except Exception as exc:
         log.exception("AI review cycle could not start")
         summary.update(status="start_error", error=type(exc).__name__, error_message=str(exc)[:300],
@@ -380,6 +577,7 @@ async def run_review_cycle() -> dict:
 
     summary["users_checked"] = len(user_ids)
     summary["payments_checked"] = len(payment_ids)
+    summary["corrections_checked"] = len(correction_ids)
     for user_id in user_ids:
         try:
             (summary["users_approved"] if await review_user(user_id, token)
@@ -400,7 +598,20 @@ async def run_review_cycle() -> dict:
             await _write_worker_audit("AI_RECEIPT_REVIEW", {
                 "payment_id": payment_id, "result": "error", "error": type(exc).__name__,
             }, entity_type="payment", entity_id=str(payment_id))
-    if summary["users_errors"] or summary["payments_errors"]:
+    for change_id in correction_ids:
+        try:
+            outcome = await review_correction(change_id, reviewer_id)
+            if outcome == "accepted":
+                summary["corrections_accepted"].append(change_id)
+            elif outcome == "rejected":
+                summary["corrections_rejected"].append(change_id)
+        except Exception as exc:
+            log.exception("AI correction review failed correction_id=%s", change_id)
+            summary["corrections_errors"].append({"id": change_id, "error": type(exc).__name__})
+            await _write_worker_audit("AI_CORRECTION_REVIEW", {
+                "correction_id": change_id, "result": "error", "error": type(exc).__name__,
+            }, entity_type="correction", entity_id=str(change_id))
+    if summary["users_errors"] or summary["payments_errors"] or summary["corrections_errors"]:
         summary["status"] = "completed_with_errors"
     await _write_worker_audit("AI_REVIEW_CYCLE", summary)
     return summary
