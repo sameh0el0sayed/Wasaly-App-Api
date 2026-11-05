@@ -74,7 +74,7 @@ class Settings(BaseSettings):
     ai_service_phone: str = ""
     ai_service_password: str = ""
     ai_service_base_url: str = "http://127.0.0.1:8000"
-    ai_review_interval_seconds: int = 900
+    ai_review_interval_seconds: int = 600
     ai_review_batch_size: int = 20
 
 
