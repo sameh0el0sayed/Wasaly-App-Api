@@ -108,10 +108,19 @@ async def lifespan(app: FastAPI):
     await bootstrap()
     from .routers.v14 import seed_translations
     await seed_translations()
-    task = asyncio.create_task(background_loop()) if settings.run_background_tasks else None
+    tasks = []
+    if settings.run_background_tasks:
+        tasks.append(asyncio.create_task(background_loop()))
+        from .services.ai_review import review_loop
+        tasks.append(asyncio.create_task(review_loop()))
     yield
-    if task:
+    for task in tasks:
         task.cancel()
+    for task in tasks:
+        try:
+            await task
+        except asyncio.CancelledError:
+            pass
     from .services import cache
     await cache.close()
 

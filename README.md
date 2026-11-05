@@ -257,3 +257,11 @@ if (response.statusCode == 200) {
   // 502/503/504 are temporary AI service errors.
 }
 ```
+
+### Scheduled AI review of CPRs and BenefitPay receipts
+
+The API can run a scheduled review cycle at startup and every 15 minutes (`AI_REVIEW_INTERVAL_SECONDS=900`, bounded batch size `AI_REVIEW_BATCH_SIZE=20`). Provision one dedicated account through the super-admin `POST /api/admin/admins` endpoint with `role: "AI"`, then place that account's phone and password in backend-only `AI_SERVICE_PHONE` and `AI_SERVICE_PASSWORD`. The worker logs in through `/api/auth/login`, uses the returned short-lived token only for the scoped AI review endpoints, and never sends credentials or tokens to Gemini. `AI_SERVICE_BASE_URL` defaults to `http://127.0.0.1:8000` for the API container.
+
+For pending customer registrations, Gemini reads the CPR image and the backend compares visible name, CPR number, issue date, and expiry date against the registration record. Driver review also compares license number and expiry. For pending BenefitPay payments on completed orders, Gemini extracts the receipt date, visible beneficiary account, amount, and currency; the backend compares these with the order's local completion date, configured BenefitPay account, and amount due (after wallet credit). All fields must match before the existing AI-only approval/confirmation endpoints are called. Unclear fields, provider failures, subscriptions without a trip date, and unmatched documents remain pending for manual review. Vehicle registration documents are not auto-approved by this pass.
+
+This is image-field matching only; it cannot prove that a transfer actually settled or authenticate that an ID is genuine. A masked beneficiary account is accepted only when its visible suffix (at least four characters) matches the configured account. Configure the AI service account, Gemini key, model and account settings before expecting automatic review. Redeploy the updated application code, not just the `.env`, for the 15-minute worker to take effect.

@@ -71,6 +71,11 @@ class Settings(BaseSettings):
     gemini_timeout_seconds: float = 30.0
     gemini_thinking_level: str = "low"  # Gemini 3 models: low | medium | high
     chatbot_rate_limit: int = 10  # requests per user per minute
+    ai_service_phone: str = ""
+    ai_service_password: str = ""
+    ai_service_base_url: str = "http://127.0.0.1:8000"
+    ai_review_interval_seconds: int = 900
+    ai_review_batch_size: int = 20
 
 
 settings = Settings()
