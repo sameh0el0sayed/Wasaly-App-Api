@@ -1,21 +1,174 @@
 {
   "application": {
     "name": "Wasaly",
-    "description": "تطبيق بحريني للنقل والتوصيل. تتوفر خدمات العملاء والسائقين في التطبيق. / A Bahrain transport and delivery application for customers and drivers."
+    "description": {
+      "ar": "تطبيق بحريني للنقل والتوصيل للعملاء والسائقين.",
+      "en": "A Bahrain transport and delivery application for customers and drivers."
+    }
   },
-  "services": [
-    "رحلات نقل الأشخاص / Passenger transport trips",
-    "خدمات التوصيل / Delivery services",
-    "اشتراكات الرحلات المجدولة / Scheduled trip subscriptions"
-  ],
-  "booking": "يتم إنشاء الطلب من التطبيق باختيار موقع الانطلاق والوجهة ونوع الخدمة، ويمكن عرض تقدير السعر قبل الإرسال. / Create an order in the app by selecting pickup, destination and service; an estimate can be requested before submission.",
-  "pricing": "تعتمد الأسعار على تقدير الخادم وإعدادات المشرف الحالية؛ لا تذكر سعراً ثابتاً غير ظاهر للمستخدم في التطبيق. / Prices are calculated by the server using current admin settings; do not quote a fixed price that is not shown in the app.",
-  "payment_methods": ["Tap", "BenefitPay"],
-  "cancellation": "تختلف إمكانية الإلغاء بحسب حالة الطلب وإعدادات الخدمة. لا تعد المستخدم باسترداد تلقائي؛ تحقق من تفاصيل الطلب أو وجّهه إلى الدعم.",
-  "support": "للمساعدة في حالة الحساب أو الدفع أو الطلب، استخدم قسم الدعم/الشكاوى داخل التطبيق أو معلومات التواصل المعروضة في إعدادات التطبيق.",
+  "verified_facts": {
+    "services": ["Passenger transport", "Delivery", "Scheduled trip subscriptions"],
+    "payment_methods": ["Tap", "BenefitPay"],
+    "pricing": "Prices are calculated by the server using current settings. Use the quote shown in the app; do not invent or promise a fixed price.",
+    "cancellation": "Cancellation eligibility and any fee depend on the order state. Use the in-app cancellation preview before confirming cancellation. Do not promise an automatic refund.",
+    "support": "For issues not resolved in the app, use the in-app support or complaint feature."
+  },
   "faqs": [
-    {"question": "كيف أعرف السعر؟ / How do I know the price?", "answer": "استخدم تقدير السعر في التطبيق قبل تأكيد الطلب. / Use the in-app estimate before confirming."},
-    {"question": "ما طرق الدفع؟ / What payment methods are available?", "answer": "يدعم النظام Tap وBenefitPay بحسب تفعيلهما وإتاحتهما للطلب. / Tap and BenefitPay are supported subject to current availability and enablement."}
+    {
+      "audience": "CUSTOMER",
+      "category": "booking",
+      "question_en": "How do I book a trip?",
+      "question_ar": "كيف أحجز رحلة؟",
+      "answer_en": "In the Wasaly app, choose the service, pickup location, and destination. Review the server price estimate and trip details, then submit the request.",
+      "answer_ar": "من تطبيق وصلي، اختر الخدمة وموقع الانطلاق والوجهة. راجع تقدير السعر وتفاصيل الرحلة، ثم أرسل الطلب."
+    },
+    {
+      "audience": "CUSTOMER",
+      "category": "booking",
+      "question_en": "How can I check my trip status?",
+      "question_ar": "كيف أعرف حالة رحلتي؟",
+      "answer_en": "I can check the latest trip status available in your account. You can also open your orders in the app for the current status.",
+      "answer_ar": "أقدر أراجع أحدث حالة رحلة ظاهرة في حسابك. ويمكنك أيضًا فتح طلباتك في التطبيق لمعرفة الحالة الحالية."
+    },
+    {
+      "audience": "CUSTOMER",
+      "category": "pricing",
+      "question_en": "How much will my trip cost?",
+      "question_ar": "كم سعر الرحلة؟",
+      "answer_en": "The app calculates the current estimate from the trip details and active pricing settings. Check the estimate in the app before submitting; I cannot quote a price that is not available in your order data.",
+      "answer_ar": "يحسب التطبيق التقدير الحالي بناءً على تفاصيل الرحلة وإعدادات الأسعار. راجع السعر الظاهر في التطبيق قبل الإرسال؛ لا أستطيع تخمين سعر غير موجود في بيانات طلبك."
+    },
+    {
+      "audience": "CUSTOMER",
+      "category": "payments",
+      "question_en": "What payment methods can I use?",
+      "question_ar": "ما طرق الدفع المتاحة؟",
+      "answer_en": "Wasaly supports Tap and BenefitPay when they are enabled and available for your payment. The available options are shown in the app.",
+      "answer_ar": "يدعم وصلي Tap وBenefitPay عند تفعيلهما وإتاحتهما لدفعتك. ستظهر الخيارات المتاحة في التطبيق."
+    },
+    {
+      "audience": "CUSTOMER",
+      "category": "payments",
+      "question_en": "Why is my BenefitPay payment still pending?",
+      "question_ar": "لماذا دفعة BenefitPay ما زالت قيد التحقق؟",
+      "answer_en": "BenefitPay receipts are reviewed before the payment is marked paid. I can check the latest payment status in your account. If it remains pending, contact support through the app.",
+      "answer_ar": "تُراجع إيصالات BenefitPay قبل تسجيل الدفعة كمدفوعة. أقدر أراجع أحدث حالة للدفعة في حسابك. إذا استمر الانتظار، تواصل مع الدعم من التطبيق."
+    },
+    {
+      "audience": "CUSTOMER",
+      "category": "payments",
+      "question_en": "What should I do if my payment was rejected?",
+      "question_ar": "ماذا أفعل إذا رُفضت الدفعة؟",
+      "answer_en": "Check the rejection reason shown with your payment. Follow the instructions in the app and upload a new receipt if requested. Contact support if the reason is unclear.",
+      "answer_ar": "راجع سبب الرفض الظاهر مع الدفعة. اتبع تعليمات التطبيق وارفع إيصالًا جديدًا إذا طُلب ذلك. تواصل مع الدعم إذا لم يكن السبب واضحًا."
+    },
+    {
+      "audience": "CUSTOMER",
+      "category": "cancellation",
+      "question_en": "Can I cancel my order?",
+      "question_ar": "هل أستطيع إلغاء الطلب؟",
+      "answer_en": "Open the order and use the cancellation option if it is available. Review the cancellation preview, including any fee shown, before confirming.",
+      "answer_ar": "افتح الطلب واستخدم خيار الإلغاء إذا كان متاحًا. راجع معاينة الإلغاء وأي رسوم ظاهرة قبل التأكيد."
+    },
+    {
+      "audience": "CUSTOMER",
+      "category": "account",
+      "question_en": "Why is my account awaiting approval?",
+      "question_ar": "لماذا حسابي بانتظار الموافقة؟",
+      "answer_en": "Some accounts require document review before approval. Check the status and any correction requests in your profile. I can report the account status currently returned by the API.",
+      "answer_ar": "قد يحتاج بعض الحسابات إلى مراجعة المستندات قبل الموافقة. راجع الحالة وطلبات التصحيح في ملفك الشخصي. أستطيع إخبارك بالحالة التي يعرضها النظام حاليًا."
+    },
+    {
+      "audience": "CUSTOMER",
+      "category": "support",
+      "question_en": "How do I report a problem with a trip?",
+      "question_ar": "كيف أبلغ عن مشكلة في الرحلة؟",
+      "answer_en": "Open the relevant order and use the in-app complaint or support option. Include the order number and a short description of the issue.",
+      "answer_ar": "افتح الطلب المعني واستخدم خيار الشكوى أو الدعم في التطبيق. أرفق رقم الطلب ووصفًا مختصرًا للمشكلة."
+    },
+    {
+      "audience": "CUSTOMER",
+      "category": "live_account_data",
+      "question_en": "What is the status of my latest payment?",
+      "question_ar": "ما حالة آخر دفعة لي؟",
+      "answer_en": "I will check the latest payment records linked to your signed-in account and report only the status returned by the API.",
+      "answer_ar": "سأراجع أحدث سجلات الدفع المرتبطة بحسابك المسجل وأذكر الحالة التي يعرضها النظام فقط."
+    },
+    {
+      "audience": "DRIVER",
+      "category": "availability",
+      "question_en": "How do I go online to receive trip offers?",
+      "question_ar": "كيف أتحول إلى متصل لاستقبال الطلبات؟",
+      "answer_en": "Use the availability control in the driver app. If the app does not let you go online, check your account, vehicle, and document status for any required action.",
+      "answer_ar": "استخدم زر التوفر في تطبيق السائق. إذا لم يسمح لك التطبيق بالاتصال، راجع حالة الحساب والمركبة والمستندات لمعرفة المطلوب."
+    },
+    {
+      "audience": "DRIVER",
+      "category": "offers",
+      "question_en": "How do I accept a trip offer?",
+      "question_ar": "كيف أقبل عرض رحلة؟",
+      "answer_en": "Open the offer in the driver app and review its details. Accept it in the app while it is still available.",
+      "answer_ar": "افتح العرض في تطبيق السائق وراجع تفاصيله، ثم اقبله من التطبيق ما دام متاحًا."
+    },
+    {
+      "audience": "DRIVER",
+      "category": "orders",
+      "question_en": "How can I see my active trip?",
+      "question_ar": "كيف أرى رحلتي النشطة؟",
+      "answer_en": "I can check the latest orders assigned to your driver account. The driver app also shows your accepted and active orders.",
+      "answer_ar": "أقدر أراجع أحدث الطلبات المسندة إلى حساب السائق. ويعرض تطبيق السائق أيضًا الطلبات المقبولة والنشطة."
+    },
+    {
+      "audience": "DRIVER",
+      "category": "earnings",
+      "question_en": "What is the status of my payout?",
+      "question_ar": "ما حالة مستحقاتي؟",
+      "answer_en": "I will check the payout records linked to your driver account and report their current status and amount. If no payout record is available, check the driver app or contact support.",
+      "answer_ar": "سأراجع سجلات المستحقات المرتبطة بحساب السائق وأذكر حالتها ومبلغها. إذا لم يظهر سجل، راجع تطبيق السائق أو تواصل مع الدعم."
+    },
+    {
+      "audience": "DRIVER",
+      "category": "documents",
+      "question_en": "Why can't I go online?",
+      "question_ar": "لماذا لا أستطيع الاتصال؟",
+      "answer_en": "I can check your driver status and whether the API reports open correction requests. Complete any required document updates shown in your profile, or contact support if the restriction is unclear.",
+      "answer_ar": "أقدر أراجع حالة السائق ووجود طلبات تصحيح مفتوحة حسب بيانات النظام. أكمل تحديث المستندات المطلوبة في ملفك، أو تواصل مع الدعم إذا لم يكن سبب المنع واضحًا."
+    },
+    {
+      "audience": "DRIVER",
+      "category": "documents",
+      "question_en": "How do I resubmit a corrected document?",
+      "question_ar": "كيف أعيد إرسال مستند بعد تصحيحه؟",
+      "answer_en": "Open the correction request in your profile, upload the requested document or information, and submit it for review. The request reason is shown with the correction.",
+      "answer_ar": "افتح طلب التصحيح في ملفك، وارفع المستند أو البيانات المطلوبة، ثم أرسلها للمراجعة. يظهر سبب الطلب مع التصحيح."
+    },
+    {
+      "audience": "DRIVER",
+      "category": "customer_issues",
+      "question_en": "What should I do if the customer does not arrive?",
+      "question_ar": "ماذا أفعل إذا لم يصل العميل؟",
+      "answer_en": "Use the order options in the driver app and follow the instructions shown there. If the available options do not cover the situation, contact support and provide the order number.",
+      "answer_ar": "استخدم خيارات الطلب في تطبيق السائق واتبع التعليمات الظاهرة. إذا لم تغطِ الخيارات الحالة، تواصل مع الدعم واذكر رقم الطلب."
+    },
+    {
+      "audience": "DRIVER",
+      "category": "support",
+      "question_en": "How do I report a safety issue?",
+      "question_ar": "كيف أبلغ عن مشكلة تتعلق بالسلامة؟",
+      "answer_en": "Use the support or complaint option in the app. If there is immediate danger, contact the local emergency services first.",
+      "answer_ar": "استخدم خيار الدعم أو الشكوى في التطبيق. إذا كان هناك خطر فوري، تواصل أولًا مع خدمات الطوارئ المحلية."
+    },
+    {
+      "audience": "BOTH",
+      "category": "live_data_rules",
+      "question_en": "Can you check my order, payment, correction, or payout status?",
+      "question_ar": "هل تستطيع التحقق من حالة طلبي أو دفعتي أو تصحيحي أو مستحقاتي؟",
+      "answer_en": "Yes. I can check records linked to your signed-in account. I cannot access another user's records or change a record for you.",
+      "answer_ar": "نعم، أستطيع مراجعة السجلات المرتبطة بحسابك المسجل. لا أستطيع الوصول إلى سجلات مستخدم آخر أو تغيير السجل نيابةً عنك."
+    }
   ],
-  "fallback": "لا أملك معلومة مؤكدة عن ذلك. تواصل مع دعم Wasaly عبر التطبيق للحصول على إجابة دقيقة. / I don't have verified information about that. Please contact Wasaly support through the app for an accurate answer."
+  "fallback": {
+    "ar": "لا أملك معلومة مؤكدة أو سجلًا متاحًا للإجابة. راجع التفاصيل في التطبيق أو تواصل مع دعم وصلي.",
+    "en": "I do not have verified information or an available record to answer that. Check the app or contact Wasaly support."
+  }
 }
