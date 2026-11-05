@@ -3,8 +3,9 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from ...constants import Role
 from ...database import get_db
-from ...deps import admin_user, paging
+from ...deps import admin_user, ai_review_user, paging
 from ...models import ProfileChange, User
 from ...schemas import ChangeReviewIn, CorrectionRequestIn
 from ...security import create_file_token
@@ -22,9 +23,13 @@ def _url(key):
 
 
 @router.post("/users/{user_id}/request-correction")
-async def request_correction(user_id: int, body: CorrectionRequestIn, admin: User = Depends(admin_user), db: AsyncSession = Depends(get_db)):
+async def request_correction(user_id: int, body: CorrectionRequestIn, admin: User = Depends(ai_review_user), db: AsyncSession = Depends(get_db)):
     """Asks for specific fields to be fixed. The account stays as it is; a driver cannot go online until all are submitted."""
     u = await _target(db, user_id)
+    if admin.role == Role.AI and (
+        u.role != Role.CUSTOMER or any(f.field not in {"profile_photo", "cpr_photo"} for f in body.fields)
+    ):
+        raise HTTPException(403, {"code": "AI_CUSTOMER_DOCUMENT_CORRECTION_ONLY"})
     for f in body.fields:
         if f.field == "phone":
             raise HTTPException(422, {"code": "INVALID_FIELD", "field": f.field})

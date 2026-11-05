@@ -145,14 +145,15 @@ async def _admin_post(token: str, path: str, body: dict | None = None) -> None:
     response.raise_for_status()
 
 
-async def _write_worker_audit(action: str, details: dict) -> None:
+async def _write_worker_audit(action: str, details: dict, *,
+                              entity_type: str = "system", entity_id: str = "ai-review-worker") -> None:
     try:
         async with SessionLocal() as db:
             db.add(AdminAuditLog(
                 admin_id=None,
                 action=action,
-                entity_type="system",
-                entity_id="ai-review-worker",
+                entity_type=entity_type,
+                entity_id=entity_id,
                 details=details,
             ))
             await db.commit()
@@ -197,7 +198,7 @@ async def review_payment(payment_id: int, token: str) -> bool:
             "result": "not_confirmed",
             "reason_codes": reasons,
             "reference": extracted.get("reference"),
-        })
+        }, entity_type="payment", entity_id=str(payment_id))
         return False
     review_notes = {
         "beneficiary_account": extracted.get("beneficiary_account"),
@@ -218,7 +219,7 @@ async def review_payment(payment_id: int, token: str) -> bool:
         "payment_id": payment_id,
         "result": "confirmed",
         "review_notes": review_notes,
-    })
+    }, entity_type="payment", entity_id=str(payment_id))
     log.info("AI receipt field match payment_id=%s", payment_id)
     return True
 
@@ -237,11 +238,25 @@ async def review_user(user_id: int, token: str) -> bool:
     async with SessionLocal() as db:
         user = await db.get(User, user_id)
         if not user or user.role not in {Role.CUSTOMER, Role.DRIVER} or user.account_status != AccountStatus.PENDING_APPROVAL:
+            await _write_worker_audit("AI_IDENTITY_REVIEW", {
+                "user_id": user_id, "result": "not_approved", "reason_codes": ["USER_NOT_PENDING_REVIEW"],
+            }, entity_type="user", entity_id=str(user_id))
             return False
         if not user.cpr_photo or not user.cpr_encrypted or not user.cpr_issue_date or not user.cpr_expiry_date:
+            missing = [name for name, value in {
+                "cpr_photo": user.cpr_photo, "cpr_number": user.cpr_encrypted,
+                "cpr_issue_date": user.cpr_issue_date, "cpr_expiry_date": user.cpr_expiry_date,
+            }.items() if not value]
+            await _write_worker_audit("AI_IDENTITY_REVIEW", {
+                "user_id": user_id, "result": "not_approved", "reason_codes": ["MISSING_CPR_DATA"],
+                "missing_fields": missing,
+            }, entity_type="user", entity_id=str(user_id))
             return False
         cpr_doc = await db.get(UploadedFile, user.cpr_photo)
         if not cpr_doc:
+            await _write_worker_audit("AI_IDENTITY_REVIEW", {
+                "user_id": user_id, "result": "not_approved", "reason_codes": ["CPR_FILE_NOT_FOUND"],
+            }, entity_type="user", entity_id=str(user_id))
             return False
         files = [(cpr_doc.content_type, await get_bytes(user.cpr_photo))]
         labels = ["Bahrain CPR card"]
@@ -251,9 +266,15 @@ async def review_user(user_id: int, token: str) -> bool:
         driver = (await db.execute(select(DriverProfile).where(DriverProfile.user_id == user.id))).scalar_one_or_none()
         if user.role == Role.DRIVER:
             if not driver or not driver.license_document:
+                await _write_worker_audit("AI_IDENTITY_REVIEW", {
+                    "user_id": user_id, "result": "not_approved", "reason_codes": ["MISSING_DRIVER_LICENSE"],
+                }, entity_type="user", entity_id=str(user_id))
                 return False
             license_doc = await db.get(UploadedFile, driver.license_document)
             if not license_doc:
+                await _write_worker_audit("AI_IDENTITY_REVIEW", {
+                    "user_id": user_id, "result": "not_approved", "reason_codes": ["LICENSE_FILE_NOT_FOUND"],
+                }, entity_type="user", entity_id=str(user_id))
                 return False
             files.append((license_doc.content_type, await get_bytes(driver.license_document)))
             labels.append("driver license")
@@ -267,23 +288,59 @@ async def review_user(user_id: int, token: str) -> bool:
         "license_number, license_expiry_date, confidence. Dates must be YYYY-MM-DD. Copy only visible text; "
         "do not infer. confidence must be high, medium, or low.", files,
     )
-    matches = (
-        extracted.get("confidence") == "high"
-        and _normalize_alnum(extracted.get("cpr_number")) == _normalize_alnum(expected["cpr"])
-        and _name_matches(extracted.get("cpr_name"), expected["name"])
-        and extracted.get("cpr_issue_date") == expected["cpr_issue_date"]
-        and extracted.get("cpr_expiry_date") == expected["cpr_expiry_date"]
-    )
+    field_matches = {
+        "confidence_high": extracted.get("confidence") == "high",
+        "cpr_number_match": _normalize_alnum(extracted.get("cpr_number")) == _normalize_alnum(expected["cpr"]),
+        "cpr_name_match": _name_matches(extracted.get("cpr_name"), expected["name"]),
+        "cpr_issue_date_match": extracted.get("cpr_issue_date") == expected["cpr_issue_date"],
+        "cpr_expiry_date_match": extracted.get("cpr_expiry_date") == expected["cpr_expiry_date"],
+    }
     if role == Role.DRIVER:
-        matches = matches and (
+        field_matches["license_number_match"] = (
             _normalize_alnum(extracted.get("license_number")) == _normalize_alnum(expected["license_number"])
-            and extracted.get("license_expiry_date") == expected["license_expiry_date"]
         )
+        field_matches["license_expiry_date_match"] = (
+            extracted.get("license_expiry_date") == expected["license_expiry_date"]
+        )
+    matches = all(field_matches.values())
     if not matches:
         log.info("AI identity field mismatch user_id=%s", user_id)
+        mismatch_fields = [name for name, matched in field_matches.items() if not matched]
+        if role == Role.CUSTOMER:
+            reason = (
+                "تم اعتماد الحساب، لكن بيانات البطاقة لم تتطابق بالكامل مع البيانات المسجلة. "
+                "يرجى تحديث الصورة الشخصية وإعادة رفع صورة واضحة للبطاقة لاستكمال التحقق. "
+                "حقول المراجعة غير المتطابقة: " + ", ".join(mismatch_fields)
+            )
+            await _admin_post(token, f"/api/admin/users/{user_id}/request-correction", {
+                "reason": reason,
+                "fields": [
+                    {"field": "profile_photo", "reason": "يرجى رفع صورة شخصية واضحة وحديثة لصاحب الحساب."},
+                    {"field": "cpr_photo", "reason": reason},
+                ],
+            })
+            await _admin_post(token, f"/api/admin/users/{user_id}/approve", {
+                "approve_pending_documents": False,
+            })
+            await _write_worker_audit("AI_IDENTITY_REVIEW", {
+                "user_id": user_id, "result": "approved_with_correction_request",
+                "reason_codes": mismatch_fields,
+                "corrections_requested": ["profile_photo", "cpr_photo"],
+                "correction_reason": reason,
+                "field_matches": field_matches,
+            }, entity_type="user", entity_id=str(user_id))
+            return True
+        await _write_worker_audit("AI_IDENTITY_REVIEW", {
+            "user_id": user_id, "result": "not_approved",
+            "reason_codes": mismatch_fields,
+            "field_matches": field_matches,
+        }, entity_type="user", entity_id=str(user_id))
         return False
     await _admin_post(token, f"/api/admin/users/{user_id}/approve", {"approve_pending_documents": False})
     log.info("AI identity fields matched user_id=%s role=%s", user_id, role)
+    await _write_worker_audit("AI_IDENTITY_REVIEW", {
+        "user_id": user_id, "result": "approved", "field_matches": field_matches,
+    }, entity_type="user", entity_id=str(user_id))
     return True
 
 
@@ -332,7 +389,7 @@ async def run_review_cycle() -> dict:
             summary["users_errors"].append({"id": user_id, "error": type(exc).__name__})
             await _write_worker_audit("AI_IDENTITY_REVIEW", {
                 "user_id": user_id, "result": "error", "error": type(exc).__name__,
-            })
+            }, entity_type="user", entity_id=str(user_id))
     for payment_id in payment_ids:
         try:
             (summary["payments_confirmed"] if await review_payment(payment_id, token)
@@ -342,7 +399,7 @@ async def run_review_cycle() -> dict:
             summary["payments_errors"].append({"id": payment_id, "error": type(exc).__name__})
             await _write_worker_audit("AI_RECEIPT_REVIEW", {
                 "payment_id": payment_id, "result": "error", "error": type(exc).__name__,
-            })
+            }, entity_type="payment", entity_id=str(payment_id))
     if summary["users_errors"] or summary["payments_errors"]:
         summary["status"] = "completed_with_errors"
     await _write_worker_audit("AI_REVIEW_CYCLE", summary)
