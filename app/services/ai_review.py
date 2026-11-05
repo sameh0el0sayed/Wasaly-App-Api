@@ -73,9 +73,18 @@ async def _ai_token(client: httpx.AsyncClient) -> str:
     if not settings.ai_service_phone or not settings.ai_service_password:
         raise RuntimeError("AI_SERVICE_PHONE/PASSWORD not configured")
     base = settings.ai_service_base_url.rstrip("/")
-    response = await client.post(f"{base}/api/auth/login", json={
-        "phone": settings.ai_service_phone, "password": settings.ai_service_password,
-    })
+    for attempt in range(5):
+        try:
+            response = await client.post(f"{base}/api/auth/login", json={
+                "phone": settings.ai_service_phone, "password": settings.ai_service_password,
+            })
+            break
+        except httpx.ConnectError:
+            if attempt == 4:
+                raise
+            delay = min(4, 0.5 * (2 ** attempt))
+            log.warning("AI service login connection failed; retry %s/4 in %.1fs", attempt + 1, delay)
+            await asyncio.sleep(delay)
     response.raise_for_status()
     token = response.json().get("access_token")
     if not token:
@@ -307,7 +316,8 @@ async def run_review_cycle() -> dict:
             ).order_by(Payment.created_at).limit(settings.ai_review_batch_size))).scalars())
     except Exception as exc:
         log.exception("AI review cycle could not start")
-        summary.update(status="start_error", error=type(exc).__name__)
+        summary.update(status="start_error", error=type(exc).__name__, error_message=str(exc)[:300],
+                       ai_service_base_url=settings.ai_service_base_url)
         await _write_worker_audit("AI_REVIEW_CYCLE", summary)
         return summary
 
@@ -342,6 +352,7 @@ async def run_review_cycle() -> dict:
 async def review_loop() -> None:
     interval = max(60, settings.ai_review_interval_seconds)
     log.info("AI review worker started interval_seconds=%s background_tasks_enabled=true", interval)
+    await asyncio.sleep(5)  # let Uvicorn start accepting the AI account's internal login request
     result = await run_review_cycle()
     log.info("AI review attempt completed details=%s", json.dumps(result, ensure_ascii=False, sort_keys=True))
     next_review = asyncio.get_running_loop().time() + interval
