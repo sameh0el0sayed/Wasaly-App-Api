@@ -1,21 +1,23 @@
 """v20: company partners (monthly percentage of net profit) + admin wallet top-ups for customers and drivers."""
+import re
 from datetime import datetime
 from decimal import ROUND_HALF_UP, Decimal
 from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..config import settings
 from ..database import get_db
 from ..deps import admin_user, super_admin_user
-from ..models import Partner, PartnerStatement, Payment, User, WalletEntry, utcnow
+from ..models import Partner, PartnerPayout, PartnerStatement, Payment, User, WalletEntry, utcnow
 from ..serializers import dt
 from ..services import settings_service
 from ..services.audit import audit
 from ..services.notifications import notify
+from ..services.payouts import transfer
 
 admin_router = APIRouter(prefix="/api/admin", tags=["v20-admin"])
 Q = Decimal("0.001")
@@ -27,12 +29,28 @@ def _m(v) -> str:
 
 
 # ------------------------------- partners -------------------------------
+def _valid_iban(v: str | None) -> str | None:
+    """Bahrain IBAN: BH + 2 check digits + 4 bank letters + 14 alphanumerics (22 chars), mod-97 checked."""
+    if v is None or not v.strip():
+        return None
+    iban = re.sub(r"\s", "", v).upper()
+    if not re.fullmatch(r"BH\d{2}[A-Z]{4}[A-Z0-9]{14}", iban) or \
+            int("".join(str(int(c, 36)) for c in iban[4:] + iban[:4])) % 97 != 1:
+        raise ValueError("INVALID_IBAN")
+    return iban
+
+
 class PartnerIn(BaseModel):
     name: str = Field(min_length=2, max_length=120)
     percent: Decimal = Field(ge=0, le=100)
     phone: str | None = Field(default=None, max_length=32)
     notes: str | None = None
     is_active: bool = True
+    iban: str | None = None
+    bank_name: str | None = Field(default=None, max_length=120)
+    beneficiary_name: str | None = Field(default=None, max_length=120)
+    tap_destination_id: str | None = Field(default=None, max_length=80)
+    _iban = field_validator("iban")(_valid_iban)
 
 
 class PartnerPatch(BaseModel):
@@ -41,6 +59,15 @@ class PartnerPatch(BaseModel):
     phone: str | None = None
     notes: str | None = None
     is_active: bool | None = None
+    iban: str | None = None
+    bank_name: str | None = Field(default=None, max_length=120)
+    beneficiary_name: str | None = Field(default=None, max_length=120)
+    tap_destination_id: str | None = Field(default=None, max_length=80)
+    _iban = field_validator("iban")(_valid_iban)
+
+
+class PayTapIn(BaseModel):
+    confirm: bool
 
 
 class PayIn(BaseModel):
@@ -49,10 +76,29 @@ class PayIn(BaseModel):
 
 def _p(p: Partner) -> dict:
     return {"id": p.id, "name": p.name, "percent": f"{p.percent:.2f}", "phone": p.phone, "notes": p.notes,
-            "is_active": p.is_active, "created_at": dt(p.created_at)}
+            "is_active": p.is_active, "iban": p.iban, "bank_name": p.bank_name, "beneficiary_name": p.beneficiary_name,
+            "tap_destination_id": p.tap_destination_id, "created_at": dt(p.created_at)}
 
 
-def _st(s: PartnerStatement, name: str | None = None) -> dict:
+def _payout(x: PartnerPayout | None) -> dict | None:
+    if not x:
+        return None
+    return {"id": x.id, "status": x.status, "provider": x.provider, "provider_ref": x.provider_ref,
+            "failure_reason": x.failure_reason, "created_at": dt(x.created_at), "transferred_at": dt(x.transferred_at)}
+
+
+async def _latest_payouts(db: AsyncSession, ids: list[int]) -> dict[int, PartnerPayout]:
+    if not ids:
+        return {}
+    rows = (await db.execute(select(PartnerPayout).where(PartnerPayout.statement_id.in_(ids)).order_by(PartnerPayout.id))).scalars().all()
+    return {r.statement_id: r for r in rows}  # later rows overwrite earlier ones -> latest attempt
+
+
+def _st(s: PartnerStatement, name: str | None = None, payout: PartnerPayout | None = None) -> dict:
+    return {"payout": _payout(payout), "pay_method": s.pay_method, **_st_base(s, name)}
+
+
+def _st_base(s: PartnerStatement, name: str | None = None) -> dict:
     return {"id": s.id, "partner_id": s.partner_id, "partner_name": name, "period": s.period,
             "gross_commission": _m(s.gross_commission), "referral_cost": _m(s.referral_cost), "base_amount": _m(s.base_amount),
             "percent": f"{s.percent:.2f}", "amount": _m(s.amount), "status": s.status, "paid_at": dt(s.paid_at),
@@ -165,7 +211,8 @@ async def generate(month: str, regenerate: bool = False, admin: User = Depends(s
     audit(db, admin.id, "PARTNER_STATEMENTS_GENERATE", "partner_statement", month, details={"regenerate": regenerate})
     await db.commit()
     names = {p.id: p.name for p in (await db.execute(select(Partner))).scalars().all()}
-    return {"items": [_st(s, names.get(s.partner_id)) for s in rows]}
+    po = await _latest_payouts(db, [s.id for s in rows])
+    return {"items": [_st(s, names.get(s.partner_id), po.get(s.id)) for s in rows]}
 
 
 @admin_router.get("/partners/statements")
@@ -180,7 +227,8 @@ async def list_statements(month: str | None = None, partner_id: int | None = Non
         q = q.where(PartnerStatement.status == status)
     rows = (await db.execute(q.order_by(PartnerStatement.period.desc(), PartnerStatement.id))).all()
     pending = sum((s.amount for s, _ in rows if s.status == "PENDING"), Decimal(0))
-    return {"items": [_st(s, n) for s, n in rows], "pending_total": _m(pending)}
+    po = await _latest_payouts(db, [s.id for s, _ in rows])
+    return {"items": [_st(s, n, po.get(s.id)) for s, n in rows], "pending_total": _m(pending)}
 
 
 @admin_router.post("/partners/statements/{statement_id}/pay")
@@ -190,11 +238,73 @@ async def pay_statement(statement_id: int, body: PayIn = PayIn(), admin: User = 
         raise HTTPException(404, "Statement not found")
     if s.status == "PAID":
         raise HTTPException(409, {"code": "ALREADY_PAID"})
-    s.status, s.paid_at, s.paid_by, s.paid_ref = "PAID", utcnow(), admin.id, body.reference
+    last = (await _latest_payouts(db, [s.id])).get(s.id)
+    if last and last.status == "PENDING":
+        raise HTTPException(409, {"code": "PAYOUT_IN_PROGRESS"})
+    s.status, s.paid_at, s.paid_by, s.paid_ref, s.pay_method = "PAID", utcnow(), admin.id, body.reference, "MANUAL"
     audit(db, admin.id, "PARTNER_STATEMENT_PAID", "partner_statement", s.id, details={"amount": str(s.amount), "ref": body.reference})
     await db.commit()
     p = await db.get(Partner, s.partner_id)
-    return _st(s, p.name if p else None)
+    return _st(s, p.name if p else None, (await _latest_payouts(db, [s.id])).get(s.id))
+
+
+async def _run_tap_payout(db: AsyncSession, statement_id: int, admin: User, retry: bool) -> dict:
+    s = (await db.execute(select(PartnerStatement).where(PartnerStatement.id == statement_id).with_for_update())).scalar_one_or_none()
+    if not s:
+        raise HTTPException(404, "Statement not found")
+    if s.status == "PAID":
+        raise HTTPException(409, {"code": "ALREADY_PAID"})
+    last = (await _latest_payouts(db, [s.id])).get(s.id)
+    if last and last.status == "PENDING":
+        raise HTTPException(409, {"code": "PAYOUT_IN_PROGRESS"})
+    if retry and (not last or last.status != "FAILED"):
+        raise HTTPException(409, {"code": "NOTHING_TO_RETRY"})
+    if settings.payout_provider == "none":
+        raise HTTPException(503, {"code": "TAP_PAYOUTS_NOT_CONFIGURED"})
+    p = await db.get(Partner, s.partner_id)
+    amount = Decimal(s.amount or 0).quantize(Q)
+    if amount <= 0:
+        raise HTTPException(422, {"code": "AMOUNT_ZERO"})
+    if not p or not (p.iban or p.tap_destination_id):
+        raise HTTPException(422, {"code": "PARTNER_NO_BANK_DETAILS"})
+    cur = (await settings_service.get_all(db)).get("currency") or "BHD"
+    po = PartnerPayout(statement_id=s.id, amount=amount, status="PENDING", provider="TAP", requested_by=admin.id)
+    db.add(po)
+    await db.flush()
+    audit(db, admin.id, "PARTNER_PAYOUT_REQUESTED", "partner_statement", s.id,
+          details={"statement_id": s.id, "partner_id": p.id, "amount": str(amount)})
+    ref = f"PARTNER-{s.id}-{po.id}"
+    if p.tap_destination_id:
+        method, account = "TAP_DESTINATION", p.tap_destination_id
+    else:
+        method, account = "IBAN", p.iban
+    res = await transfer(method, account, p.beneficiary_name or p.name, amount, cur, ref)
+    po.simulated = res.simulated
+    if res.status == "TRANSFERRED":
+        po.status, po.provider_ref, po.transferred_at = "TRANSFERRED", res.reference or ref, utcnow()
+        s.status, s.paid_at, s.paid_by, s.paid_ref, s.pay_method = "PAID", utcnow(), admin.id, po.provider_ref, "TAP"
+        audit(db, admin.id, "PARTNER_PAYOUT_TRANSFERRED", "partner_statement", s.id,
+              details={"statement_id": s.id, "partner_id": p.id, "amount": str(amount), "provider_ref": po.provider_ref})
+    elif res.status == "FAILED":
+        po.status, po.failure_reason = "FAILED", res.error
+        audit(db, admin.id, "PARTNER_PAYOUT_FAILED", "partner_statement", s.id,
+              details={"statement_id": s.id, "partner_id": p.id, "amount": str(amount), "provider_ref": res.error})
+    else:  # provider accepted it but has not settled yet
+        po.provider_ref = res.reference or ref
+    await db.commit()
+    return _st(s, p.name, po)
+
+
+@admin_router.post("/partners/statements/{statement_id}/pay-tap")
+async def pay_statement_tap(statement_id: int, body: PayTapIn, admin: User = Depends(super_admin_user), db: AsyncSession = Depends(get_db)):
+    if not body.confirm:
+        raise HTTPException(422, {"code": "CONFIRM_REQUIRED"})
+    return await _run_tap_payout(db, statement_id, admin, retry=False)
+
+
+@admin_router.post("/partners/statements/{statement_id}/pay-tap/retry")
+async def pay_statement_tap_retry(statement_id: int, admin: User = Depends(super_admin_user), db: AsyncSession = Depends(get_db)):
+    return await _run_tap_payout(db, statement_id, admin, retry=True)
 
 
 async def monthly_job(db: AsyncSession) -> None:

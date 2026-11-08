@@ -745,6 +745,10 @@ class Partner(Base):
     phone: Mapped[str | None] = mapped_column(String(32), nullable=True)
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    iban: Mapped[str | None] = mapped_column(String(34), nullable=True)
+    bank_name: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    beneficiary_name: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    tap_destination_id: Mapped[str | None] = mapped_column(String(80), nullable=True)
     created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
 
 
@@ -764,7 +768,24 @@ class PartnerStatement(Base):
     paid_at: Mapped[datetime | None] = mapped_column(UTCDateTime, nullable=True)
     paid_by: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True)
     paid_ref: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    pay_method: Mapped[str | None] = mapped_column(String(10), nullable=True)  # MANUAL | TAP
     created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
+
+
+class PartnerPayout(Base):
+    """One transfer attempt of a partner statement (a FAILED attempt can be retried as a new row)."""
+    __tablename__ = "partner_payouts"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    statement_id: Mapped[int] = mapped_column(ForeignKey("partner_statements.id"), index=True)
+    amount: Mapped[Decimal] = mapped_column(Numeric(12, 3))
+    status: Mapped[str] = mapped_column(String(15), default="PENDING", index=True)  # PENDING | TRANSFERRED | FAILED
+    provider: Mapped[str] = mapped_column(String(10), default="TAP")
+    provider_ref: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    failure_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
+    simulated: Mapped[bool] = mapped_column(Boolean, default=False)
+    requested_by: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
+    transferred_at: Mapped[datetime | None] = mapped_column(UTCDateTime, nullable=True)
 
 
 class Translation(Base):
