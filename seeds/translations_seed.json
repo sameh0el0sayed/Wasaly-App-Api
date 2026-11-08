@@ -8933,5 +8933,40 @@
   "key": "err.TAP_PAYOUTS_NOT_CONFIGURED",
   "ar": "تحويلات Tap غير مفعّلة على الخادم.",
   "en": "Tap payouts are not configured on the server."
+ },
+ {
+  "key": "v21.w_title",
+  "ar": "وصلي",
+  "en": "Wasaly"
+ },
+ {
+  "key": "v21.w_open",
+  "ar": "افتح وصلي",
+  "en": "Open Wasaly"
+ },
+ {
+  "key": "v21.w_live",
+  "ar": "تفعيل لايف",
+  "en": "Go live"
+ },
+ {
+  "key": "v21.w_off",
+  "ar": "إيقاف",
+  "en": "Go off"
+ },
+ {
+  "key": "v21.w_state_live",
+  "ar": "أنت متاح الآن (لايف)",
+  "en": "You are live"
+ },
+ {
+  "key": "v21.w_state_off",
+  "ar": "أنت غير متاح",
+  "en": "You are offline"
+ },
+ {
+  "key": "v21.w_order",
+  "ar": "اطلب الآن",
+  "en": "Order now"
  }
 ]
