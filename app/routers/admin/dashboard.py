@@ -10,7 +10,7 @@ from ...constants import AccountStatus, Role
 from ...constants import OrderStatus as S
 from ...database import get_db
 from ...deps import admin_user
-from ...models import Complaint, DriverApplication, DriverProfile, Order, User, utcnow
+from ...models import Complaint, DriverApplication, DriverProfile, Order, ProfileChange, User, utcnow
 from ...serializers import money
 from ...services import settings_service
 from ...services.license import warn_days
@@ -49,5 +49,6 @@ async def dashboard(admin: User = Depends(admin_user), db: AsyncSession = Depend
             DriverProfile.license_expiry_date >= date.today(),
             DriverProfile.license_expiry_date <= date.today() + timedelta(days=max(warn_days((await settings_service.get_all(db))["license_expiry_warn_days"]) or [30])))),
         "driver_applications_pending": await count(select(func.count()).select_from(DriverApplication).where(DriverApplication.status == "PENDING_REVIEW")),
+        "pending_corrections": await count(select(func.count()).select_from(ProfileChange).where(ProfileChange.status.in_(("SUBMITTED", "PENDING_REVIEW")))),
         "open_complaints": await count(select(func.count()).select_from(Complaint).where(Complaint.status == "OPEN")),
     }

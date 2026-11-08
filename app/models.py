@@ -68,6 +68,9 @@ class User(Base):
     cpr_photo: Mapped[str | None] = mapped_column(String(255), nullable=True)
     referral_code: Mapped[str | None] = mapped_column(String(16), unique=True, index=True, nullable=True)
     wallet_balance: Mapped[Decimal] = mapped_column(Numeric(12, 3), default=0, server_default="0")
+    last_lat: Mapped[float | None] = mapped_column(Float, nullable=True)  # last location a customer app sent (estimate / order); admin radar only
+    last_lng: Mapped[float | None] = mapped_column(Float, nullable=True)
+    last_location_at: Mapped[datetime | None] = mapped_column(UTCDateTime, nullable=True)
     language: Mapped[str] = mapped_column(String(2), default="ar", server_default="ar")  # notification language (ar | en)
     must_change_password: Mapped[bool] = mapped_column(Boolean, default=False)
     token_version: Mapped[int] = mapped_column(Integer, default=0)

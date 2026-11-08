@@ -65,9 +65,18 @@ async def _notify_admins(db: AsyncSession, ntype: str, title: str, message: str,
 
 # ======================= 1) admin live map =======================
 @admin_router.get("/live-map")
-async def live_map(service_area_id: int | None = None, include_offline_minutes: int = 0, admin: User = Depends(_admin),
-                   db: AsyncSession = Depends(get_db)):
+async def live_map(service_area_id: int | None = None, include_offline_minutes: int = 0, include_customers: bool = False,
+                   customer_active_minutes: int = 30, admin: User = Depends(_admin), db: AsyncSession = Depends(get_db)):
+    from ..models import Complaint, ProfileChange
+    from ..serializers import _file_url
+    from ..services.license import doc_status
+    from .ratings import stats_for
     now = utcnow()
+    open_c: dict[int, int] = {}
+    for uid, n in (await db.execute(select(Complaint.user_id, func.count()).where(Complaint.user_id.is_not(None), Complaint.status.not_in(("CLOSED", "RESOLVED"))).group_by(Complaint.user_id))).all():
+        open_c[uid] = n
+    sos_users = {uid for (uid,) in (await db.execute(select(SosAlert.raised_by_user_id).where(SosAlert.status != "RESOLVED"))).all()}
+    renewal = {uid for (uid,) in (await db.execute(select(ProfileChange.user_id).where(ProfileChange.field == "license", ProfileChange.status == "PENDING_REVIEW"))).all()}
     busy = {o.driver_id: o.id for o in (await db.execute(select(Order).where(Order.order_status.in_(S.DRIVER_BUSY)))).scalars().all() if o.driver_id}
     areas_of: dict[int, list[int]] = {}
     for r in (await db.execute(select(DriverServiceArea))).scalars().all():
@@ -91,7 +100,11 @@ async def live_map(service_area_id: int | None = None, include_offline_minutes: 
         drivers.append({"id": u.id, "name": u.full_name, "phone": u.phone, "mode": p.mode, "busy": u.id in busy, "order_id": busy.get(u.id),
                         "lat": lat, "lng": lng, "location_at": _iso(at), "location_age_s": age,
                         "service_area_ids": areas_of.get(u.id, []),
-                        "vehicle": {"plate_number": u.vehicle.plate_number, "vehicle_type": u.vehicle.vehicle_type} if u.vehicle else None})
+                        "vehicle": {"plate_number": u.vehicle.plate_number, "vehicle_type": u.vehicle.vehicle_type} if u.vehicle else None,
+                        "account_status": u.account_status, "is_online": bool(p.is_online),
+                        "license_status": "RENEWAL_PENDING" if u.id in renewal else doc_status(p.license_expiry_date),
+                        "open_complaints": open_c.get(u.id, 0), "open_sos": u.id in sos_users,
+                        "rating_avg": (await stats_for(db, u))["rating_avg"], "profile_photo": _file_url(u.profile_photo)})
     open_sos = {a.order_id for a in (await db.execute(select(SosAlert).where(SosAlert.status != "RESOLVED"))).scalars().all()}
     oq = select(Order).where(Order.order_status.not_in(list(S.FINAL)))
     if service_area_id:
@@ -117,7 +130,40 @@ async def live_map(service_area_id: int | None = None, include_offline_minutes: 
         areas.append({"id": a.id, "name": a.name, "boundary": a.boundary, "drivers_online": len(in_area),
                       "drivers_free": len([d for d in in_area if not d["busy"]]),
                       "orders_searching": searching.get(a.id, 0), "orders_active": active.get(a.id, 0)})
-    return {"server_time": now.isoformat(), "drivers": drivers, "orders": orders, "areas": areas}
+    customers = []
+    cust_active = 0
+    if include_customers:
+        window = now - timedelta(minutes=max(1, customer_active_minutes))
+        live = (await db.execute(select(Order).where(Order.order_status.in_(list(S.SEARCHING) + list(S.DRIVER_BUSY))))).scalars().all()
+        order_of: dict[int, Order] = {}
+        for o in live:
+            order_of.setdefault(o.customer_id, o)
+        ids = set(order_of)
+        ids |= {uid for (uid,) in (await db.execute(select(User.id).where(User.role == Role.CUSTOMER, User.last_location_at >= window))).all()}
+        for u in (await db.execute(select(User).where(User.id.in_(ids), User.account_status == "APPROVED"))).scalars().unique().all() if ids else []:
+            o = order_of.get(u.id)
+            fresh = u.last_location_at and _aware(u.last_location_at) >= window
+            if fresh:
+                lat, lng, at, src = u.last_lat, u.last_lng, _aware(u.last_location_at), "LAST_APP_LOCATION"
+            elif o:
+                lat, lng, at, src = o.pickup_latitude, o.pickup_longitude, _aware(o.created_at), "ACTIVE_ORDER_PICKUP"
+            else:
+                continue
+            if lat is None or lng is None:
+                continue
+            state = "IDLE" if not o else ("ORDERING" if o.order_status in S.SEARCHING else "ON_TRIP")
+            customers.append({"id": u.id, "name": u.full_name, "phone": u.phone, "profile_photo": _file_url(u.profile_photo),
+                              "lat": lat, "lng": lng, "location_at": _iso(at), "location_age_s": round((now - at).total_seconds()),
+                              "source": src, "state": state, "order_id": o.id if o else None,
+                              "open_complaints": open_c.get(u.id, 0), "open_sos": u.id in sos_users, "account_status": u.account_status})
+        cust_active = len(customers)
+    summary = {"drivers_online": len([d for d in drivers if d["is_online"]]), "drivers_busy": len([d for d in drivers if d["busy"]]),
+               "customers_active": cust_active, "orders_searching": len([o for o in orders if o["status"] in S.SEARCHING]),
+               "open_sos": len(open_sos), "open_complaints": sum(open_c.values())}
+    out = {"server_time": now.isoformat(), "drivers": drivers, "orders": orders, "areas": areas, "summary": summary}
+    if include_customers:
+        out["customers"] = customers
+    return out
 
 
 # ======================= 2) SOS =======================

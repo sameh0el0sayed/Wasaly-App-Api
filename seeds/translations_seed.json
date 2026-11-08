@@ -7256,7 +7256,7 @@
  },
  {
   "key": "v18.extra.MALE_DRIVER",
-  "ar": "سائق ذكر",
+  "ar": "سائق رجل",
   "en": "Male driver"
  },
  {
@@ -7538,5 +7538,80 @@
   "key": "v15.set_c2d",
   "ar": "السماح للعملاء بالتسجيل كسائقين",
   "en": "Allow customers to apply as drivers"
+ },
+ {
+  "key": "currency.BHD",
+  "ar": "د.ب",
+  "en": "BHD"
+ },
+ {
+  "key": "v20.time_note",
+  "ar": "يُحسب الوقت من «بدء الرحلة» حتى «الوصول للوجهة» فقط.",
+  "en": "Time is counted from 'start trip' to 'arrived at destination' only."
+ },
+ {
+  "key": "v20.share_receipt",
+  "ar": "مشاركة الإيصال",
+  "en": "Share receipt"
+ },
+ {
+  "key": "v20.type_person",
+  "ar": "توصيل راكب",
+  "en": "Ride"
+ },
+ {
+  "key": "v20.type_delivery",
+  "ar": "توصيل شحنة",
+  "en": "Parcel"
+ },
+ {
+  "key": "v20.step_onboard",
+  "ar": "الراكب في السيارة — ابدأ الرحلة",
+  "en": "Passenger on board — start trip"
+ },
+ {
+  "key": "v20.view_receipt",
+  "ar": "عرض الإيصال ومشاركته",
+  "en": "View & share receipt"
+ },
+ {
+  "key": "v20.pay_method",
+  "ar": "طريقة الدفع",
+  "en": "Payment method"
+ },
+ {
+  "key": "v20.m_TAP",
+  "ar": "بطاقة (Tap)",
+  "en": "Card (Tap)"
+ },
+ {
+  "key": "v20.m_BENEFITPAY",
+  "ar": "BenefitPay",
+  "en": "BenefitPay"
+ },
+ {
+  "key": "v20.m_WALLET",
+  "ar": "المحفظة",
+  "en": "Wallet"
+ },
+ {
+  "key": "v20.wallet",
+  "ar": "من المحفظة",
+  "en": "From wallet"
+ },
+ {
+  "key": "v20.gateway_fee",
+  "ar": "رسوم البوابة",
+  "en": "Gateway fee"
+ },
+ {
+  "key": "v20.charged",
+  "ar": "المبلغ المدفوع",
+  "en": "Amount paid"
+ },
+ {
+  "key": "v20.paid_at",
+  "ar": "وقت الدفع",
+  "en": "Paid at"
  }
 ]

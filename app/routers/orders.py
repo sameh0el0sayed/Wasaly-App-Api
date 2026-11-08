@@ -147,6 +147,8 @@ async def estimate(body: EstimateIn, user: User = Depends(customer_user), db: As
     """Approximate price BEFORE ordering. The final price depends on the real trip time. The app must label it 'تقديري'."""
     s = await settings_service.get_all(db)
     p = await settings_service.get_pricing(db)
+    user.last_lat, user.last_lng, user.last_location_at = body.pickup_latitude, body.pickup_longitude, utcnow()  # admin radar only
+    await db.commit()
     km, minutes = route_guess(body.pickup_latitude, body.pickup_longitude, body.destination_latitude,
                               body.destination_longitude, s["estimate_road_factor"], s["estimate_avg_speed_kmh"])
     outside = bool(p.outside_enabled) and not point_in_boundary(body.destination_latitude, body.destination_longitude, p.country_boundary)
@@ -222,6 +224,8 @@ async def create_order(body: OrderCreateIn, user: User = Depends(customer_user),
         if not await fav.is_favorite(db, user.id, body.preferred_driver_id):
             raise HTTPException(422, {"code": "NOT_FAVORITE_DRIVER"})
         data["choose_driver"] = False  # a direct trip: the driver's acceptance assigns the order
+    if body.pickup_latitude is not None and body.pickup_longitude is not None:
+        user.last_lat, user.last_lng, user.last_location_at = body.pickup_latitude, body.pickup_longitude, utcnow()  # admin radar only
     outside = bool(p.outside_enabled) and not point_in_boundary(body.destination_latitude, body.destination_longitude, p.country_boundary)
     s_all = await settings_service.get_all(db)
     est_km, est_min = route_guess(body.pickup_latitude or body.destination_latitude, body.pickup_longitude or body.destination_longitude,
