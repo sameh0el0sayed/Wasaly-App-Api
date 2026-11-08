@@ -102,7 +102,9 @@ async def pricing(db: AsyncSession = Depends(get_db)):
                                 "applies_to": "the whole trip price when the trip starts inside the window"},
             # customers only see a fee when it is added on top of the trip price
             "service_fee": ({"type": p.commission_type, "value": str(p.commission_value)} if p.commission_mode == "ADD" else None),
-            "note": "Time is counted from 'start trip' to 'arrived at destination' only."}
+            "note": "Time is counted from 'start trip' to 'arrived at destination' only.",
+            "note_ar": "يُحسب الوقت من «بدء الرحلة» حتى «الوصول للوجهة» فقط.",
+            "note_en": "Time is counted from 'start trip' to 'arrived at destination' only."}
 
 
 async def _visible_order(db: AsyncSession, order_id: int, user: User) -> Order:

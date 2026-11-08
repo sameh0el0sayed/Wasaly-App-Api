@@ -273,7 +273,7 @@ def _share_url(token: str) -> str:
 
 def _share_expires(o: Order) -> datetime:
     end = _aware(o.completed_at or o.cancelled_at) if (o.completed_at or o.cancelled_at) else None
-    return (end + timedelta(minutes=30)) if end else utcnow() + timedelta(days=1)
+    return (end + timedelta(hours=2)) if end else utcnow() + timedelta(days=1)
 
 
 @router.post("/orders/{order_id}/share")
@@ -302,7 +302,14 @@ async def revoke_share(order_id: int, user: User = Depends(customer_user), db: A
     return {"revoked": True}
 
 
+def _base() -> str:
+    from ..config import settings
+    return (getattr(settings, "public_base_url", None) or "https://phoenixsystems.online/wasaly-api").rstrip("/")
+
+
 async def _public_trip(db: AsyncSession, token: str) -> dict:
+    from ..serializers import _file_url
+    from .ratings import stats_for
     t = (await db.execute(select(TripShare).where(TripShare.token == token))).scalars().first()
     if not t or t.revoked:
         raise HTTPException(404, {"code": "SHARE_NOT_FOUND"})
@@ -316,32 +323,82 @@ async def _public_trip(db: AsyncSession, token: str) -> dict:
         km = _haversine_m(p.last_lat, p.last_lng, o.destination_latitude, o.destination_longitude) / 1000
         eta = max(1, round(km * 1.3 / 35 * 60))
     v = drv.vehicle if drv else None
-    return {"status": o.order_status, "ended": o.order_status in S.FINAL,
-            "driver": {"first_name": drv.full_name.split()[0], "vehicle": {"make": v.make, "model": v.model, "color": v.color, "plate_number": v.plate_number} if v else None} if drv else None,
+    timeline = [{"key": k, "at": _iso(at)} for k, at in (
+        ("ACCEPTED", o.accepted_at), ("DRIVER_ON_THE_WAY", o.driver_on_the_way_at), ("ARRIVED_AT_PICKUP", o.driver_arrived_at),
+        ("IN_PROGRESS", o.trip_started_at), ("DELIVERED", o.trip_arrived_at or o.completed_at)) if at]
+    rating = (await stats_for(db, drv))["rating_avg"] if drv else None
+    # privacy: first name only, no phone numbers, no prices, no customer details
+    return {"status": o.order_status, "ended": o.order_status in S.FINAL, "timeline": timeline,
+            "service_type": o.service_type, "passengers": o.passenger_count, "parcel_description": o.cargo_description,
+            "driver": {"first_name": drv.full_name.split()[0], "photo_url": (_base() + _file_url(drv.profile_photo)) if drv.profile_photo else None,
+                       "rating": rating, "vehicle": {"make": v.make, "model": v.model, "color": v.color, "plate_number": v.plate_number} if v else None} if drv else None,
+            "vehicle": {"make": v.make, "model": v.model, "color": v.color, "plate_number": v.plate_number} if v else None,
             "driver_location": {"lat": p.last_lat, "lng": p.last_lng, "at": _iso(p.last_location_at)} if p and p.last_lat is not None and o.order_status not in S.FINAL else None,
             "pickup": {"lat": o.pickup_latitude, "lng": o.pickup_longitude, "address": o.pickup_address},
             "destination": {"lat": o.destination_latitude, "lng": o.destination_longitude, "address": o.destination_address},
-            "stops": [{"lat": s.lat, "lng": s.lng, "address": s.address, "status": s.status} for s in stops], "eta_min": eta}
+            "stops": [{"lat": s.lat, "lng": s.lng, "address": s.address, "status": s.status} for s in stops],
+            "eta_min": eta, "eta_minutes": eta, "completed_at": _iso(o.completed_at)}
 
 
 @public_router.get("/api/public/trip/{token}")
+@public_router.get("/api/public/trips/{token}")
 async def public_trip(token: str, db: AsyncSession = Depends(get_db)):
     return await _public_trip(db, token)
 
 
 _PAGE = """<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>تتبع الرحلة</title><link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-<style>body{margin:0;font-family:system-ui,sans-serif}#m{height:60vh}#i{padding:12px 16px;line-height:1.7}</style></head><body>
-<div id="m"></div><div id="i">جاري التحميل…</div>
+<title>Wasaly</title><link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<style>
+:root{--bg:#f6f7f9;--card:#fff;--tx:#14181f;--mut:#6b7380;--ac:#1652F0;--ok:#16a34a;--bd:#e4e7ec}
+@media(prefers-color-scheme:dark){:root{--bg:#0f1115;--card:#171a21;--tx:#eef0f4;--mut:#9aa3b2;--bd:#2a2f3a}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--tx);font-family:system-ui,-apple-system,"Segoe UI",Tahoma,sans-serif}
+header{display:flex;align-items:center;justify-content:space-between;padding:12px 16px}
+.logo{font-weight:800;font-size:20px;color:var(--ac);letter-spacing:.3px}.lang{background:none;border:1px solid var(--bd);color:var(--tx);border-radius:8px;padding:4px 10px;cursor:pointer}
+#m{height:42vh;min-height:260px}.wrap{max-width:640px;margin:0 auto;padding:12px 16px 28px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:14px 16px;margin-top:12px}
+.st{font-size:18px;font-weight:700}.mut{color:var(--mut);font-size:13px}.eta{color:var(--ac);font-weight:600;margin-top:4px}
+.tl{list-style:none;margin:0;padding:0}.tl li{display:flex;gap:10px;align-items:center;padding:6px 0}.dot{width:12px;height:12px;border-radius:50%;background:var(--bd);flex:none}
+.tl li.on .dot{background:var(--ok)}.tl li.on{font-weight:600}.tl .t{margin-inline-start:auto;color:var(--mut);font-size:12px}
+.drv{display:flex;gap:12px;align-items:center}.ph{width:52px;height:52px;border-radius:50%;background:var(--bd);object-fit:cover;flex:none}
+.row{display:flex;gap:8px;margin-top:6px}.row b{min-width:78px;color:var(--mut);font-weight:500}.done{text-align:center;color:var(--ok);font-weight:700;font-size:17px}
+footer{text-align:center;color:var(--mut);font-size:12px;padding:6px 0 22px}
+</style></head><body>
+<header><div class="logo">Wasaly &middot; وصلي</div><button class="lang" id="lg"></button></header>
+<div id="m"></div>
+<div class="wrap"><div class="card" id="s">...</div><div class="card" id="dv" hidden></div><div class="card"><ul class="tl" id="tl"></ul></div><div class="card" id="rt"></div></div>
+<footer>Powered By Phoenix Systems</footer>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-const T="__TOKEN__",m=L.map('m').setView([26.22,50.58],11);L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(m);
-let car,pk,ds;const ST={ACCEPTED:'السائق قبل الطلب',DRIVER_ON_THE_WAY:'السائق في الطريق',ARRIVED_AT_PICKUP:'السائق وصل',IN_PROGRESS:'الرحلة جارية',ARRIVED_AT_DESTINATION:'وصلت الرحلة',COMPLETED:'انتهت الرحلة',CANCELLED:'انتهت الرحلة'};
-async function tick(){try{const r=await fetch('api/public/trip/'+T);if(r.status>=400){document.getElementById('i').textContent='انتهت الرحلة';return}
-const d=await r.json();if(!pk&&d.pickup.lat){pk=L.marker([d.pickup.lat,d.pickup.lng]).addTo(m).bindPopup('الاستلام');ds=L.marker([d.destination.lat,d.destination.lng]).addTo(m).bindPopup('الوجهة');m.fitBounds([[d.pickup.lat,d.pickup.lng],[d.destination.lat,d.destination.lng]])}
-if(d.driver_location){const p=[d.driver_location.lat,d.driver_location.lng];car?car.setLatLng(p):car=L.circleMarker(p,{radius:9,color:'#1652F0'}).addTo(m)}
-const v=d.driver&&d.driver.vehicle;document.getElementById('i').innerHTML='<b>'+(ST[d.status]||d.status)+'</b>'+(d.eta_min?'<br>الوصول خلال '+d.eta_min+' دقيقة تقريبًا':'')+(d.driver?'<br>السائق: '+d.driver.first_name+(v?' — '+v.make+' '+v.model+' '+v.color+' — '+v.plate_number:''):'')+'<br>من: '+d.pickup.address+'<br>إلى: '+d.destination.address;
-if(d.ended)return}catch(e){}setTimeout(tick,10000)}tick();
+const T="__TOKEN__",Q=new URLSearchParams(location.search);
+let lang=Q.get('lang')||((navigator.language||'ar').toLowerCase().startsWith('en')?'en':'ar');
+const I={ar:{ACCEPTED:'تم قبول الطلب',DRIVER_ON_THE_WAY:'السائق في الطريق',ARRIVED_AT_PICKUP:'السائق وصل إلى نقطة الاستلام',IN_PROGRESS:'الرحلة جارية',DELIVERED:'تم الوصول',
+ PENDING:'جارٍ البحث عن سائق',OFFERED:'جارٍ البحث عن سائق',NO_DRIVER_AVAILABLE:'جارٍ البحث عن سائق',ARRIVED_AT_DESTINATION:'وصلت الرحلة إلى الوجهة',COMPLETED:'اكتملت الرحلة',CANCELLED:'أُلغيت الرحلة',EXPIRED:'انتهت الرحلة',
+ eta:'الوصول خلال {n} دقيقة تقريبًا',driver:'السائق',car:'السيارة',plate:'اللوحة',from:'من',to:'إلى',stop:'محطة',ride:'توصيل راكب',parcel:'توصيل شحنة',pax:'عدد الركاب',desc:'الشحنة',
+ done:'اكتملت الرحلة',at:'وقت الوصول',gone:'انتهت صلاحية رابط الرحلة',pick:'الاستلام',dest:'الوجهة',sw:'English'},
+en:{ACCEPTED:'Order accepted',DRIVER_ON_THE_WAY:'Driver on the way',ARRIVED_AT_PICKUP:'Driver arrived at pickup',IN_PROGRESS:'Trip in progress',DELIVERED:'Arrived',
+ PENDING:'Looking for a driver',OFFERED:'Looking for a driver',NO_DRIVER_AVAILABLE:'Looking for a driver',ARRIVED_AT_DESTINATION:'Arrived at destination',COMPLETED:'Trip completed',CANCELLED:'Trip cancelled',EXPIRED:'Trip ended',
+ eta:'Arriving in about {n} min',driver:'Driver',car:'Car',plate:'Plate',from:'From',to:'To',stop:'Stop',ride:'Ride',parcel:'Parcel delivery',pax:'Passengers',desc:'Parcel',
+ done:'Trip completed',at:'Arrival time',gone:'This trip link has expired',pick:'Pickup',dest:'Destination',sw:'العربية'}};
+const KEYS=['ACCEPTED','DRIVER_ON_THE_WAY','ARRIVED_AT_PICKUP','IN_PROGRESS','DELIVERED'];
+const m=L.map('m').setView([26.22,50.58],11);L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(m);
+let car,line,pins=[],last=null;
+const e=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const tm=iso=>iso?new Date(iso).toLocaleTimeString(lang==='ar'?'ar-BH':'en-GB',{hour:'2-digit',minute:'2-digit'}):'';
+function paint(){const d=last,t=I[lang];document.documentElement.lang=lang;document.documentElement.dir=lang==='ar'?'rtl':'ltr';document.getElementById('lg').textContent=t.sw;if(!d)return;
+ let h='<div class="st">'+e(t[d.status]||d.status)+'</div>';if(d.eta_minutes)h+='<div class="eta">'+t.eta.replace('{n}',d.eta_minutes)+'</div>';
+ h+='<div class="mut">'+(d.service_type==='DELIVERY'||d.service_type==='PARCEL'?t.parcel:t.ride)+(d.passengers?' · '+t.pax+': '+d.passengers:'')+'</div>';
+ if(d.status==='COMPLETED'||d.status==='ARRIVED_AT_DESTINATION')h='<div class="done">'+t.done+'</div>'+(d.completed_at?'<div class="mut" style="text-align:center">'+t.at+': '+tm(d.completed_at)+'</div>':'');
+ document.getElementById('s').innerHTML=h;
+ const dv=document.getElementById('dv');if(d.driver){const v=d.vehicle||d.driver.vehicle;dv.hidden=false;dv.innerHTML='<div class="drv">'+(d.driver.photo_url?'<img class="ph" src="'+e(d.driver.photo_url)+'">':'<div class="ph"></div>')+'<div><b>'+e(d.driver.first_name)+'</b>'+(d.driver.rating?' ★ '+d.driver.rating:'')+(v?'<div class="mut">'+e(v.make)+' '+e(v.model)+' · '+e(v.color)+'</div><div class="mut">'+t.plate+': '+e(v.plate_number)+'</div>':'')+'</div></div>'}else dv.hidden=true;
+ const seen={};(d.timeline||[]).forEach(x=>seen[x.key]=x.at);document.getElementById('tl').innerHTML=KEYS.map(k=>'<li class="'+(seen[k]?'on':'')+'"><span class="dot"></span>'+t[k]+'<span class="t">'+tm(seen[k])+'</span></li>').join('');
+ let r='<div class="row"><b>'+t.from+'</b><span>'+e(d.pickup.address)+'</span></div>';(d.stops||[]).forEach(s=>r+='<div class="row"><b>'+t.stop+'</b><span>'+e(s.address)+'</span></div>');r+='<div class="row"><b>'+t.to+'</b><span>'+e(d.destination.address)+'</span></div>';
+ if(d.parcel_description)r+='<div class="row"><b>'+t.desc+'</b><span>'+e(d.parcel_description)+'</span></div>';document.getElementById('rt').innerHTML=r}
+function draw(d){const pts=[];if(d.pickup.lat!=null)pts.push([d.pickup.lat,d.pickup.lng]);(d.stops||[]).forEach(s=>pts.push([s.lat,s.lng]));if(d.destination.lat!=null)pts.push([d.destination.lat,d.destination.lng]);
+ if(!pins.length&&pts.length){pts.forEach((p,i)=>pins.push(L.marker(p).addTo(m)));line=L.polyline(pts,{color:'#1652F0',weight:4,dashArray:'6 8'}).addTo(m);m.fitBounds(pts,{padding:[30,30]})}
+ if(d.driver_location){const p=[d.driver_location.lat,d.driver_location.lng];car?car.setLatLng(p):car=L.circleMarker(p,{radius:10,color:'#fff',weight:3,fillColor:'#1652F0',fillOpacity:1}).addTo(m)}else if(car){m.removeLayer(car);car=null}}
+async function tick(){try{const r=await fetch('../api/public/trips/'+T);if(r.status>=400){document.getElementById('s').innerHTML='<div class="st">'+I[lang].gone+'</div>';return}
+ last=await r.json();draw(last);paint();if(last.ended&&last.status!=='ARRIVED_AT_DESTINATION')return}catch(x){}setTimeout(tick,10000)}
+document.getElementById('lg').onclick=()=>{lang=lang==='ar'?'en':'ar';paint()};paint();tick();
 </script></body></html>"""
 
 

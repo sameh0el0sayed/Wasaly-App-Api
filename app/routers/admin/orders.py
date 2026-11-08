@@ -77,7 +77,7 @@ async def adjust_price(order_id: int, body: PriceAdjustIn, admin: User = Depends
     if not o or o.order_status != S.COMPLETED:
         raise HTTPException(409, "Only completed orders can be adjusted")
     if o.payment_status == "PAID" or (o.payment_status == "PENDING_VERIFICATION"):
-        raise HTTPException(409, {"code": "PAYMENT_ALREADY_STARTED", "message": "Adjust before payment, or refund first"})
+        raise HTTPException(409, {"code": "ADJUST_AFTER_PAYMENT"})
     if not o.price_adjusted:
         o.original_price = o.final_price
     old = o.final_price
