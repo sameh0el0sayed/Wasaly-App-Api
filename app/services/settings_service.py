@@ -21,6 +21,7 @@ DEFAULTS = {
     "analytics_enabled": "true",
     "analytics_retention_days": "180",
     "license_job_last_run": "",
+    "partners_last_generated": "",
     "analytics_cleanup_last_run": "",
     "currency_code": "BHD",
     "unit_price": "0.500",

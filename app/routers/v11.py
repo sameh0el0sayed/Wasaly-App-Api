@@ -498,7 +498,7 @@ async def my_wallet(limit: int = 20, offset: int = 0, user: User = Depends(appro
     rows = (await db.execute(select(WalletEntry).where(WalletEntry.user_id == user.id).order_by(WalletEntry.id.desc())
                              .limit(max(1, min(limit, 100))).offset(max(0, offset)))).scalars().all()
     return {"balance": f"{Decimal(user.wallet_balance or 0):.3f}",
-            "items": [{"id": w.id, "amount": f"{w.amount:.3f}", "kind": w.kind, "created_at": _iso(w.created_at)} for w in rows]}
+            "items": [{"id": w.id, "amount": f"{w.amount:.3f}", "kind": w.kind, "note": w.note, "created_at": _iso(w.created_at)} for w in rows]}
 
 
 @admin_router.get("/referrals")

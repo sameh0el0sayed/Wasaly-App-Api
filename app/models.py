@@ -729,8 +729,41 @@ class WalletEntry(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
     amount: Mapped[Decimal] = mapped_column(Numeric(12, 3))  # + credit / - spend
-    kind: Mapped[str] = mapped_column(String(20))  # REFERRAL_INVITER | REFERRAL_INVITEE | REVOKED | SPEND
+    kind: Mapped[str] = mapped_column(String(20))  # REFERRAL_INVITER | REFERRAL_INVITEE | REVOKED | SPEND | REFUND | ADMIN_CREDIT | ADMIN_DEBIT
     ref_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    note: Mapped[str | None] = mapped_column(Text, nullable=True)  # admin reason
+    admin_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
+
+
+class Partner(Base):
+    """Company partner paid a monthly percentage of the company's net profit."""
+    __tablename__ = "partners"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    name: Mapped[str] = mapped_column(String(120))
+    percent: Mapped[Decimal] = mapped_column(Numeric(5, 2))
+    phone: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
+
+
+class PartnerStatement(Base):
+    """One row per partner per month. base = company net profit of the month, amount = base x percent."""
+    __tablename__ = "partner_statements"
+    __table_args__ = (UniqueConstraint("partner_id", "period", name="uq_partner_period"),)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    partner_id: Mapped[int] = mapped_column(ForeignKey("partners.id"), index=True)
+    period: Mapped[str] = mapped_column(String(7), index=True)  # YYYY-MM
+    gross_commission: Mapped[Decimal] = mapped_column(Numeric(12, 3), default=0)
+    referral_cost: Mapped[Decimal] = mapped_column(Numeric(12, 3), default=0)
+    base_amount: Mapped[Decimal] = mapped_column(Numeric(12, 3), default=0)
+    percent: Mapped[Decimal] = mapped_column(Numeric(5, 2))
+    amount: Mapped[Decimal] = mapped_column(Numeric(12, 3), default=0)
+    status: Mapped[str] = mapped_column(String(10), default="PENDING", index=True)  # PENDING | PAID
+    paid_at: Mapped[datetime | None] = mapped_column(UTCDateTime, nullable=True)
+    paid_by: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True)
+    paid_ref: Mapped[str | None] = mapped_column(String(120), nullable=True)
     created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
 
 

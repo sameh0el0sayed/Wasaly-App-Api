@@ -12,6 +12,9 @@ DEFAULT_LANGUAGE = "ar"
 
 # (arabic, english). Placeholders: {name}. Order does not matter: every entry is anchored (^...$).
 PAIRS: list[tuple[str, str]] = [
+    # v20 wallet
+    ("تم إيداع رصيد في محفظتك", "Funds were added to your wallet"), ("أُضيف {amt} إلى محفظتك.", "{amt} was added to your wallet."),
+    ("تم خصم رصيد من محفظتك", "Funds were deducted from your wallet"), ("خُصم {amt} من محفظتك.", "{amt} was deducted from your wallet."),
     # v16 passkeys
     ("أُضيف مفتاح مرور جديد إلى حسابك", "A new passkey was added to your account"),
     ("مفتاح مرور جديد", "New passkey"),
