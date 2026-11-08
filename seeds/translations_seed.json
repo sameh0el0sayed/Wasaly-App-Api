@@ -7613,5 +7613,1325 @@
   "key": "v20.paid_at",
   "ar": "وقت الدفع",
   "en": "Paid at"
+ },
+ {
+  "key": "v21.active",
+  "ar": "نشط",
+  "en": "Active"
+ },
+ {
+  "key": "v21.active_percent",
+  "ar": "مجموع نسب الشركاء النشطين",
+  "en": "Active partners total"
+ },
+ {
+  "key": "v21.actor_ADMIN",
+  "ar": "الإدارة",
+  "en": "Admin"
+ },
+ {
+  "key": "v21.actor_AI",
+  "ar": "الذكاء الاصطناعي",
+  "en": "AI"
+ },
+ {
+  "key": "v21.actor_SYSTEM",
+  "ar": "النظام",
+  "en": "System"
+ },
+ {
+  "key": "v21.add_funds",
+  "ar": "إضافة رصيد",
+  "en": "Add funds"
+ },
+ {
+  "key": "v21.add_partner",
+  "ar": "إضافة شريك",
+  "en": "Add partner"
+ },
+ {
+  "key": "v21.ai_review",
+  "ar": "مراجعة الذكاء الاصطناعي",
+  "en": "AI review"
+ },
+ {
+  "key": "v21.amount",
+  "ar": "المبلغ",
+  "en": "Amount"
+ },
+ {
+  "key": "v21.balance",
+  "ar": "الرصيد",
+  "en": "Balance"
+ },
+ {
+  "key": "v21.bank",
+  "ar": "اسم البنك",
+  "en": "Bank name"
+ },
+ {
+  "key": "v21.base",
+  "ar": "صافي الربح",
+  "en": "Net profit"
+ },
+ {
+  "key": "v21.beneficiary",
+  "ar": "اسم المستفيد",
+  "en": "Beneficiary name"
+ },
+ {
+  "key": "v21.chat_403",
+  "ar": "المساعد غير متاح لحسابك حاليًا.",
+  "en": "The assistant is not available for your account."
+ },
+ {
+  "key": "v21.chat_429",
+  "ar": "أرسلت رسائل كثيرة، انتظر دقيقة ثم حاول.",
+  "en": "Too many messages — wait a minute and try again."
+ },
+ {
+  "key": "v21.chat_503",
+  "ar": "المساعد غير متاح الآن، حاول لاحقًا.",
+  "en": "The assistant is unavailable right now."
+ },
+ {
+  "key": "v21.chat_hello",
+  "ar": "مرحبًا! أنا مساعد وصلي، كيف أساعدك؟",
+  "en": "Hi! I am the Wasaly assistant. How can I help?"
+ },
+ {
+  "key": "v21.chat_hint",
+  "ar": "اكتب سؤالك…",
+  "en": "Type your question…"
+ },
+ {
+  "key": "v21.chat_new",
+  "ar": "محادثة جديدة",
+  "en": "New chat"
+ },
+ {
+  "key": "v21.chat_s1",
+  "ar": "كيف أطلب رحلة؟",
+  "en": "How do I book a trip?"
+ },
+ {
+  "key": "v21.chat_s2",
+  "ar": "أين وصل طلبي؟",
+  "en": "Where is my order?"
+ },
+ {
+  "key": "v21.chat_s3",
+  "ar": "كيف يُحسب السعر؟",
+  "en": "How is the price calculated?"
+ },
+ {
+  "key": "v21.chat_sub",
+  "ar": "اسأل عن طلباتك ومدفوعاتك وحسابك",
+  "en": "Ask about your orders, payments and account"
+ },
+ {
+  "key": "v21.chat_timeout",
+  "ar": "تأخر الرد، حاول مرة أخرى.",
+  "en": "The reply took too long — try again."
+ },
+ {
+  "key": "v21.chat_title",
+  "ar": "مساعد وصلي",
+  "en": "Wasaly assistant"
+ },
+ {
+  "key": "v21.chat_too_long",
+  "ar": "الرسالة طويلة جدًا (الحد 4000 حرف).",
+  "en": "Message is too long (max 4000)."
+ },
+ {
+  "key": "v21.checked",
+  "ar": "تمت مراجعتها",
+  "en": "Checked"
+ },
+ {
+  "key": "v21.col_action",
+  "ar": "الإجراء",
+  "en": "Action"
+ },
+ {
+  "key": "v21.col_actor",
+  "ar": "المنفّذ",
+  "en": "By"
+ },
+ {
+  "key": "v21.col_entity",
+  "ar": "على",
+  "en": "On"
+ },
+ {
+  "key": "v21.col_reason",
+  "ar": "السبب",
+  "en": "Reason"
+ },
+ {
+  "key": "v21.col_time",
+  "ar": "الوقت",
+  "en": "Time"
+ },
+ {
+  "key": "v21.comparison",
+  "ar": "مقارنة الحقول",
+  "en": "Field comparison"
+ },
+ {
+  "key": "v21.complaints",
+  "ar": "شكاوى",
+  "en": "Complaints"
+ },
+ {
+  "key": "v21.confidence",
+  "ar": "الثقة",
+  "en": "Confidence"
+ },
+ {
+  "key": "v21.customers_active",
+  "ar": "عملاء نشطون",
+  "en": "Active customers"
+ },
+ {
+  "key": "v21.deduct",
+  "ar": "خصم",
+  "en": "Deduct"
+ },
+ {
+  "key": "v21.details",
+  "ar": "التفاصيل",
+  "en": "Details"
+ },
+ {
+  "key": "v21.document",
+  "ar": "المستند",
+  "en": "Document"
+ },
+ {
+  "key": "v21.drivers_busy",
+  "ar": "سائقون في رحلة",
+  "en": "Drivers on trip"
+ },
+ {
+  "key": "v21.drivers_online",
+  "ar": "سائقون متصلون",
+  "en": "Drivers online"
+ },
+ {
+  "key": "v21.edit_partner",
+  "ar": "تعديل الشريك",
+  "en": "Edit partner"
+ },
+ {
+  "key": "v21.expected",
+  "ar": "المتوقع",
+  "en": "Expected"
+ },
+ {
+  "key": "v21.extracted",
+  "ar": "المستخرج",
+  "en": "Extracted"
+ },
+ {
+  "key": "v21.f_alerts",
+  "ar": "تنبيهات",
+  "en": "Alerts"
+ },
+ {
+  "key": "v21.f_all",
+  "ar": "الكل",
+  "en": "All"
+ },
+ {
+  "key": "v21.f_corrections",
+  "ar": "التصحيحات",
+  "en": "Corrections"
+ },
+ {
+  "key": "v21.f_customers",
+  "ar": "العملاء",
+  "en": "Customers"
+ },
+ {
+  "key": "v21.f_drivers",
+  "ar": "السائقون",
+  "en": "Drivers"
+ },
+ {
+  "key": "v21.f_payments",
+  "ar": "المدفوعات",
+  "en": "Payments"
+ },
+ {
+  "key": "v21.f_users",
+  "ar": "المستخدمون",
+  "en": "Users"
+ },
+ {
+  "key": "v21.field",
+  "ar": "الحقل",
+  "en": "Field"
+ },
+ {
+  "key": "v21.generate",
+  "ar": "إنشاء كشوف الشهر",
+  "en": "Generate statements"
+ },
+ {
+  "key": "v21.generate_q",
+  "ar": "إنشاء كشوف هذا الشهر للشركاء النشطين؟",
+  "en": "Generate this month's statements?"
+ },
+ {
+  "key": "v21.generated",
+  "ar": "أُنشئت الكشوف",
+  "en": "Statements generated"
+ },
+ {
+  "key": "v21.go_home",
+  "ar": "الرئيسية",
+  "en": "Home"
+ },
+ {
+  "key": "v21.gross",
+  "ar": "إجمالي العمولات",
+  "en": "Gross commission"
+ },
+ {
+  "key": "v21.inactive",
+  "ar": "غير نشط",
+  "en": "Inactive"
+ },
+ {
+  "key": "v21.last_cycle",
+  "ar": "آخر دورة مراجعة",
+  "en": "Latest cycle"
+ },
+ {
+  "key": "v21.last_heartbeat",
+  "ar": "آخر نبضة",
+  "en": "Last heartbeat"
+ },
+ {
+  "key": "v21.last_seen",
+  "ar": "آخر ظهور",
+  "en": "Last seen"
+ },
+ {
+  "key": "v21.license",
+  "ar": "الرخصة",
+  "en": "Licence"
+ },
+ {
+  "key": "v21.mark_paid",
+  "ar": "تم الدفع يدويًا",
+  "en": "Mark paid"
+ },
+ {
+  "key": "v21.min_ago",
+  "ar": "قبل {0} دقيقة",
+  "en": "{0} min ago"
+ },
+ {
+  "key": "v21.name",
+  "ar": "الاسم",
+  "en": "Name"
+ },
+ {
+  "key": "v21.net_profit",
+  "ar": "صافي الربح",
+  "en": "Net profit"
+ },
+ {
+  "key": "v21.next_review",
+  "ar": "المراجعة القادمة",
+  "en": "Next review"
+ },
+ {
+  "key": "v21.no_partners",
+  "ar": "لا يوجد شركاء",
+  "en": "No partners"
+ },
+ {
+  "key": "v21.no_results",
+  "ar": "لا توجد نتائج",
+  "en": "No results"
+ },
+ {
+  "key": "v21.no_statements",
+  "ar": "لا توجد كشوف",
+  "en": "No statements"
+ },
+ {
+  "key": "v21.notes",
+  "ar": "ملاحظات",
+  "en": "Notes"
+ },
+ {
+  "key": "v21.now",
+  "ar": "الآن",
+  "en": "Now"
+ },
+ {
+  "key": "v21.open_order",
+  "ar": "فتح الطلب",
+  "en": "Open order"
+ },
+ {
+  "key": "v21.open_user",
+  "ar": "فتح المستخدم",
+  "en": "Open user"
+ },
+ {
+  "key": "v21.partners",
+  "ar": "الشركاء",
+  "en": "Partners"
+ },
+ {
+  "key": "v21.pay_manual_q",
+  "ar": "تأكيد دفع {0} إلى {1}؟ اكتب رقم التحويل",
+  "en": "Confirm paying {0} to {1}? Enter the transfer reference"
+ },
+ {
+  "key": "v21.pay_tap",
+  "ar": "ادفع عبر Tap",
+  "en": "Pay via Tap"
+ },
+ {
+  "key": "v21.pay_tap_body",
+  "ar": "سيُحوَّل المبلغ فعليًا إلى حساب الشريك عبر Tap.",
+  "en": "The money will be transferred to the partner through Tap."
+ },
+ {
+  "key": "v21.pay_tap_q",
+  "ar": "تحويل {0} إلى {1} عبر Tap؟",
+  "en": "Transfer {0} to {1} via Tap?"
+ },
+ {
+  "key": "v21.pending_corrections",
+  "ar": "طلبات التصحيح",
+  "en": "Correction requests"
+ },
+ {
+  "key": "v21.pending_total",
+  "ar": "المستحق غير المدفوع",
+  "en": "Pending total"
+ },
+ {
+  "key": "v21.percent",
+  "ar": "النسبة %",
+  "en": "Percent %"
+ },
+ {
+  "key": "v21.phone",
+  "ar": "الهاتف",
+  "en": "Phone"
+ },
+ {
+  "key": "v21.plate",
+  "ar": "اللوحة",
+  "en": "Plate"
+ },
+ {
+  "key": "v21.profit",
+  "ar": "أرباح الشهر",
+  "en": "Monthly profit"
+ },
+ {
+  "key": "v21.radar",
+  "ar": "الرادار المباشر",
+  "en": "Live radar"
+ },
+ {
+  "key": "v21.rating",
+  "ar": "التقييم",
+  "en": "Rating"
+ },
+ {
+  "key": "v21.reason",
+  "ar": "السبب",
+  "en": "Reason"
+ },
+ {
+  "key": "v21.reference",
+  "ar": "رقم المرجع",
+  "en": "Reference"
+ },
+ {
+  "key": "v21.referral_cost",
+  "ar": "مكافآت الإحالة",
+  "en": "Referral rewards"
+ },
+ {
+  "key": "v21.results",
+  "ar": "نتائج المراجعة",
+  "en": "Review results"
+ },
+ {
+  "key": "v21.retry",
+  "ar": "إعادة المحاولة",
+  "en": "Retry"
+ },
+ {
+  "key": "v21.review_details",
+  "ar": "تفاصيل المراجعة",
+  "en": "Review details"
+ },
+ {
+  "key": "v21.reviewed_at",
+  "ar": "وقت المراجعة",
+  "en": "Reviewed at"
+ },
+ {
+  "key": "v21.save",
+  "ar": "حفظ",
+  "en": "Save"
+ },
+ {
+  "key": "v21.screen_error",
+  "ar": "حدث خطأ في هذه الشاشة",
+  "en": "Something went wrong on this screen"
+ },
+ {
+  "key": "v21.searching",
+  "ar": "طلبات تبحث",
+  "en": "Searching"
+ },
+ {
+  "key": "v21.share",
+  "ar": "نصيب الشريك",
+  "en": "Share"
+ },
+ {
+  "key": "v21.shares",
+  "ar": "حصص الشركاء",
+  "en": "Partner shares"
+ },
+ {
+  "key": "v21.sos_open",
+  "ar": "نداء استغاثة مفتوح",
+  "en": "Open SOS"
+ },
+ {
+  "key": "v21.st_busy",
+  "ar": "في رحلة",
+  "en": "On a trip"
+ },
+ {
+  "key": "v21.st_idle",
+  "ar": "خامل",
+  "en": "Idle"
+ },
+ {
+  "key": "v21.st_offline",
+  "ar": "غير متصل",
+  "en": "Offline"
+ },
+ {
+  "key": "v21.st_on_trip",
+  "ar": "في رحلة",
+  "en": "On a trip"
+ },
+ {
+  "key": "v21.st_online",
+  "ar": "متصل ومتاح",
+  "en": "Online, free"
+ },
+ {
+  "key": "v21.st_ordering",
+  "ar": "يطلب الآن",
+  "en": "Ordering"
+ },
+ {
+  "key": "v21.state",
+  "ar": "الحالة",
+  "en": "State"
+ },
+ {
+  "key": "v21.statements",
+  "ar": "الكشوف",
+  "en": "Statements"
+ },
+ {
+  "key": "v21.tap_destination",
+  "ar": "معرّف Tap (اختياري)",
+  "en": "Tap destination ID (optional)"
+ },
+ {
+  "key": "v21.tap_payout",
+  "ar": "تحويل Tap",
+  "en": "Tap payout"
+ },
+ {
+  "key": "v21.tap_sent",
+  "ar": "أُرسل التحويل",
+  "en": "Transfer sent"
+ },
+ {
+  "key": "v21.v_PAID",
+  "ar": "مدفوع",
+  "en": "Paid"
+ },
+ {
+  "key": "v21.v_PENDING",
+  "ar": "بانتظار الدفع",
+  "en": "Pending"
+ },
+ {
+  "key": "v21.v_TRANSFERRED",
+  "ar": "تم التحويل",
+  "en": "Transferred"
+ },
+ {
+  "key": "v21.v_FAILED",
+  "ar": "فشل",
+  "en": "Failed"
+ },
+ {
+  "key": "v21.v_confirmed",
+  "ar": "مؤكَّد",
+  "en": "Confirmed"
+ },
+ {
+  "key": "v21.v_approved",
+  "ar": "مقبول",
+  "en": "Approved"
+ },
+ {
+  "key": "v21.v_accepted",
+  "ar": "مقبول",
+  "en": "Accepted"
+ },
+ {
+  "key": "v21.v_rejected",
+  "ar": "مرفوض",
+  "en": "Rejected"
+ },
+ {
+  "key": "v21.v_not_confirmed",
+  "ar": "غير مؤكَّد",
+  "en": "Not confirmed"
+ },
+ {
+  "key": "v21.v_error",
+  "ar": "خطأ",
+  "en": "Error"
+ },
+ {
+  "key": "v21.wallet",
+  "ar": "المحفظة",
+  "en": "Wallet"
+ },
+ {
+  "key": "v21.wk_ADMIN_CREDIT",
+  "ar": "أضافته الإدارة",
+  "en": "Added by admin"
+ },
+ {
+  "key": "v21.wk_ADMIN_DEBIT",
+  "ar": "خصمته الإدارة",
+  "en": "Deducted by admin"
+ },
+ {
+  "key": "v21.wk_SPEND",
+  "ar": "دفع رحلة",
+  "en": "Trip payment"
+ },
+ {
+  "key": "v21.wk_REFUND",
+  "ar": "استرداد",
+  "en": "Refund"
+ },
+ {
+  "key": "v21.wk_REFERRAL_INVITER",
+  "ar": "مكافأة دعوة صديق",
+  "en": "Referral reward"
+ },
+ {
+  "key": "v21.wk_REFERRAL_INVITEE",
+  "ar": "مكافأة التسجيل بدعوة",
+  "en": "Invite bonus"
+ },
+ {
+  "key": "v21.wk_REVOKED",
+  "ar": "سحب مكافأة",
+  "en": "Reward revoked"
+ },
+ {
+  "key": "v21.ws_running",
+  "ar": "يراجع الآن",
+  "en": "Reviewing now"
+ },
+ {
+  "key": "v21.ws_waiting",
+  "ar": "يعمل — بانتظار الدورة",
+  "en": "Alive — waiting"
+ },
+ {
+  "key": "v21.ws_error",
+  "ar": "خطأ",
+  "en": "Error"
+ },
+ {
+  "key": "v21.ws_unknown",
+  "ar": "لا توجد نبضة بعد",
+  "en": "No heartbeat yet"
+ },
+ {
+  "key": "v21.t_user",
+  "ar": "مستخدم",
+  "en": "User"
+ },
+ {
+  "key": "v21.t_correction",
+  "ar": "تصحيح",
+  "en": "Correction"
+ },
+ {
+  "key": "v21.t_payment",
+  "ar": "دفعة",
+  "en": "Payment"
+ },
+ {
+  "key": "v21.lic_VALID",
+  "ar": "سارية",
+  "en": "Valid"
+ },
+ {
+  "key": "v21.lic_EXPIRING",
+  "ar": "تنتهي قريبًا",
+  "en": "Expiring"
+ },
+ {
+  "key": "v21.lic_EXPIRED",
+  "ar": "منتهية",
+  "en": "Expired"
+ },
+ {
+  "key": "v21.lic_RENEWAL_PENDING",
+  "ar": "تجديد قيد المراجعة",
+  "en": "Renewal pending"
+ },
+ {
+  "key": "v21.ent_user",
+  "ar": "مستخدم",
+  "en": "User"
+ },
+ {
+  "key": "v21.ent_order",
+  "ar": "طلب",
+  "en": "Order"
+ },
+ {
+  "key": "v21.ent_payment",
+  "ar": "دفعة",
+  "en": "Payment"
+ },
+ {
+  "key": "v21.ent_correction",
+  "ar": "تصحيح",
+  "en": "Correction"
+ },
+ {
+  "key": "v21.ent_partner",
+  "ar": "شريك",
+  "en": "Partner"
+ },
+ {
+  "key": "v21.fld_payment_amount",
+  "ar": "المبلغ",
+  "en": "Amount"
+ },
+ {
+  "key": "v21.fld_reference",
+  "ar": "المرجع",
+  "en": "Reference"
+ },
+ {
+  "key": "v21.fld_cpr_number",
+  "ar": "رقم الهوية",
+  "en": "CPR"
+ },
+ {
+  "key": "v21.fld_full_name",
+  "ar": "الاسم",
+  "en": "Name"
+ },
+ {
+  "key": "v21.rc_USER_NOT_PENDING_REVIEW",
+  "ar": "الحساب ليس بانتظار المراجعة",
+  "en": "Account not pending review"
+ },
+ {
+  "key": "v21.rc_MISSING_CPR_DATA",
+  "ar": "بيانات الهوية ناقصة",
+  "en": "Missing CPR data"
+ },
+ {
+  "key": "v21.rc_CPR_FILE_NOT_FOUND",
+  "ar": "صورة الهوية غير موجودة",
+  "en": "CPR image not found"
+ },
+ {
+  "key": "v21.rc_MISSING_DRIVER_LICENSE",
+  "ar": "رخصة القيادة ناقصة",
+  "en": "Missing driving licence"
+ },
+ {
+  "key": "v21.rc_LICENSE_FILE_NOT_FOUND",
+  "ar": "صورة الرخصة غير موجودة",
+  "en": "Licence image not found"
+ },
+ {
+  "key": "v21.rc_ACCOUNT_MISMATCH",
+  "ar": "الحساب المستلم لا يطابق",
+  "en": "Account mismatch"
+ },
+ {
+  "key": "v21.rc_AMOUNT_MISMATCH",
+  "ar": "المبلغ لا يطابق",
+  "en": "Amount mismatch"
+ },
+ {
+  "key": "v21.rc_CURRENCY_MISMATCH",
+  "ar": "العملة لا تطابق",
+  "en": "Currency mismatch"
+ },
+ {
+  "key": "v21.rc_REFERENCE_MISSING",
+  "ar": "رقم المرجع غير موجود",
+  "en": "Reference missing"
+ },
+ {
+  "key": "audit.ACCOUNT_DELETED",
+  "ar": "حذف حساب",
+  "en": "Account deleted"
+ },
+ {
+  "key": "audit.ACCOUNT_RESTORED",
+  "ar": "استعادة حساب",
+  "en": "Account restored"
+ },
+ {
+  "key": "audit.ACCOUNT_APPROVED",
+  "ar": "قبول حساب",
+  "en": "Account approved"
+ },
+ {
+  "key": "audit.ADMIN_CREATED",
+  "ar": "إنشاء مدير",
+  "en": "Admin created"
+ },
+ {
+  "key": "audit.AIRPORT_ZONE_CREATED",
+  "ar": "إضافة منطقة مطار",
+  "en": "Airport zone created"
+ },
+ {
+  "key": "audit.AIRPORT_ZONE_DELETED",
+  "ar": "حذف منطقة مطار",
+  "en": "Airport zone deleted"
+ },
+ {
+  "key": "audit.AIRPORT_ZONE_UPDATED",
+  "ar": "تعديل منطقة مطار",
+  "en": "Airport zone updated"
+ },
+ {
+  "key": "audit.AI_CORRECTION_ACCEPTED",
+  "ar": "الذكاء الاصطناعي قبل تصحيحًا",
+  "en": "AI accepted a correction"
+ },
+ {
+  "key": "audit.AI_CORRECTION_REJECTED",
+  "ar": "الذكاء الاصطناعي رفض تصحيحًا",
+  "en": "AI rejected a correction"
+ },
+ {
+  "key": "audit.AI_CORRECTION_REVIEW",
+  "ar": "مراجعة تصحيح بالذكاء الاصطناعي",
+  "en": "AI correction review"
+ },
+ {
+  "key": "audit.AI_IDENTITY_REVIEW",
+  "ar": "مراجعة هوية بالذكاء الاصطناعي",
+  "en": "AI identity review"
+ },
+ {
+  "key": "audit.AI_RECEIPT_REVIEW",
+  "ar": "مراجعة إيصال بالذكاء الاصطناعي",
+  "en": "AI receipt review"
+ },
+ {
+  "key": "audit.AI_REVIEW_CYCLE",
+  "ar": "دورة مراجعة الذكاء الاصطناعي",
+  "en": "AI review cycle"
+ },
+ {
+  "key": "audit.AI_REVIEW_HEARTBEAT",
+  "ar": "نبضة المراجِع الآلي",
+  "en": "AI reviewer heartbeat"
+ },
+ {
+  "key": "audit.ANNOUNCEMENT_SENT",
+  "ar": "إرسال إعلان",
+  "en": "Announcement sent"
+ },
+ {
+  "key": "audit.AREA_CREATED",
+  "ar": "إضافة منطقة خدمة",
+  "en": "Area created"
+ },
+ {
+  "key": "audit.AREA_UPDATED",
+  "ar": "تعديل منطقة خدمة",
+  "en": "Area updated"
+ },
+ {
+  "key": "audit.AUTO_SUSPENDED_LOW_RATING",
+  "ar": "إيقاف تلقائي لانخفاض التقييم",
+  "en": "Auto-suspended (low rating)"
+ },
+ {
+  "key": "audit.BANNER_CREATE",
+  "ar": "إضافة بانر",
+  "en": "Banner created"
+ },
+ {
+  "key": "audit.BANNER_DELETE",
+  "ar": "حذف بانر",
+  "en": "Banner deleted"
+ },
+ {
+  "key": "audit.BANNER_UPDATE",
+  "ar": "تعديل بانر",
+  "en": "Banner updated"
+ },
+ {
+  "key": "audit.BAN_REINSTATED",
+  "ar": "رفع الحظر",
+  "en": "Ban lifted"
+ },
+ {
+  "key": "audit.COMPLAINT_RESOLVED",
+  "ar": "حل شكوى",
+  "en": "Complaint resolved"
+ },
+ {
+  "key": "audit.CORRECTION_REQUESTED",
+  "ar": "طلب تصحيح",
+  "en": "Correction requested"
+ },
+ {
+  "key": "audit.CORRECTION_ACCEPTED",
+  "ar": "قبول تصحيح",
+  "en": "Correction accepted"
+ },
+ {
+  "key": "audit.CORRECTION_REJECTED",
+  "ar": "رفض تصحيح",
+  "en": "Correction rejected"
+ },
+ {
+  "key": "audit.DOCUMENT_REVIEW",
+  "ar": "مراجعة مستند",
+  "en": "Document review"
+ },
+ {
+  "key": "audit.DRIVER_APPLICATION_APPROVED",
+  "ar": "قبول طلب سائق",
+  "en": "Driver application approved"
+ },
+ {
+  "key": "audit.DRIVER_APPLICATION_CORRECTION",
+  "ar": "طلب تصحيح لطلب سائق",
+  "en": "Driver application correction"
+ },
+ {
+  "key": "audit.DRIVER_APPLICATION_REJECTED",
+  "ar": "رفض طلب سائق",
+  "en": "Driver application rejected"
+ },
+ {
+  "key": "audit.DRIVER_AREAS_SELF_SET",
+  "ar": "السائق حدد مناطقه",
+  "en": "Driver set own areas"
+ },
+ {
+  "key": "audit.DRIVER_AREAS_SET",
+  "ar": "تحديد مناطق سائق",
+  "en": "Driver areas set"
+ },
+ {
+  "key": "audit.DRIVER_DEBT_SETTLED",
+  "ar": "تسوية مديونية سائق",
+  "en": "Driver debt settled"
+ },
+ {
+  "key": "audit.DRIVER_GENDER_SET",
+  "ar": "تحديد جنس السائق",
+  "en": "Driver gender set"
+ },
+ {
+  "key": "audit.ORDER_CANCELLED",
+  "ar": "إلغاء طلب",
+  "en": "Order cancelled"
+ },
+ {
+  "key": "audit.PARTNER_CREATE",
+  "ar": "إضافة شريك",
+  "en": "Partner created"
+ },
+ {
+  "key": "audit.PARTNER_PAYOUT_FAILED",
+  "ar": "فشل تحويل شريك",
+  "en": "Partner payout failed"
+ },
+ {
+  "key": "audit.PARTNER_PAYOUT_REQUESTED",
+  "ar": "طلب تحويل لشريك",
+  "en": "Partner payout requested"
+ },
+ {
+  "key": "audit.PARTNER_PAYOUT_TRANSFERRED",
+  "ar": "تم تحويل أرباح شريك",
+  "en": "Partner payout transferred"
+ },
+ {
+  "key": "audit.PARTNER_STATEMENTS_GENERATE",
+  "ar": "إنشاء كشوف الشركاء",
+  "en": "Partner statements generated"
+ },
+ {
+  "key": "audit.PARTNER_STATEMENT_PAID",
+  "ar": "دفع كشف شريك",
+  "en": "Partner statement paid"
+ },
+ {
+  "key": "audit.PARTNER_UPDATE",
+  "ar": "تعديل شريك",
+  "en": "Partner updated"
+ },
+ {
+  "key": "audit.PASSWORD_RESET",
+  "ar": "إعادة تعيين كلمة المرور",
+  "en": "Password reset"
+ },
+ {
+  "key": "audit.PAYMENT_CONFIRMED",
+  "ar": "تأكيد دفعة",
+  "en": "Payment confirmed"
+ },
+ {
+  "key": "audit.PAYMENT_REJECTED",
+  "ar": "رفض دفعة",
+  "en": "Payment rejected"
+ },
+ {
+  "key": "audit.PAYOUT_MARKED_TRANSFERRED",
+  "ar": "تأكيد تحويل لسائق",
+  "en": "Payout marked transferred"
+ },
+ {
+  "key": "audit.PAYOUT_RETRY",
+  "ar": "إعادة تحويل لسائق",
+  "en": "Payout retried"
+ },
+ {
+  "key": "audit.PRICE_ADJUSTED",
+  "ar": "تعديل سعر طلب",
+  "en": "Price adjusted"
+ },
+ {
+  "key": "audit.PROMO_CREATE",
+  "ar": "إضافة كود خصم",
+  "en": "Promo created"
+ },
+ {
+  "key": "audit.PROMO_DELETE",
+  "ar": "حذف كود خصم",
+  "en": "Promo deleted"
+ },
+ {
+  "key": "audit.PROMO_UPDATE",
+  "ar": "تعديل كود خصم",
+  "en": "Promo updated"
+ },
+ {
+  "key": "audit.REFERRAL_REVOKED",
+  "ar": "سحب مكافأة إحالة",
+  "en": "Referral revoked"
+ },
+ {
+  "key": "audit.REVEAL_CPR",
+  "ar": "عرض رقم الهوية كاملًا",
+  "en": "CPR revealed"
+ },
+ {
+  "key": "audit.SETTINGS_CHANGED",
+  "ar": "تغيير الإعدادات",
+  "en": "Settings changed"
+ },
+ {
+  "key": "audit.SOS_RESOLVED",
+  "ar": "إغلاق نداء استغاثة",
+  "en": "SOS resolved"
+ },
+ {
+  "key": "audit.SUBSCRIPTION_DRIVER_CHANGED",
+  "ar": "تغيير سائق الاشتراك",
+  "en": "Subscription driver changed"
+ },
+ {
+  "key": "audit.SUBSCRIPTION_PAUSED",
+  "ar": "إيقاف اشتراك مؤقتًا",
+  "en": "Subscription paused"
+ },
+ {
+  "key": "audit.SUBSCRIPTION_QUOTED",
+  "ar": "تسعير اشتراك",
+  "en": "Subscription quoted"
+ },
+ {
+  "key": "audit.SUBSCRIPTION_REJECTED",
+  "ar": "رفض اشتراك",
+  "en": "Subscription rejected"
+ },
+ {
+  "key": "audit.SUBSCRIPTION_RESUMED",
+  "ar": "استئناف اشتراك",
+  "en": "Subscription resumed"
+ },
+ {
+  "key": "audit.USER_EDITED_BY_ADMIN",
+  "ar": "تعديل مستخدم من الإدارة",
+  "en": "User edited by admin"
+ },
+ {
+  "key": "audit.VIEW_USER_LOCATION",
+  "ar": "عرض موقع مستخدم",
+  "en": "User location viewed"
+ },
+ {
+  "key": "audit.WALLET_CREDIT",
+  "ar": "إضافة رصيد للمحفظة",
+  "en": "Wallet credit"
+ },
+ {
+  "key": "audit.WALLET_DEBIT",
+  "ar": "خصم من المحفظة",
+  "en": "Wallet debit"
+ },
+ {
+  "key": "audit.WHATSAPP_PHONE_VERIFIED",
+  "ar": "تأكيد الرقم عبر واتساب",
+  "en": "Phone verified via WhatsApp"
+ },
+ {
+  "key": "audit.APPROVED",
+  "ar": "مقبول",
+  "en": "Approved"
+ },
+ {
+  "key": "audit.REJECTED",
+  "ar": "مرفوض",
+  "en": "Rejected"
+ },
+ {
+  "key": "audit.PENDING_REVIEW",
+  "ar": "بانتظار المراجعة",
+  "en": "Pending review"
+ },
+ {
+  "key": "audit.SUSPENDED",
+  "ar": "موقوف",
+  "en": "Suspended"
+ },
+ {
+  "key": "audit.f.reason",
+  "ar": "السبب",
+  "en": "Reason"
+ },
+ {
+  "key": "audit.f.amount",
+  "ar": "المبلغ",
+  "en": "Amount"
+ },
+ {
+  "key": "audit.f.recipients",
+  "ar": "عدد المستلمين",
+  "en": "Recipients"
+ },
+ {
+  "key": "audit.f.title",
+  "ar": "العنوان",
+  "en": "Title"
+ },
+ {
+  "key": "audit.f.old_price",
+  "ar": "السعر القديم",
+  "en": "Old price"
+ },
+ {
+  "key": "audit.f.new_price",
+  "ar": "السعر الجديد",
+  "en": "New price"
+ },
+ {
+  "key": "audit.f.field",
+  "ar": "الحقل",
+  "en": "Field"
+ },
+ {
+  "key": "audit.f.old",
+  "ar": "القيمة القديمة",
+  "en": "Old value"
+ },
+ {
+  "key": "audit.f.new",
+  "ar": "القيمة الجديدة",
+  "en": "New value"
+ },
+ {
+  "key": "audit.f.status",
+  "ar": "الحالة",
+  "en": "Status"
+ },
+ {
+  "key": "audit.f.result",
+  "ar": "النتيجة",
+  "en": "Result"
+ },
+ {
+  "key": "audit.f.user_id",
+  "ar": "رقم المستخدم",
+  "en": "User ID"
+ },
+ {
+  "key": "audit.f.order_id",
+  "ar": "رقم الطلب",
+  "en": "Order ID"
+ },
+ {
+  "key": "audit.f.payment_id",
+  "ar": "رقم الدفعة",
+  "en": "Payment ID"
+ },
+ {
+  "key": "audit.f.partner_id",
+  "ar": "رقم الشريك",
+  "en": "Partner ID"
+ },
+ {
+  "key": "audit.f.statement_id",
+  "ar": "رقم الكشف",
+  "en": "Statement ID"
+ },
+ {
+  "key": "audit.f.provider_ref",
+  "ar": "مرجع التحويل",
+  "en": "Provider reference"
+ },
+ {
+  "key": "audit.f.changes",
+  "ar": "التغييرات",
+  "en": "Changes"
+ },
+ {
+  "key": "audit.f.checked",
+  "ar": "تمت مراجعتها",
+  "en": "Checked"
+ },
+ {
+  "key": "audit.f.approved",
+  "ar": "مقبولة",
+  "en": "Approved"
+ },
+ {
+  "key": "audit.f.rejected",
+  "ar": "مرفوضة",
+  "en": "Rejected"
+ },
+ {
+  "key": "audit.f.errors",
+  "ar": "أخطاء",
+  "en": "Errors"
+ },
+ {
+  "key": "audit.f.balance",
+  "ar": "الرصيد",
+  "en": "Balance"
+ },
+ {
+  "key": "audit.f.direction",
+  "ar": "النوع",
+  "en": "Direction"
+ },
+ {
+  "key": "audit.f.period",
+  "ar": "الفترة",
+  "en": "Period"
+ },
+ {
+  "key": "err.ADJUST_AFTER_PAYMENT",
+  "ar": "لا يمكن تعديل السعر بعد الدفع. استرد المبلغ أولًا.",
+  "en": "Price can't be changed after payment — refund first."
+ },
+ {
+  "key": "err.INSUFFICIENT_WALLET",
+  "ar": "رصيد المحفظة لا يكفي.",
+  "en": "Not enough wallet balance."
+ },
+ {
+  "key": "err.BAD_AMOUNT",
+  "ar": "المبلغ غير صحيح (الحد 10000).",
+  "en": "Invalid amount (max 10000)."
+ },
+ {
+  "key": "err.ALREADY_PAID",
+  "ar": "هذا الكشف مدفوع بالفعل.",
+  "en": "Already paid."
+ },
+ {
+  "key": "err.PAYOUT_IN_PROGRESS",
+  "ar": "يوجد تحويل جارٍ لهذا الكشف.",
+  "en": "A payout is already in progress."
+ },
+ {
+  "key": "err.NOTHING_TO_RETRY",
+  "ar": "لا يوجد تحويل فاشل لإعادته.",
+  "en": "Nothing to retry."
+ },
+ {
+  "key": "err.PARTNER_NO_BANK_DETAILS",
+  "ar": "أضف IBAN أو معرّف Tap للشريك أولًا.",
+  "en": "Add the partner's IBAN or Tap ID first."
+ },
+ {
+  "key": "err.AMOUNT_ZERO",
+  "ar": "المبلغ صفر.",
+  "en": "The amount is zero."
+ },
+ {
+  "key": "err.CONFIRM_REQUIRED",
+  "ar": "يلزم التأكيد.",
+  "en": "Confirmation required."
+ },
+ {
+  "key": "err.PARTNER_PERCENT_EXCEEDS_100",
+  "ar": "مجموع نسب الشركاء النشطين يتجاوز 100%.",
+  "en": "Active partners exceed 100%."
+ },
+ {
+  "key": "err.BAD_PERIOD",
+  "ar": "الشهر غير صحيح.",
+  "en": "Invalid month."
+ },
+ {
+  "key": "err.TAP_PAYOUTS_NOT_CONFIGURED",
+  "ar": "تحويلات Tap غير مفعّلة على الخادم.",
+  "en": "Tap payouts are not configured on the server."
  }
 ]
