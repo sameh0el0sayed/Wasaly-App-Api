@@ -1,6 +1,6 @@
-import logging
 import hashlib
 import hmac
+import logging
 import re
 import secrets
 import uuid
@@ -18,8 +18,15 @@ from ..database import get_db
 from ..deps import current_user, request_lang
 from ..i18n import localize
 from ..models import (
-    Complaint, DriverProfile, LoginEvent, User, UserDevice, Vehicle,
-    WhatsAppVerification, WhatsAppWebhookEvent, utcnow,
+    Complaint,
+    DriverProfile,
+    LoginEvent,
+    User,
+    UserDevice,
+    Vehicle,
+    WhatsAppVerification,
+    WhatsAppWebhookEvent,
+    utcnow,
 )
 from ..schemas import ChangePasswordIn, ForgotPasswordIn, LoginIn, RegisterIn, WhatsAppVerificationRequestIn
 from ..security import cpr_hash, create_access_token, encrypt, hash_password, normalize_phone, verify_password
@@ -38,7 +45,7 @@ _OTP_DIGITS = str.maketrans("٠١٢٣٤٥٦٧٨٩۰۱۲۳۴۵۶۷۸۹", "0123456
 
 def _otp_digest(verification_id: str, otp: str) -> str:
     secret = settings.secret_key.encode("utf-8")
-    message = f"whatsapp-reverse-otp:{verification_id}:{otp}".encode("utf-8")
+    message = f"whatsapp-reverse-otp:{verification_id}:{otp}".encode()
     return hmac.new(secret, message, hashlib.sha256).hexdigest()
 
 

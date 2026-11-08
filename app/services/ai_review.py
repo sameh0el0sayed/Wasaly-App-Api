@@ -4,7 +4,8 @@ import base64
 import json
 import logging
 import re
-from datetime import datetime, timedelta, timezone
+import uuid
+from datetime import UTC, datetime, timedelta
 from decimal import Decimal, InvalidOperation
 from difflib import SequenceMatcher
 
@@ -14,12 +15,12 @@ from sqlalchemy import select
 from ..config import settings
 from ..constants import AccountStatus, Role
 from ..database import SessionLocal
-from ..models import AdminAuditLog, DriverProfile, Order, Payment, ProfileChange, User, UploadedFile
+from ..models import AdminAuditLog, DriverProfile, Order, Payment, ProfileChange, UploadedFile, User
 from ..security import decrypt, normalize_phone
-from ..services import settings_service
-from ..services.files import get_bytes
 from ..services import corrections as correction_service
+from ..services import settings_service
 from ..services.audit import audit
+from ..services.files import get_bytes
 from ..services.notifications import notify
 
 log = logging.getLogger("ai-review")
@@ -529,8 +530,24 @@ async def review_correction(change_id: int, reviewer_id: int) -> str:
         return "accepted"
 
 
+STATE: dict = {"running": False, "last_heartbeat_at": None, "next_review_at": None, "last_cycle_status": None, "last_error": None}
+
+
 async def run_review_cycle() -> dict:
+    STATE["running"] = True
+    try:
+        result = await _run_review_cycle()
+    finally:
+        STATE["running"] = False
+    STATE["last_cycle_status"] = "error" if str(result.get("status", "")).endswith("error") or result.get("status", "").startswith("disabled") else "completed"
+    STATE["last_error"] = result.get("error_message") or result.get("error") or (result.get("status") if result.get("status", "").startswith("disabled") else None)
+    return result
+
+
+async def _run_review_cycle() -> dict:
     summary = {
+        "cycle_id": uuid.uuid4().hex,
+        "started_at": datetime.now(UTC).isoformat(),
         "status": "completed",
         "users_checked": 0,
         "users_approved": [],
@@ -637,8 +654,7 @@ async def review_loop() -> None:
                 next_review += interval
             continue
 
-        next_at = (datetime.now(timezone.utc) + timedelta(seconds=remaining)).isoformat()
-        heartbeat = {"status": "alive", "next_review_in_seconds": remaining, "next_review_at": next_at}
+        next_at = (datetime.now(UTC) + timedelta(seconds=remaining)).isoformat()
         log.info("AI review worker alive; next attempt in %s seconds at %s", remaining, next_at)
-        await _write_worker_audit("AI_REVIEW_HEARTBEAT", heartbeat)
+        STATE.update(last_heartbeat_at=datetime.now(UTC).isoformat(), next_review_at=next_at)  # not written to the audit log (one row a minute flooded it)
         await asyncio.sleep(min(60, remaining))
