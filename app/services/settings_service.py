@@ -22,6 +22,7 @@ DEFAULTS = {
     "analytics_retention_days": "180",
     "license_job_last_run": "",
     "partners_last_generated": "",
+    "whatsapp_verification_required": "false",
     "analytics_cleanup_last_run": "",
     "currency_code": "BHD",
     "unit_price": "0.500",

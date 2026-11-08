@@ -228,17 +228,20 @@ async def whatsapp_webhook(request: Request, db: AsyncSession = Depends(get_db))
 
 @router.post("/auth/register", status_code=201)
 async def register(body: RegisterIn, db: AsyncSession = Depends(get_db), lang: str = Depends(request_lang)):
-    """Creates a pending account only after the submitted phone completed reverse-OTP verification."""
-    if not _whatsapp_configured():
-        raise HTTPException(503, {"code": "WHATSAPP_VERIFICATION_NOT_CONFIGURED"})
-    verification = await db.get(WhatsAppVerification, body.whatsapp_verification_id, with_for_update=True)
-    if (not verification or verification.phone != body.phone or verification.status != "VERIFIED"
-            or verification.user_id is not None or not verification.verified_at):
-        raise HTTPException(409, {"code": "PHONE_VERIFICATION_REQUIRED"})
-    if utcnow() - verification.verified_at > timedelta(hours=24):
-        verification.status = "EXPIRED"
-        await db.commit()
-        raise HTTPException(409, {"code": "PHONE_VERIFICATION_EXPIRED"})
+    """Creates a pending account. WhatsApp reverse-OTP is enforced only when whatsapp_verification_required=true (default false)."""
+    verification = None
+    if (await settings_service.get_all(db))["whatsapp_verification_required"] == "true":  # off by default
+        if not _whatsapp_configured():
+            raise HTTPException(503, {"code": "WHATSAPP_VERIFICATION_NOT_CONFIGURED"})
+        verification = (await db.get(WhatsAppVerification, body.whatsapp_verification_id, with_for_update=True)
+                        if body.whatsapp_verification_id else None)
+        if (not verification or verification.phone != body.phone or verification.status != "VERIFIED"
+                or verification.user_id is not None or not verification.verified_at):
+            raise HTTPException(409, {"code": "PHONE_VERIFICATION_REQUIRED"})
+        if utcnow() - verification.verified_at > timedelta(hours=24):
+            verification.status = "EXPIRED"
+            await db.commit()
+            raise HTTPException(409, {"code": "PHONE_VERIFICATION_EXPIRED"})
     dup = await db.execute(select(User.id).where(or_(User.phone == body.phone, User.cpr_hash == cpr_hash(body.cpr))))
     if dup.first():
         banned = (await db.execute(select(User.id).where(or_(User.phone == body.phone, User.cpr_hash == cpr_hash(body.cpr)),
@@ -252,7 +255,7 @@ async def register(body: RegisterIn, db: AsyncSession = Depends(get_db), lang: s
     user = User(full_name=body.full_name, phone=body.phone, cpr_encrypted=encrypt(body.cpr),
                 cpr_hash=cpr_hash(body.cpr), cpr_last3=body.cpr[-3:], password_hash=hash_password(body.password),
                 role=body.role, account_status=AccountStatus.PENDING_APPROVAL,
-                phone_verified=True, language=body.language or lang)
+                phone_verified=verification is not None, language=body.language or lang)
     db.add(user)
     try:
         await db.flush()
@@ -288,14 +291,15 @@ async def register(body: RegisterIn, db: AsyncSession = Depends(get_db), lang: s
                              license_expiry_date=d.license_expiry_date, license_issue_date=d.license_issue_date, license_document=d.license_document,
                              gender=d.gender, smoking_allowed=d.smoking_allowed))
         db.add(Vehicle(driver_id=user.id, **v.model_dump()))
-    verification.user_id = user.id
-    verification.status = "CONSUMED"
-    audit(db, None, "WHATSAPP_PHONE_VERIFIED", "user", user.id,
-          details={"verification_id": verification.verification_id})
+    if verification:
+        verification.user_id = user.id
+        verification.status = "CONSUMED"
+        audit(db, None, "WHATSAPP_PHONE_VERIFIED", "user", user.id,
+              details={"verification_id": verification.verification_id})
     await db.commit()
     await db.refresh(user, ["driver_profile", "vehicle", "driver_application"])  # new instance: load before user_public()
     return {"user": user_public(user), "access_token": create_access_token(user.id, user.token_version),
-            "token_type": "bearer", "phone_verified": True,
+            "token_type": "bearer", "phone_verified": verification is not None,
             "message": localize("تم التحقق من رقم الهاتف. حسابك الآن قيد المراجعة من الإدارة", user.language)}
 
 

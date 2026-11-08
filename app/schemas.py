@@ -49,7 +49,7 @@ class DriverRegIn(BaseModel):
 
 class RegisterIn(BaseModel):
     role: Literal["CUSTOMER", "DRIVER"]
-    whatsapp_verification_id: str = Field(min_length=36, max_length=36)
+    whatsapp_verification_id: str | None = Field(default=None, min_length=36, max_length=36)  # only used when whatsapp_verification_required=true
     language: Literal["ar", "en"] | None = None  # default: Accept-Language header, else ar
     full_name: str = Field(min_length=2, max_length=120)
     phone: str
