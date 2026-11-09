@@ -61,7 +61,7 @@ async def switch_role(body: SwitchIn, user: User = Depends(current_user), db: As
         busy = (await db.execute(select(Order.id).where(Order.driver_id == user.id, Order.order_status.in_(S.DRIVER_BUSY)).limit(1))).scalar()
         if busy:
             raise HTTPException(409, {"code": "SWITCH_BLOCKED_ACTIVE_TRIP", "order_id": busy})
-    elif user.role == Role.CUSTOMER:
+    elif user.role == Role.CUSTOMER and body.role not in Role.ADMINS:  # an admin may always return to the admin role, even with an open customer order
         busy = (await db.execute(select(Order.id).where(Order.customer_id == user.id, Order.order_status.in_(S.SEARCHING | S.DRIVER_BUSY)).limit(1))).scalar()
         if busy:
             raise HTTPException(409, {"code": "SWITCH_BLOCKED_ACTIVE_ORDER", "order_id": busy})
