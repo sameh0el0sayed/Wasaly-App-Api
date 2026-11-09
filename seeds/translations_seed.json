@@ -8968,5 +8968,95 @@
   "key": "v21.w_order",
   "ar": "اطلب الآن",
   "en": "Order now"
+ },
+ {
+  "key": "v21.web_admin_only",
+  "ar": "نسخة الويب مخصّصة للإدارة",
+  "en": "The web version is for admins"
+ },
+ {
+  "key": "v21.web_admin_only_sub",
+  "ar": "استخدم تطبيق وصلي على جوالك كعميل أو سائق.",
+  "en": "Please use the Wasaly mobile app as a customer or driver."
+ },
+ {
+  "key": "v21.logout",
+  "ar": "تسجيل الخروج",
+  "en": "Sign out"
+ },
+ {
+  "key": "v21.g_ops",
+  "ar": "التشغيل",
+  "en": "Operations"
+ },
+ {
+  "key": "v21.g_people",
+  "ar": "المستخدمون",
+  "en": "People"
+ },
+ {
+  "key": "v21.g_money",
+  "ar": "المالية",
+  "en": "Finance"
+ },
+ {
+  "key": "v21.g_review",
+  "ar": "المراجعة والرقابة",
+  "en": "Review & audit"
+ },
+ {
+  "key": "v21.g_system",
+  "ar": "النظام",
+  "en": "System"
+ },
+ {
+  "key": "v21.lang",
+  "ar": "اللغة",
+  "en": "Language"
+ },
+ {
+  "key": "v21.recent_orders",
+  "ar": "آخر الطلبات",
+  "en": "Recent orders"
+ },
+ {
+  "key": "v21.view_all",
+  "ar": "عرض الكل",
+  "en": "View all"
+ },
+ {
+  "key": "v21.recent_activity",
+  "ar": "آخر النشاطات",
+  "en": "Recent activity"
+ },
+ {
+  "key": "v21.usage",
+  "ar": "نشاط المستخدمين (30 يومًا)",
+  "en": "User activity (30 days)"
+ },
+ {
+  "key": "v21.dau",
+  "ar": "يوميًا",
+  "en": "Daily"
+ },
+ {
+  "key": "v21.wau",
+  "ar": "أسبوعيًا",
+  "en": "Weekly"
+ },
+ {
+  "key": "v21.mau",
+  "ar": "شهريًا",
+  "en": "Monthly"
+ },
+ {
+  "key": "v21.new_users",
+  "ar": "جدد",
+  "en": "New"
+ },
+ {
+  "key": "v21.avg_session",
+  "ar": "متوسط الجلسة (دقيقة)",
+  "en": "Avg session (min)"
  }
 ]
