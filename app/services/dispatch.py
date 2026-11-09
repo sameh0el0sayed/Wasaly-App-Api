@@ -179,9 +179,11 @@ async def expire_offers_and_orders(db: AsyncSession) -> None:
                                                       and_(Order.scheduled_at.is_not(None), Order.scheduled_at <= cutoff))))).scalars().all()
     for order in stale:
         await close_pending_offers(db, order.id)
-        await transition(db, order, S.EXPIRED, None, "SYSTEM", "Order timeout")
-        await notify(db, order.customer_id, "ORDER_EXPIRED", "انتهت صلاحية الطلب",
-                     "انتهت مهلة الطلب دون إسناده لسائق.", order.id)
+        await close_pending_counters(db, order.id, CounterStatus.REJECTED)
+        await transition(db, order, S.CANCELLED, None, "SYSTEM", "Order timeout")
+        order.cancelled_by_role, order.cancellation_reason, order.cancelled_at = "SYSTEM", "انتهت المهلة", now
+        await notify(db, order.customer_id, "ORDER_CANCELLED_TIMEOUT", "أُلغي الطلب",
+                     "أُلغي طلبك لانتهاء المهلة دون قبول سائق.", order.id)
 
 
 async def force_offline(db: AsyncSession, driver_id: int) -> None:

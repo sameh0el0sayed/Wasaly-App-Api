@@ -28,7 +28,7 @@ async def list_orders(status: str | None = None, customer_id: int | None = None,
     limit, offset = page
     stmt = select(Order)
     if status:
-        stmt = stmt.where(Order.order_status == status)
+        stmt = stmt.where(Order.order_status.in_([S.CANCELLED, S.EXPIRED]) if status == S.CANCELLED else Order.order_status == status)
     if customer_id:
         stmt = stmt.where(Order.customer_id == customer_id)
     if driver_id:

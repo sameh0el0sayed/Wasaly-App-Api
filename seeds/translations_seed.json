@@ -9083,5 +9083,15 @@
   "key": "err.LIVE_TEST_TAP_DISABLED",
   "ar": "الدفع الإلكتروني متوقف أثناء وضع التجربة. استخدم BenefitPay.",
   "en": "Online payment is off during live test. Please use BenefitPay."
+ },
+ {
+  "key": "v22.cancel_timeout",
+  "ar": "ملغي — انتهت المهلة دون قبول سائق",
+  "en": "Cancelled — the waiting time ran out with no driver"
+ },
+ {
+  "key": "v22.cancel_timeout_short",
+  "ar": "انتهت المهلة",
+  "en": "Time ran out"
  }
 ]

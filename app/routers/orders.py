@@ -316,7 +316,7 @@ async def my_orders(status: str | None = None, page=Depends(paging), user: User 
     col = Order.customer_id if user.role == Role.CUSTOMER else Order.driver_id
     q = select(Order).where(col == user.id)
     if status:
-        q = q.where(Order.order_status == status)
+        q = q.where(Order.order_status.in_([S.CANCELLED, S.EXPIRED]) if status == S.CANCELLED else Order.order_status == status)
     total = (await db.execute(select(func.count()).select_from(q.subquery()))).scalar_one()
     rows = (await db.execute(q.order_by(Order.id.desc()).limit(limit).offset(offset))).scalars().all()
     return {"total": total, "items": [_view(o, user) for o in rows]}

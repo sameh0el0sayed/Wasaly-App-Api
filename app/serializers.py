@@ -93,6 +93,8 @@ def order_base(o: Order) -> dict:
         "payment_id": o.payment_id, "payment_method": o.payment_method, "payment_status": o.payment_status,
         "completed_at": dt(o.completed_at), "cancelled_at": dt(o.cancelled_at),
         "cancelled_by_role": o.cancelled_by_role, "cancellation_reason": o.cancellation_reason,
+        "cancel_reason_code": ("ORDER_TIMEOUT" if o.cancelled_by_role == "SYSTEM" or o.order_status == "EXPIRED"
+                               else (o.cancelled_by_role if o.cancelled_by_role in ("CUSTOMER", "DRIVER", "ADMIN") else None)),
         "server_time": dt(utcnow()),
     }
 
