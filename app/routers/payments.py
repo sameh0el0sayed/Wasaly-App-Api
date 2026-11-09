@@ -15,7 +15,7 @@ from ..models import AdminAuditLog, DriverPayout, Order, Payment, Subscription, 
 from ..schemas import BenefitPayIn, MarkTransferredIn, PaymentConfirmIn, ReasonIn
 from ..security import create_file_token, decrypt
 from ..serializers import dt, money, payment_out, payout_out
-from ..services import settings_service, tap
+from ..services import live_test, settings_service, tap
 from ..services.audit import audit
 from ..services.files import assert_owned
 from ..services.payments import attempt_payout, finalize_paid, notify_admins, tap_fee
@@ -39,7 +39,7 @@ async def _mine(db: AsyncSession, user: User, payment_id: int) -> Payment:
 async def payment_methods(user: User = Depends(customer_user), db: AsyncSession = Depends(get_db)):
     """What the payment screen shows: enabled methods, Tap fee, and the company BenefitPay account. All from settings."""
     s = await settings_service.get_all(db)
-    return {"methods": [m for m, on in (("TAP", s["tap_enabled"] == "true"), ("BENEFITPAY", s["benefitpay_enabled"] == "true")) if on],
+    return {"methods": [m for m, on in (("TAP", live_test.tap_on(s)), ("BENEFITPAY", s["benefitpay_enabled"] == "true")) if on],
             "tap": {"fee_percent": s["tap_fee_percent"], "fee_fixed": s["tap_fee_fixed"]},
             "benefitpay": {"account_name": s["benefitpay_account_name"], "account_number": s["benefitpay_account_number"],
                            "instructions": s["benefitpay_instructions"]}}
@@ -69,6 +69,7 @@ async def pay_with_tap(payment_id: int, user: User = Depends(customer_user), db:
     if p.payment_status in ("PAID", "PENDING_VERIFICATION"):
         raise HTTPException(409, {"code": "PAYMENT_NOT_OPEN", "status": p.payment_status})
     s = await settings_service.get_all(db)
+    live_test.block_tap(s)
     if s["tap_enabled"] != "true":
         raise HTTPException(409, {"code": "METHOD_DISABLED", "method": "TAP"})
     due = p.amount - (p.wallet_amount or 0)  # the wallet already covered part of it

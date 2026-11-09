@@ -9058,5 +9058,30 @@
   "key": "v21.avg_session",
   "ar": "متوسط الجلسة (دقيقة)",
   "en": "Avg session (min)"
+ },
+ {
+  "key": "v22.live_test_banner",
+  "ar": "وضع التجربة الحية — الدفع الإلكتروني (Tap) متوقف",
+  "en": "Live test mode — online card payment (Tap) is off"
+ },
+ {
+  "key": "v22.live_test",
+  "ar": "وضع التجربة الحية (Live test)",
+  "en": "Live test mode"
+ },
+ {
+  "key": "v22.live_test_help",
+  "ar": "يظهر شريط «تجربة حية» في كل الشاشات ويُوقَف الدفع عبر Tap، وكل شيء آخر يعمل (منه BenefitPay).",
+  "en": "Shows a live-test strip on every screen and turns Tap payments off; everything else (incl. BenefitPay) keeps working."
+ },
+ {
+  "key": "v22.live_test_message",
+  "ar": "نص الشريط (اختياري)",
+  "en": "Strip text (optional)"
+ },
+ {
+  "key": "err.LIVE_TEST_TAP_DISABLED",
+  "ar": "الدفع الإلكتروني متوقف أثناء وضع التجربة. استخدم BenefitPay.",
+  "en": "Online payment is off during live test. Please use BenefitPay."
  }
 ]

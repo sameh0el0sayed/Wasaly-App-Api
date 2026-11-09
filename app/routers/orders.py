@@ -16,8 +16,8 @@ from ..models import Complaint, CounterOffer, Order, OrderOffer, OrderStatusHist
 from ..schemas import EstimateIn, OptionalReasonIn, OrderCreateIn, PriceRaiseIn, ReasonIn
 from ..serializers import driver_card, history_out, order_for_admin, order_for_customer, order_for_driver
 from ..services import favorites as fav
+from ..services import live_test, settings_service
 from ..services import price_increase as pi
-from ..services import settings_service
 from ..services.dispatch import dispatch_order, has_active_order, work_blockers
 from ..services.estimate import money_estimate, route_guess
 from ..services.extras import compute_extras, resolve_prefs
@@ -81,7 +81,8 @@ async def app_config(db: AsyncSession = Depends(get_db)):
             "price_increase": {"enabled": pi.config(s)["enabled"], "max_percent": pi.config(s)["max_percent"],
                                "steps": pi.config(s)["steps"], "counter_ttl_seconds": pi.config(s)["counter_ttl_seconds"]},
             "currency": p.currency, "currency_decimals": p.decimals, "upload_max_mb": int(s["upload_max_mb"]),
-            "payment_methods": [m for m, k in (("TAP", "tap_enabled"), ("BENEFITPAY", "benefitpay_enabled")) if s[k] == "true"],
+            "payment_methods": [m for m, on in (("TAP", live_test.tap_on(s)), ("BENEFITPAY", s["benefitpay_enabled"] == "true")) if on],
+            "live_test": live_test.is_live_test(s), "live_test_message": s["live_test_message"] or "",
             "cancel_after_accept_allowed": s["cancel_after_accept_allowed"] == "true",
             "server_time": utcnow().isoformat()}
 

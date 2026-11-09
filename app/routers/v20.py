@@ -14,7 +14,7 @@ from ..database import get_db
 from ..deps import admin_user, super_admin_user
 from ..models import Partner, PartnerPayout, PartnerStatement, Payment, User, WalletEntry, utcnow
 from ..serializers import dt
-from ..services import settings_service
+from ..services import live_test, settings_service
 from ..services.audit import audit
 from ..services.notifications import notify
 from ..services.payouts import transfer
@@ -259,6 +259,7 @@ async def _run_tap_payout(db: AsyncSession, statement_id: int, admin: User, retr
         raise HTTPException(409, {"code": "PAYOUT_IN_PROGRESS"})
     if retry and (not last or last.status != "FAILED"):
         raise HTTPException(409, {"code": "NOTHING_TO_RETRY"})
+    live_test.block_tap(await settings_service.get_all(db))
     if settings.payout_provider == "none":
         raise HTTPException(503, {"code": "TAP_PAYOUTS_NOT_CONFIGURED"})
     p = await db.get(Partner, s.partner_id)

@@ -254,7 +254,7 @@ def payment_out(p, settings_map: dict | None = None, admin: bool = False) -> dic
         out["benefitpay_account"] = {"name": settings_map.get("benefitpay_account_name"),
                                      "number": settings_map.get("benefitpay_account_number"),
                                      "instructions": settings_map.get("benefitpay_instructions")}
-        out["methods"] = [m for m, k in (("TAP", "tap_enabled"), ("BENEFITPAY", "benefitpay_enabled")) if settings_map.get(k) == "true"]
+        out["methods"] = [m for m, k in (("TAP", "tap_enabled"), ("BENEFITPAY", "benefitpay_enabled")) if settings_map.get(k) == "true" and not (m == "TAP" and settings_map.get("live_test") == "true")]
     if admin:
         out.update({"customer_id": p.customer_id, "driver_id": p.driver_id, "driver_amount": money(p.driver_amount, d),
                     "company_amount": money(p.company_amount, d), "verified_by": p.verified_by})

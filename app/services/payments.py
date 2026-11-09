@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from ..constants import Role
 from ..models import DriverPayout, DriverProfile, Order, Payment, User, utcnow
 from ..security import decrypt
-from . import payouts, settings_service
+from . import live_test, payouts, settings_service
 from .notifications import notify
 from .pricing import quantum
 
@@ -102,6 +102,8 @@ async def finalize_paid(db: AsyncSession, payment: Payment, verified_by: int | N
 async def attempt_payout(db: AsyncSession, payout: DriverPayout) -> None:
     if payout.status == "OFFSET" or payout.amount <= 0:
         return  # fully kept against the driver's debt
+    if live_test.is_live_test(await settings_service.get_all(db)):
+        return  # live test: no automatic transfers, stays pending for manual handling
     prof = (await db.execute(select(DriverProfile).where(DriverProfile.user_id == payout.driver_id))).scalar_one_or_none()
     driver = await db.get(User, payout.driver_id)
     account = decrypt(prof.payout_account_encrypted) if prof and prof.payout_account_encrypted else None

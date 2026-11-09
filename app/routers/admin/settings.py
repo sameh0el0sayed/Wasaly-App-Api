@@ -17,9 +17,13 @@ router = APIRouter(prefix="/api/admin", tags=["admin"])
 
 
 # ---------------- settings ----------------
+def _out(s: dict) -> dict:
+    return {**s, "live_test": s.get("live_test") == "true", "live_test_message": s.get("live_test_message") or ""}
+
+
 @router.get("/settings")
 async def get_settings(admin: User = Depends(admin_user), db: AsyncSession = Depends(get_db)):
-    return await settings_service.get_all(db)
+    return _out(await settings_service.get_all(db))
 
 
 @router.patch("/settings")
@@ -50,5 +54,8 @@ async def patch_settings(body: SettingsPatch, admin: User = Depends(super_admin_
         await settings_service.set_value(db, k, val, admin.id)
     audit(db, admin.id, "SETTINGS_CHANGED", "settings", "global", body.reason,
           {"before": {k: before[k] for k in changes}, "after": {k: str(v) for k, v in changes.items()}})
+    if "live_test" in changes and str(changes["live_test"]).lower() != before["live_test"]:
+        audit(db, admin.id, "SETTINGS_UPDATED", "settings", "live_test", body.reason,
+              {"before": {"live_test": before["live_test"] == "true"}, "after": {"live_test": bool(changes["live_test"])}})
     await db.commit()
-    return await settings_service.get_all(db)
+    return _out(await settings_service.get_all(db))

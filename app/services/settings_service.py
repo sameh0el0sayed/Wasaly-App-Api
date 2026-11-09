@@ -40,6 +40,8 @@ DEFAULTS = {
     "tap_fee_percent": "0",   # gateway fee charged to the customer on top (Tap)
     "tap_fee_fixed": "0",
     "tap_enabled": "true",
+    "live_test": "false",  # live-test mode: Tap (online card payment) is switched off everywhere
+    "live_test_message": "",
     "benefitpay_enabled": "true",
     "benefitpay_instructions": "",  # text shown to the customer, e.g. "حوّل المبلغ ثم ارفع صورة التحويل"
     "benefitpay_account_name": "",
