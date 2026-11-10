@@ -885,3 +885,19 @@ class ChatMessage(Base):
     role: Mapped[str] = mapped_column(String(10))  # user | model
     content: Mapped[str] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
+
+
+class ChatAction(Base):
+    """An action the AI assistant PROPOSED; it runs only after the user confirms it in the app (v23)."""
+    __tablename__ = "chat_actions"
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    conversation_id: Mapped[str] = mapped_column(ForeignKey("chat_conversations.id", ondelete="CASCADE"), index=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    type: Mapped[str] = mapped_column(String(30))
+    params: Mapped[dict] = mapped_column(JSON, default=dict)
+    card: Mapped[dict] = mapped_column(JSON, default=dict)  # title, summary, details, danger (+ quote total for create_order)
+    status: Mapped[str] = mapped_column(String(12), default="PENDING", index=True)  # PENDING | DONE | CANCELLED
+    result: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
+    expires_at: Mapped[datetime] = mapped_column(UTCDateTime)
+    executed_at: Mapped[datetime | None] = mapped_column(UTCDateTime, nullable=True)

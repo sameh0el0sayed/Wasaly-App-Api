@@ -9093,5 +9093,40 @@
   "key": "v22.cancel_timeout_short",
   "ar": "انتهت المهلة",
   "en": "Time ran out"
+ },
+ {
+  "key": "v23.action_confirm",
+  "ar": "تأكيد",
+  "en": "Confirm"
+ },
+ {
+  "key": "v23.action_cancel",
+  "ar": "إلغاء",
+  "en": "Cancel"
+ },
+ {
+  "key": "v23.action_done",
+  "ar": "تم التنفيذ",
+  "en": "Done"
+ },
+ {
+  "key": "v23.action_cancelled",
+  "ar": "تم الإلغاء",
+  "en": "Cancelled"
+ },
+ {
+  "key": "err.ACTION_EXPIRED",
+  "ar": "انتهت صلاحية هذا الإجراء، اطلبه مرة أخرى.",
+  "en": "This action expired, please ask again."
+ },
+ {
+  "key": "err.ACTION_ALREADY_DONE",
+  "ar": "تم تنفيذ هذا الإجراء من قبل.",
+  "en": "This action was already done."
+ },
+ {
+  "key": "err.QUOTE_CHANGED",
+  "ar": "تغيّر السعر، راجع العرض الجديد.",
+  "en": "The price changed, please review the new offer."
  }
 ]
