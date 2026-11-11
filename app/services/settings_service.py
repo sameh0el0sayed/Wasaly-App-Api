@@ -37,8 +37,8 @@ DEFAULTS = {
     "country_boundary": json.dumps({"type": "polygon", "points": [[25.50, 50.37], [25.50, 50.85], [26.35, 50.85], [26.35, 50.37]]}),
     "estimate_road_factor": "1.35",  # straight-line km x factor = road km (estimates only)
     "estimate_avg_speed_kmh": "35",  # average city speed used to guess duration (estimates only)
-    "tap_fee_percent": "0",   # gateway fee charged to the customer on top (Tap)
-    "tap_fee_fixed": "0",
+    "tap_fee_percent": "3.245",   # Tap Beginner package, local Visa/MC 2.95% + 10% VAT; charged to the customer on top
+    "tap_fee_fixed": "0.110",  # 100 fils + 10% VAT
     "tap_enabled": "true",
     "live_test": "false",  # live-test mode: Tap (online card payment) is switched off everywhere
     "live_test_message": "",
