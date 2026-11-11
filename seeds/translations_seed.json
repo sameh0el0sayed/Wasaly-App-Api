@@ -9248,5 +9248,15 @@
   "key": "v25.benefit_fee_fixed",
   "ar": "رسم بنفت باي الثابت",
   "en": "BenefitPay fixed fee"
+ },
+ {
+  "key": "v25.m_BENEFITPAY_FREE",
+  "ar": "تحويل بنفت باي (مجاني)",
+  "en": "BenefitPay transfer (free)"
+ },
+ {
+  "key": "v25.free",
+  "ar": "مجاني",
+  "en": "Free"
  }
 ]

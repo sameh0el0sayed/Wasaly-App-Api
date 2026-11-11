@@ -42,7 +42,7 @@ async def payment_methods(user: User = Depends(customer_user), db: AsyncSession 
     return {"methods": [m for m, on in (("TAP", live_test.tap_on(s)), ("BENEFIT", live_test.benefit_on(s)), ("BENEFITPAY", s["benefitpay_enabled"] == "true")) if on],
             "tap": {"fee_percent": s["tap_fee_percent"], "fee_fixed": s["tap_fee_fixed"]},
             "benefit": {"fee_percent": s["benefit_fee_percent"], "fee_fixed": s["benefit_fee_fixed"]},
-            "benefitpay": {"account_name": s["benefitpay_account_name"], "account_number": s["benefitpay_account_number"],
+            "benefitpay": {"free": True, "fee_percent": "0", "fee_fixed": "0", "account_name": s["benefitpay_account_name"], "account_number": s["benefitpay_account_number"],
                            "instructions": s["benefitpay_instructions"]}}
 
 
