@@ -9168,5 +9168,55 @@
   "key": "v24.dismiss",
   "ar": "تجاهل",
   "en": "Dismiss"
+ },
+ {
+  "key": "v24.note",
+  "ar": "ملاحظة (اختياري)",
+  "en": "Note (optional)"
+ },
+ {
+  "key": "v24.scan",
+  "ar": "فحص الآن",
+  "en": "Scan now"
+ },
+ {
+  "key": "v24.empty",
+  "ar": "لا توجد حالات",
+  "en": "No flags"
+ },
+ {
+  "key": "v24.status.OPEN",
+  "ar": "مفتوحة",
+  "en": "Open"
+ },
+ {
+  "key": "v24.status.CONFIRMED",
+  "ar": "مؤكدة",
+  "en": "Confirmed"
+ },
+ {
+  "key": "v24.status.DISMISSED",
+  "ar": "متجاهلة",
+  "en": "Dismissed"
+ },
+ {
+  "key": "v24.sev.HIGH",
+  "ar": "عالية",
+  "en": "High"
+ },
+ {
+  "key": "v24.sev.MEDIUM",
+  "ar": "متوسطة",
+  "en": "Medium"
+ },
+ {
+  "key": "v24.sev.LOW",
+  "ar": "منخفضة",
+  "en": "Low"
+ },
+ {
+  "key": "err.FLAG_ALREADY_RESOLVED",
+  "ar": "تمت مراجعة هذه الحالة من قبل.",
+  "en": "This flag was already resolved."
  }
 ]
