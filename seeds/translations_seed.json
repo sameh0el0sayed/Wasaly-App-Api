@@ -9128,5 +9128,45 @@
   "key": "err.QUOTE_CHANGED",
   "ar": "تغيّر السعر، راجع العرض الجديد.",
   "en": "The price changed, please review the new offer."
+ },
+ {
+  "key": "v24.fraud_title",
+  "ar": "اشتباه احتيال السائقين",
+  "en": "Driver fraud flags"
+ },
+ {
+  "key": "v24.rule.PAIR_REPEAT",
+  "ar": "رحلات متكررة مع نفس العميل",
+  "en": "Repeated trips with the same customer"
+ },
+ {
+  "key": "v24.rule.SHORT_TRIPS",
+  "ar": "رحلات قصيرة جدًا",
+  "en": "Very short trips"
+ },
+ {
+  "key": "v24.rule.PADDED_DURATION",
+  "ar": "مدة رحلة أطول بكثير من التقدير",
+  "en": "Trip time far above the estimate"
+ },
+ {
+  "key": "v24.rule.DRIVER_CANCELS",
+  "ar": "إلغاءات متكررة بعد الوصول",
+  "en": "Repeated cancellations after arrival"
+ },
+ {
+  "key": "v24.rule.OWN_REFERRALS",
+  "ar": "رحلات مع عملاء دعاهم السائق",
+  "en": "Trips with customers the driver invited"
+ },
+ {
+  "key": "v24.confirm",
+  "ar": "تأكيد الاحتيال",
+  "en": "Confirm fraud"
+ },
+ {
+  "key": "v24.dismiss",
+  "ar": "تجاهل",
+  "en": "Dismiss"
  }
 ]
