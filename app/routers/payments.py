@@ -39,8 +39,9 @@ async def _mine(db: AsyncSession, user: User, payment_id: int) -> Payment:
 async def payment_methods(user: User = Depends(customer_user), db: AsyncSession = Depends(get_db)):
     """What the payment screen shows: enabled methods, Tap fee, and the company BenefitPay account. All from settings."""
     s = await settings_service.get_all(db)
-    return {"methods": [m for m, on in (("TAP", live_test.tap_on(s)), ("BENEFITPAY", s["benefitpay_enabled"] == "true")) if on],
+    return {"methods": [m for m, on in (("TAP", live_test.tap_on(s)), ("BENEFIT", live_test.benefit_on(s)), ("BENEFITPAY", s["benefitpay_enabled"] == "true")) if on],
             "tap": {"fee_percent": s["tap_fee_percent"], "fee_fixed": s["tap_fee_fixed"]},
+            "benefit": {"fee_percent": s["benefit_fee_percent"], "fee_fixed": s["benefit_fee_fixed"]},
             "benefitpay": {"account_name": s["benefitpay_account_name"], "account_number": s["benefitpay_account_number"],
                            "instructions": s["benefitpay_instructions"]}}
 
@@ -72,8 +73,25 @@ async def pay_with_tap(payment_id: int, user: User = Depends(customer_user), db:
     live_test.block_tap(s)
     if s["tap_enabled"] != "true":
         raise HTTPException(409, {"code": "METHOD_DISABLED", "method": "TAP"})
+    return await _tap_charge(db, user, p, s, "TAP", "src_all", "tap")
+
+
+@router.post("/{payment_id}/benefit")
+async def pay_with_benefit(payment_id: int, user: User = Depends(customer_user), db: AsyncSession = Depends(get_db)):
+    """Benefit through the Tap gateway (hosted page, confirmed automatically). Fee: benefit_fee_* settings."""
+    p = await _mine(db, user, payment_id)
+    if p.payment_status in ("PAID", "PENDING_VERIFICATION"):
+        raise HTTPException(409, {"code": "PAYMENT_NOT_OPEN", "status": p.payment_status})
+    s = await settings_service.get_all(db)
+    live_test.block_tap(s)
+    if s["benefit_enabled"] != "true":
+        raise HTTPException(409, {"code": "METHOD_DISABLED", "method": "BENEFIT"})
+    return await _tap_charge(db, user, p, s, "BENEFIT", "src_bh.benefit", "benefit")
+
+
+async def _tap_charge(db: AsyncSession, user: User, p: Payment, s: dict, method: str, source: str, prefix: str):
     due = p.amount - (p.wallet_amount or 0)  # the wallet already covered part of it
-    fee = tap_fee(due, s, p.currency_decimals)
+    fee = tap_fee(due, s, p.currency_decimals, prefix)
     charged = due + fee
     base = settings.public_base_url.rstrip("/")
     ref = f"PAY-{p.id}"
@@ -81,13 +99,13 @@ async def pay_with_tap(payment_id: int, user: User = Depends(customer_user), db:
         "amount": float(charged), "currency": p.currency, "threeDSecure": True, "save_card": False,
         "description": f"Payment #{p.id}", "reference": {"transaction": ref, "order": ref},
         "customer": {"first_name": user.full_name, "phone": {"country_code": "973", "number": user.phone.lstrip("+")[-8:]}},
-        "source": {"id": "src_all"},
+        "source": {"id": source},
         "post": {"url": f"{base}/api/payments/tap/webhook"},
         "redirect": {"url": f"{base}/api/payments/tap/return"}})
     url = (charge.get("transaction") or {}).get("url")
     if not charge.get("id") or not url:
         raise HTTPException(502, {"code": "TAP_BAD_RESPONSE"})
-    p.payment_method, p.payment_status = "TAP", "PENDING_PAYMENT"
+    p.payment_method, p.payment_status = method, "PENDING_PAYMENT"
     p.gateway_fee, p.charged_amount, p.transaction_reference, p.tap_url = fee, charged, charge["id"], url
     p.reject_reason = None
     await db.commit()
@@ -118,7 +136,7 @@ async def pay_with_benefitpay(payment_id: int, body: BenefitPayIn, user: User = 
 
 async def _verify_and_apply(db: AsyncSession, charge_id: str) -> Payment | None:
     p = (await db.execute(select(Payment).where(Payment.transaction_reference == charge_id,
-                                                Payment.payment_method == "TAP"))).scalars().first()
+                                                Payment.payment_method.in_(["TAP", "BENEFIT"])))).scalars().first()
     if not p:
         return None
     charge = await tap.retrieve_charge(charge_id)
@@ -133,7 +151,7 @@ async def _verify_and_apply(db: AsyncSession, charge_id: str) -> Payment | None:
             log.error("Tap charge %s does not match payment %s", charge_id, p.id)
             await notify_admins(db, "PAYMENT_MISMATCH", "دفعة Tap غير مطابقة", f"payment #{p.id} charge {charge_id}")
             return p
-        await finalize_paid(db, p, None, "TAP")
+        await finalize_paid(db, p, None, p.payment_method)
     elif status in TAP_FAILED and p.payment_status == "PENDING_PAYMENT":
         p.payment_status = "FAILED"
         p.reject_reason = f"TAP_{status}"

@@ -42,6 +42,9 @@ DEFAULTS = {
     "tap_enabled": "true",
     "live_test": "false",  # live-test mode: Tap (online card payment) is switched off everywhere
     "live_test_message": "",
+    "benefit_enabled": "true",  # Benefit through the Tap gateway (online, automatic)
+    "benefit_fee_percent": "2.145",  # Tap Beginner package: Benefit 1.95% + 10% VAT, charged to the customer on top
+    "benefit_fee_fixed": "0.110",  # 100 fils + 10% VAT
     "benefitpay_enabled": "true",
     "benefitpay_instructions": "",  # text shown to the customer, e.g. "حوّل المبلغ ثم ارفع صورة التحويل"
     "benefitpay_account_name": "",

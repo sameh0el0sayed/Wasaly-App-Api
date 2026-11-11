@@ -9218,5 +9218,35 @@
   "key": "err.FLAG_ALREADY_RESOLVED",
   "ar": "تمت مراجعة هذه الحالة من قبل.",
   "en": "This flag was already resolved."
+ },
+ {
+  "key": "v20.m_BENEFIT",
+  "ar": "بنفت باي",
+  "en": "BenefitPay"
+ },
+ {
+  "key": "v20.m_BENEFITPAY_MANUAL",
+  "ar": "تحويل بنفت باي (إيصال)",
+  "en": "BenefitPay transfer (receipt)"
+ },
+ {
+  "key": "v25.benefit_fee",
+  "ar": "رسوم بنفت باي",
+  "en": "BenefitPay fee"
+ },
+ {
+  "key": "v25.benefit_enabled",
+  "ar": "تفعيل بنفت باي (عبر Tap)",
+  "en": "Enable BenefitPay (via Tap)"
+ },
+ {
+  "key": "v25.benefit_fee_percent",
+  "ar": "نسبة رسوم بنفت باي %",
+  "en": "BenefitPay fee %"
+ },
+ {
+  "key": "v25.benefit_fee_fixed",
+  "ar": "رسم بنفت باي الثابت",
+  "en": "BenefitPay fixed fee"
  }
 ]

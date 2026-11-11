@@ -81,7 +81,7 @@ async def app_config(db: AsyncSession = Depends(get_db)):
             "price_increase": {"enabled": pi.config(s)["enabled"], "max_percent": pi.config(s)["max_percent"],
                                "steps": pi.config(s)["steps"], "counter_ttl_seconds": pi.config(s)["counter_ttl_seconds"]},
             "currency": p.currency, "currency_decimals": p.decimals, "upload_max_mb": int(s["upload_max_mb"]),
-            "payment_methods": [m for m, on in (("TAP", live_test.tap_on(s)), ("BENEFITPAY", s["benefitpay_enabled"] == "true")) if on],
+            "payment_methods": [m for m, on in (("TAP", live_test.tap_on(s)), ("BENEFIT", live_test.benefit_on(s)), ("BENEFITPAY", s["benefitpay_enabled"] == "true")) if on],
             "live_test": live_test.is_live_test(s), "live_test_message": s["live_test_message"] or "",
             "cancel_after_accept_allowed": s["cancel_after_accept_allowed"] == "true",
             "server_time": utcnow().isoformat()}

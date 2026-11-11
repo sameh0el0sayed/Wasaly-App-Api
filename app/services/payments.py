@@ -22,9 +22,9 @@ async def notify_admins(db: AsyncSession, ntype: str, title: str, message: str, 
         await notify(db, uid, ntype, title, message, data=data)
 
 
-def tap_fee(amount: Decimal, s: dict, decimals: int) -> Decimal:
-    """Gateway fee paid by the CUSTOMER: amount x percent% + fixed (settings tap_fee_percent / tap_fee_fixed)."""
-    fee = amount * Decimal(s["tap_fee_percent"]) / Decimal(100) + Decimal(s["tap_fee_fixed"])
+def tap_fee(amount: Decimal, s: dict, decimals: int, prefix: str = "tap") -> Decimal:
+    """Gateway fee paid by the CUSTOMER: amount x percent% + fixed (settings tap_fee_* or benefit_fee_*)."""
+    fee = amount * Decimal(s[f"{prefix}_fee_percent"]) / Decimal(100) + Decimal(s[f"{prefix}_fee_fixed"])
     return fee.quantize(quantum(decimals), ROUND_HALF_UP)
 
 

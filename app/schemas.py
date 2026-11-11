@@ -416,6 +416,9 @@ class SettingsPatch(BaseModel):
     estimate_road_factor: Decimal | None = Field(default=None, ge=1, le=3)
     estimate_avg_speed_kmh: Decimal | None = Field(default=None, ge=5, le=120)
     tap_enabled: bool | None = None
+    benefit_enabled: bool | None = None
+    benefit_fee_percent: Decimal | None = Field(default=None, ge=0, le=20)
+    benefit_fee_fixed: Decimal | None = Field(default=None, ge=0)
     live_test: bool | None = None
     live_test_message: str | None = Field(default=None, max_length=300)
     benefitpay_enabled: bool | None = None
