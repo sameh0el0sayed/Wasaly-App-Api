@@ -530,7 +530,8 @@ async def review_correction(change_id: int, reviewer_id: int) -> str:
         return "accepted"
 
 
-STATE: dict = {"running": False, "last_heartbeat_at": None, "next_review_at": None, "last_cycle_status": None, "last_error": None}
+STATE: dict = {"running": False, "last_heartbeat_at": None, "next_review_at": None, "last_cycle_status": None, "last_error": None,
+         "sleeping": False, "sleeping_until": None}
 
 
 async def run_review_cycle() -> dict:
@@ -636,22 +637,42 @@ async def _run_review_cycle() -> dict:
     return summary
 
 
+def _had_work(result: dict) -> bool:
+    return bool(result.get("users_checked") or result.get("payments_checked") or result.get("corrections_checked"))
+
+
 async def review_loop() -> None:
+    """Checks every `interval`; after `idle` seconds with nothing new it sleeps `sleep` seconds (default 1 h idle -> 5 h sleep), then repeats."""
+    loop = asyncio.get_running_loop()
     interval = max(60, settings.ai_review_interval_seconds)
-    log.info("AI review worker started interval_seconds=%s background_tasks_enabled=true", interval)
+    idle_limit, sleep_for = max(60, settings.ai_review_idle_seconds), max(60, settings.ai_review_sleep_seconds)
+    log.info("AI review worker started interval_seconds=%s idle_seconds=%s sleep_seconds=%s", interval, idle_limit, sleep_for)
     await asyncio.sleep(5)  # let Uvicorn start accepting the AI account's internal login request
-    result = await run_review_cycle()
-    log.info("AI review attempt completed details=%s", json.dumps(result, ensure_ascii=False, sort_keys=True))
-    next_review = asyncio.get_running_loop().time() + interval
+    last_work = loop.time()
+    next_review = loop.time()
     while True:
-        remaining = max(0, int(next_review - asyncio.get_running_loop().time()))
+        remaining = max(0, int(next_review - loop.time()))
         if remaining == 0:
-            log.info("AI review attempt starting after %s second interval", interval)
             result = await run_review_cycle()
             log.info("AI review attempt completed details=%s", json.dumps(result, ensure_ascii=False, sort_keys=True))
-            next_review += interval
-            while next_review <= asyncio.get_running_loop().time():
-                next_review += interval
+            now = loop.time()
+            if _had_work(result):
+                last_work = now
+            next_review = now + interval
+            if now - last_work >= idle_limit:
+                wake = datetime.now(UTC) + timedelta(seconds=sleep_for)
+                log.info("AI review: nothing new for %s s; sleeping %s s until %s", int(now - last_work), sleep_for, wake.isoformat())
+                STATE.update(sleeping=True, sleeping_until=wake.isoformat())
+                await _write_worker_audit("AI_REVIEW_SLEEP", {"idle_seconds": int(now - last_work), "sleep_seconds": sleep_for,
+                                                              "wake_at": wake.isoformat()})
+                end = loop.time() + sleep_for
+                while loop.time() < end:
+                    STATE.update(last_heartbeat_at=datetime.now(UTC).isoformat(), next_review_at=wake.isoformat())
+                    await asyncio.sleep(min(60, max(1, end - loop.time())))
+                STATE.update(sleeping=False, sleeping_until=None)
+                log.info("AI review: waking up")
+                last_work = loop.time()  # a fresh idle window of one hour before the next sleep
+                next_review = loop.time()
             continue
 
         next_at = (datetime.now(UTC) + timedelta(seconds=remaining)).isoformat()
