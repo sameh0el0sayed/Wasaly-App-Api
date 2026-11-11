@@ -901,3 +901,19 @@ class ChatAction(Base):
     created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
     expires_at: Mapped[datetime] = mapped_column(UTCDateTime)
     executed_at: Mapped[datetime | None] = mapped_column(UTCDateTime, nullable=True)
+
+
+class FraudFlag(Base):
+    """A suspicious pattern found by the automatic scan on a driver (v24). Rule based, reviewed by an admin."""
+    __tablename__ = "fraud_flags"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    driver_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    rule: Mapped[str] = mapped_column(String(30), index=True)
+    severity: Mapped[str] = mapped_column(String(8))  # LOW | MEDIUM | HIGH
+    summary: Mapped[str] = mapped_column(String(300))
+    details: Mapped[dict] = mapped_column(JSON, default=dict)  # evidence: order ids, counts, customer ids
+    status: Mapped[str] = mapped_column(String(10), default="OPEN", index=True)  # OPEN | CONFIRMED | DISMISSED
+    note: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    reviewed_by: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True)
+    reviewed_at: Mapped[datetime | None] = mapped_column(UTCDateTime, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow, index=True)
