@@ -637,6 +637,14 @@ async def _run_review_cycle() -> dict:
     return summary
 
 
+WAKE = asyncio.Event()
+
+
+def wake() -> None:
+    """A new member / BenefitPay receipt arrived: end the sleep (or the wait) and review now."""
+    WAKE.set()
+
+
 def _had_work(result: dict) -> bool:
     return bool(result.get("users_checked") or result.get("payments_checked") or result.get("corrections_checked"))
 
@@ -666,9 +674,13 @@ async def review_loop() -> None:
                 await _write_worker_audit("AI_REVIEW_SLEEP", {"idle_seconds": int(now - last_work), "sleep_seconds": sleep_for,
                                                               "wake_at": wake.isoformat()})
                 end = loop.time() + sleep_for
-                while loop.time() < end:
+                while loop.time() < end and not WAKE.is_set():
                     STATE.update(last_heartbeat_at=datetime.now(UTC).isoformat(), next_review_at=wake.isoformat())
-                    await asyncio.sleep(min(60, max(1, end - loop.time())))
+                    try:
+                        await asyncio.wait_for(WAKE.wait(), timeout=min(60, max(1, end - loop.time())))
+                    except TimeoutError:
+                        pass
+                WAKE.clear()
                 STATE.update(sleeping=False, sleeping_until=None)
                 log.info("AI review: waking up")
                 last_work = loop.time()  # a fresh idle window of one hour before the next sleep
@@ -678,4 +690,9 @@ async def review_loop() -> None:
         next_at = (datetime.now(UTC) + timedelta(seconds=remaining)).isoformat()
         log.info("AI review worker alive; next attempt in %s seconds at %s", remaining, next_at)
         STATE.update(last_heartbeat_at=datetime.now(UTC).isoformat(), next_review_at=next_at)  # not written to the audit log (one row a minute flooded it)
-        await asyncio.sleep(min(60, remaining))
+        try:
+            await asyncio.wait_for(WAKE.wait(), timeout=min(60, remaining))
+            WAKE.clear()
+            next_review, last_work = loop.time(), loop.time()
+        except TimeoutError:
+            pass

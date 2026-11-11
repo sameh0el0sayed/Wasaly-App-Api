@@ -304,6 +304,8 @@ async def register(body: RegisterIn, db: AsyncSession = Depends(get_db), lang: s
         audit(db, None, "WHATSAPP_PHONE_VERIFIED", "user", user.id,
               details={"verification_id": verification.verification_id})
     await db.commit()
+    from ..services.ai_review import wake
+    wake()  # new member: the AI review worker wakes up if it was sleeping
     await db.refresh(user, ["driver_profile", "vehicle", "driver_application"])  # new instance: load before user_public()
     return {"user": user_public(user), "access_token": create_access_token(user.id, user.token_version),
             "token_type": "bearer", "phone_verified": verification is not None,

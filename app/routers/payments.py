@@ -109,6 +109,8 @@ async def pay_with_benefitpay(payment_id: int, body: BenefitPayIn, user: User = 
     p.gateway_fee, p.charged_amount = Decimal(0), p.amount - (p.wallet_amount or 0)
     await notify_admins(db, "PAYMENT_PROOF", "إيصال BenefitPay جديد", f"دفعة #{p.id} بانتظار التأكيد")
     await db.commit()
+    from ..services.ai_review import wake
+    wake()
     return payment_out(p)
 
 
