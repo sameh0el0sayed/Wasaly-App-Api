@@ -1,0 +1,14 @@
+{"items":[
+{"key":"v16.login","ar":"الدخول بمفتاح المرور","en":"Sign in with a passkey"},
+{"key":"v16.title","ar":"مفاتيح المرور","en":"Passkeys"},
+{"key":"v16.explain","ar":"سجّل الدخول ببصمة الوجه أو الإصبع دون كلمة مرور. يُحفظ المفتاح في iCloud أو Google ويعمل على أجهزتك الأخرى.","en":"Sign in with Face ID or your fingerprint, without a password. The passkey is saved in iCloud or Google and works on your other devices."},
+{"key":"v16.add","ar":"إنشاء مفتاح مرور","en":"Create a passkey"},
+{"key":"v16.added","ar":"تم إنشاء مفتاح المرور","en":"Passkey created"},
+{"key":"v16.err_none","ar":"لا يوجد مفتاح مرور لهذا الحساب على هذا الجهاز. سجّل الدخول بكلمة المرور ثم أنشئ مفتاحًا من الإعدادات.","en":"No passkey was found for this account on this device. Sign in with your password, then create one in Settings."},
+{"key":"v16.err_domain","ar":"مفاتيح المرور غير مفعّلة لهذا التطبيق بعد.","en":"Passkeys are not yet enabled for this app."},
+{"key":"v16.err_device","ar":"هذا الجهاز لا يدعم مفاتيح المرور.","en":"This device does not support passkeys."},
+{"key":"v16.err_failed","ar":"تعذّر التحقق من مفتاح المرور. حاول مرة أخرى.","en":"The passkey could not be verified. Please try again."},
+{"key":"v16.err_exists","ar":"يوجد مفتاح مرور على هذا الجهاز بالفعل.","en":"A passkey already exists on this device."},
+{"key":"v16.err_disabled","ar":"الدخول بمفتاح المرور غير متاح حاليًا.","en":"Passkey sign-in is currently unavailable."},
+{"key":"v16.set_passkeys","ar":"السماح بالدخول بمفاتيح المرور","en":"Allow passkey sign-in"}
+],"overwrite":false}
