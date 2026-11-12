@@ -9263,5 +9263,150 @@
   "key": "err.ACCOUNT_BANNED",
   "ar": "تم حظر هذا الحساب نهائيًا.",
   "en": "This account has been permanently banned."
+ },
+ {
+  "key": "v27.title",
+  "ar": "النمو والإيرادات",
+  "en": "Growth & Revenue"
+ },
+ {
+  "key": "v27.days_n",
+  "ar": "{0} يوم",
+  "en": "{0} days"
+ },
+ {
+  "key": "v27.daily",
+  "ar": "العمولات اليومية",
+  "en": "Daily commission"
+ },
+ {
+  "key": "v27.k_bookings",
+  "ar": "إجمالي الحجوزات",
+  "en": "Total bookings"
+ },
+ {
+  "key": "v27.k_completed",
+  "ar": "الرحلات المكتملة",
+  "en": "Completed trips"
+ },
+ {
+  "key": "v27.k_commission",
+  "ar": "عمولات وصلي",
+  "en": "Commission revenue"
+ },
+ {
+  "key": "v27.k_gmv",
+  "ar": "قيمة الرحلات",
+  "en": "Gross trip value"
+ },
+ {
+  "key": "v27.k_active_drivers",
+  "ar": "السائقون النشطون",
+  "en": "Active drivers"
+ },
+ {
+  "key": "v27.k_active_customers",
+  "ar": "العملاء النشطون",
+  "en": "Active customers"
+ },
+ {
+  "key": "v27.k_new_customers",
+  "ar": "عملاء جدد",
+  "en": "New customers"
+ },
+ {
+  "key": "v27.k_cac",
+  "ar": "تكلفة اكتساب العميل",
+  "en": "CAC"
+ },
+ {
+  "key": "v27.k_repeat_rate",
+  "ar": "نسبة تكرار الاستخدام",
+  "en": "Repeat rate"
+ },
+ {
+  "key": "v27.k_completion_rate",
+  "ar": "نسبة الإكمال",
+  "en": "Completion rate"
+ },
+ {
+  "key": "v27.k_cancel_rate",
+  "ar": "نسبة الإلغاء",
+  "en": "Cancellation rate"
+ },
+ {
+  "key": "v27.k_refunds",
+  "ar": "المسترجعات",
+  "en": "Refunds"
+ },
+ {
+  "key": "v27.by_country",
+  "ar": "الإيرادات حسب الدولة",
+  "en": "Revenue by country"
+ },
+ {
+  "key": "v27.country",
+  "ar": "الدولة",
+  "en": "Country"
+ },
+ {
+  "key": "v27.partners",
+  "ar": "أداء الشركاء",
+  "en": "Partner performance"
+ },
+ {
+  "key": "v27.partner",
+  "ar": "الشريك",
+  "en": "Partner"
+ },
+ {
+  "key": "v27.share",
+  "ar": "حصته",
+  "en": "Share"
+ },
+ {
+  "key": "v27.paid",
+  "ar": "المدفوع",
+  "en": "Paid"
+ },
+ {
+  "key": "v27.cancels",
+  "ar": "الإلغاءات حسب السبب",
+  "en": "Cancellations by reason"
+ },
+ {
+  "key": "v27.reason",
+  "ar": "السبب",
+  "en": "Reason"
+ },
+ {
+  "key": "v27.count",
+  "ar": "العدد",
+  "en": "Count"
+ },
+ {
+  "key": "v27.export_pdf",
+  "ar": "تصدير PDF",
+  "en": "Export PDF"
+ },
+ {
+  "key": "v27.export_xlsx",
+  "ar": "تصدير Excel",
+  "en": "Export Excel"
+ },
+ {
+  "key": "v27.investor",
+  "ar": "مؤشرات للمستثمرين",
+  "en": "Investor metrics"
+ },
+ {
+  "key": "v27.marketing_spend",
+  "ar": "مصروف التسويق الشهري",
+  "en": "Monthly marketing spend"
+ },
+ {
+  "key": "err.INVALID_PERIOD",
+  "ar": "فترة غير صالحة.",
+  "en": "Invalid period."
  }
 ]

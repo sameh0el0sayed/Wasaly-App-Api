@@ -19,3 +19,6 @@ firebase-admin>=6.5
 redis==5.2.1
 webauthn==2.5.2
 pyOpenSSL==25.0.0
+reportlab==5.1.0
+arabic-reshaper==3.1.0
+python-bidi==0.6.12

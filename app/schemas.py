@@ -417,6 +417,7 @@ class SettingsPatch(BaseModel):
     estimate_avg_speed_kmh: Decimal | None = Field(default=None, ge=5, le=120)
     tap_enabled: bool | None = None
     benefit_enabled: bool | None = None
+    marketing_spend_monthly: Decimal | None = Field(default=None, ge=0)
     benefit_fee_percent: Decimal | None = Field(default=None, ge=0, le=20)
     benefit_fee_fixed: Decimal | None = Field(default=None, ge=0)
     live_test: bool | None = None

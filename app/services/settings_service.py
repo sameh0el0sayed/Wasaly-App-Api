@@ -42,6 +42,7 @@ DEFAULTS = {
     "tap_enabled": "true",
     "live_test": "false",  # live-test mode: Tap (online card payment) is switched off everywhere
     "live_test_message": "",
+    "marketing_spend_monthly": "0",  # used for CAC in the growth dashboard
     "benefit_enabled": "true",  # Benefit through the Tap gateway (online, automatic)
     "benefit_fee_percent": "2.145",  # Tap Beginner package: Benefit 1.95% + 10% VAT, charged to the customer on top
     "benefit_fee_fixed": "0.110",  # 100 fils + 10% VAT
