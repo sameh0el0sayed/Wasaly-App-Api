@@ -107,6 +107,8 @@ async def _set_status(db, admin, u: User, status: str, reason: str | None, actio
     if u.account_status == AccountStatus.BANNED and status != AccountStatus.BANNED:
         raise HTTPException(409, {"code": "PERMANENTLY_BANNED"})
     u.account_status, u.status_reason = status, reason
+    if status == AccountStatus.BANNED:
+        u.token_version += 1  # a permanent ban signs the user out of every device (401)
     if u.driver_profile:
         u.driver_profile.driver_status = status
     if status != AccountStatus.APPROVED and u.role == Role.DRIVER:

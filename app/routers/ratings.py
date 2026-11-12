@@ -83,6 +83,7 @@ async def _maybe_auto_suspend(db: AsyncSession, u: User, s: dict) -> None:
     banned = ban_at > 0 and u.auto_suspend_count >= ban_at
     if banned:  # repeat offender: permanent. The row (with its CPR hash and phone) stays, so re-registration is refused.
         u.account_status, u.status_reason, u.auto_suspended = AccountStatus.BANNED, "AUTO_BANNED_REPEATED_LOW_RATING", True
+        u.token_version += 1  # permanent ban: sign out of every device
     else:
         u.account_status, u.status_reason, u.auto_suspended = AccountStatus.SUSPENDED, "AUTO_LOW_RATING", True
     if u.driver_profile:

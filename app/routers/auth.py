@@ -331,6 +331,8 @@ async def login(body: LoginIn, request: Request, db: AsyncSession = Depends(get_
         raise HTTPException(401, "Invalid phone or password")
     if user.account_status == "DELETED":  # checked after the password so the state is not revealed to strangers
         raise HTTPException(403, {"code": "ACCOUNT_DELETED", "message": "هذا الحساب محذوف"})
+    if user.account_status == "BANNED":
+        raise HTTPException(403, {"code": "ACCOUNT_BANNED", "message": "تم حظر هذا الحساب نهائيًا", "reason": user.status_reason})
     if not user.phone_verified:
         raise HTTPException(403, {"code": "PHONE_NOT_VERIFIED", "message": "Verify your phone through WhatsApp first"})
     user.failed_logins, user.locked_until = 0, None
@@ -350,7 +352,9 @@ _REFRESH_HITS: dict[int, list[float]] = {}
 
 @router.post("/auth/refresh")
 async def refresh_token(user: User = Depends(current_user)):
-    """Harmless: a fresh non-expiring token for the same token_version (401 comes from current_user if it changed)."""
+    """A fresh non-expiring token for the same token_version (401 comes from current_user if it changed). Never for banned accounts."""
+    if user.account_status in ("BANNED", "DELETED"):
+        raise HTTPException(401, {"code": "UNAUTHORIZED", "message": "Session is no longer valid"})
     import time
     now = time.time()
     hits = [x for x in _REFRESH_HITS.get(user.id, []) if now - x < 3600]
