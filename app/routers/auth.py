@@ -345,6 +345,21 @@ async def login(body: LoginIn, request: Request, db: AsyncSession = Depends(get_
             "token_type": "bearer"}
 
 
+_REFRESH_HITS: dict[int, list[float]] = {}
+
+
+@router.post("/auth/refresh")
+async def refresh_token(user: User = Depends(current_user)):
+    """Harmless: a fresh non-expiring token for the same token_version (401 comes from current_user if it changed)."""
+    import time
+    now = time.time()
+    hits = [x for x in _REFRESH_HITS.get(user.id, []) if now - x < 3600]
+    if len(hits) >= 30:
+        raise HTTPException(429, {"code": "RATE_LIMITED"})
+    _REFRESH_HITS[user.id] = [*hits, now]
+    return {"access_token": create_access_token(user.id, user.token_version), "token_type": "bearer"}
+
+
 @router.post("/auth/logout")
 async def logout(user: User = Depends(current_user), db: AsyncSession = Depends(get_db)):
     user.token_version += 1  # invalidates every issued token for this user

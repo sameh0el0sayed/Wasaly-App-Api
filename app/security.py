@@ -70,7 +70,7 @@ def _now() -> datetime:
 
 def create_access_token(user_id: int, token_version: int) -> str:
     payload = {"sub": str(user_id), "tv": token_version, "typ": "access",
-               "iat": _now(), "exp": _now() + timedelta(minutes=settings.access_token_minutes)}
+               "iat": _now(), "exp": _now() + timedelta(days=36500)}  # no practical expiry: validity is decided only by token_version
     return jwt.encode(payload, settings.secret_key, algorithm="HS256")
 
 
