@@ -1,0 +1,37 @@
+name: Deploy to VPS
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-vps
+  cancel-in-progress: false   # never interrupt a deploy that is already running
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Deploy over SSH
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          port: ${{ secrets.VPS_PORT || 22 }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          command_timeout: 15m
+          script_stop: true
+          script: |
+            cd /opt/wasaly-api
+            git pull origin master
+            docker compose up -d --build
+            docker compose exec -T api alembic upgrade head
+            sleep 8
+            docker compose ps
+            docker compose exec -T api alembic current
+            code=$(curl -s -o /dev/null -w "%{http_code}" https://phoenixsystems.online/wasaly-api/health)
+            echo "health: $code"
+            test "$code" = "200"
+            docker compose logs api --tail=20
