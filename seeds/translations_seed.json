@@ -9258,5 +9258,10 @@
   "key": "v25.free",
   "ar": "مجاني",
   "en": "Free"
+ },
+ {
+  "key": "err.ACCOUNT_BANNED",
+  "ar": "تم حظر هذا الحساب نهائيًا.",
+  "en": "This account has been permanently banned."
  }
 ]
