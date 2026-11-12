@@ -9408,5 +9408,85 @@
   "key": "err.INVALID_PERIOD",
   "ar": "فترة غير صالحة.",
   "en": "Invalid period."
+ },
+ {
+  "key": "v27.i_net_profit",
+  "ar": "صافي الربح",
+  "en": "Net profit"
+ },
+ {
+  "key": "v27.i_take_rate_pct",
+  "ar": "نسبة العمولة",
+  "en": "Take rate"
+ },
+ {
+  "key": "v27.i_avg_fare",
+  "ar": "متوسط الأجرة",
+  "en": "Average fare"
+ },
+ {
+  "key": "v27.i_avg_commission_per_trip",
+  "ar": "متوسط العمولة للرحلة",
+  "en": "Avg commission / trip"
+ },
+ {
+  "key": "v27.i_driver_payouts",
+  "ar": "مستحقات السائقين",
+  "en": "Driver payouts"
+ },
+ {
+  "key": "v27.i_promo_discounts",
+  "ar": "خصومات العروض",
+  "en": "Promo discounts"
+ },
+ {
+  "key": "v27.i_referral_cost",
+  "ar": "تكلفة الإحالات",
+  "en": "Referral cost"
+ },
+ {
+  "key": "v27.i_avg_trip_minutes",
+  "ar": "متوسط مدة الرحلة (دقيقة)",
+  "en": "Avg trip (min)"
+ },
+ {
+  "key": "v27.i_trips_per_active_driver",
+  "ar": "رحلات لكل سائق نشط",
+  "en": "Trips per active driver"
+ },
+ {
+  "key": "v27.i_trips_per_active_customer",
+  "ar": "رحلات لكل عميل نشط",
+  "en": "Trips per active customer"
+ },
+ {
+  "key": "v27.i_customers_total",
+  "ar": "إجمالي العملاء",
+  "en": "Total customers"
+ },
+ {
+  "key": "v27.i_drivers_total",
+  "ar": "إجمالي السائقين",
+  "en": "Total drivers"
+ },
+ {
+  "key": "v27.i_wallet_liability",
+  "ar": "أرصدة المحافظ (التزام)",
+  "en": "Wallet liability"
+ },
+ {
+  "key": "v27.i_driver_debt_owed_to_company",
+  "ar": "ديون السائقين للشركة",
+  "en": "Driver debt owed"
+ },
+ {
+  "key": "v27.i_peak_hours",
+  "ar": "ساعات الذروة",
+  "en": "Peak hours"
+ },
+ {
+  "key": "v27.i_payment_mix",
+  "ar": "توزيع طرق الدفع",
+  "en": "Payment mix"
  }
 ]
