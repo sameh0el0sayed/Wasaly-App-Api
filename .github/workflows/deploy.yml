@@ -28,6 +28,7 @@ jobs:
             git pull origin master
             docker compose up -d --build
             docker compose exec -T api alembic upgrade head
+            docker compose exec -T api python -m scripts.import_translations
             sleep 8
             docker compose ps
             docker compose exec -T api alembic current
