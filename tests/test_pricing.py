@@ -4,10 +4,9 @@ import pytest
 
 from app.services.pricing import calc_price
 
-CASES = [  # (seconds, expected BHD) -- the mandatory table from the spec
-    (1, "0.500"), (300, "0.500"), (301, "1.000"), (600, "1.000"), (601, "1.500"), (900, "1.500"),
-    (901, "2.000"), (1200, "2.000"), (21 * 60, "2.500"), (25 * 60, "2.500"), (26 * 60, "3.000"),
-    (30 * 60, "3.000"), (31 * 60, "3.500"), (0, "0.500"),
+CASES = [  # (seconds, expected BHD) -- 0.100 per minute, min 0.100
+    (1, "0.100"), (60, "0.100"), (61, "0.200"), (120, "0.200"), (121, "0.300"),
+    (180, "0.300"), (300, "0.500"), (301, "0.600"), (51 * 60, "5.100"), (0, "0.100"),
 ]
 
 
@@ -17,7 +16,7 @@ def test_price_table(secs, expected):
 
 
 def test_one_second_over_boundary_rounds_up():
-    assert calc_price(300)[0] == 1 and calc_price(301)[0] == 2
+    assert calc_price(60)[0] == 1 and calc_price(61)[0] == 2
 
 
 def test_custom_settings_apply():

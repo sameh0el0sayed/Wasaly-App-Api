@@ -4,9 +4,9 @@ minimum all come from settings and are snapshotted on each order when it is crea
 from datetime import datetime, time
 from decimal import ROUND_HALF_UP, Decimal
 
-UNIT_SECONDS = 300
-UNIT_PRICE = Decimal("0.500")
-MIN_PRICE = Decimal("0.500")
+UNIT_SECONDS = 60
+UNIT_PRICE = Decimal("0.100")
+MIN_PRICE = Decimal("0.100")
 
 
 def quantum(decimals: int) -> Decimal:
