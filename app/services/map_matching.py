@@ -46,6 +46,10 @@ from .realtime import hub
 log = logging.getLogger("map_matching")
 
 _queue: asyncio.Queue | None = None
+_queued: set[int] = set()  # drivers already waiting: one pending job per driver (the rolling window keeps the newest points)
+_dropped = 0  # jobs skipped because the queue was full (raw GPS stays the fallback)
+_oldest: dict[int, float] = {}  # driver -> enqueue time, for oldest-job-age
+QUEUE_MAX = 5000
 _windows: dict[int, ObservationWindow] = {}
 _seq: dict[int, int] = {}
 _last_match: dict[int, float] = {}
@@ -64,7 +68,7 @@ async def start() -> None:
     global _queue, _client, _started, _workers
     if not settings.map_matching_enabled or _started:
         return
-    _queue = asyncio.Queue()
+    _queue = asyncio.Queue(maxsize=QUEUE_MAX)
     _client = OsrmClient()
     n = max(1, int(settings.osrm_match_workers))
     _workers = [asyncio.create_task(_worker_loop()) for _ in range(n)]
@@ -101,6 +105,27 @@ def clear_driver(driver_id: int) -> None:
     _last_broadcast.pop(driver_id, None)
 
 
+def _enqueue(driver_id: int) -> None:
+    """Never blocks and never grows without bound: duplicates are collapsed, a full queue drops the job."""
+    global _dropped
+    if driver_id in _queued:
+        return
+    try:
+        _queue.put_nowait(driver_id)
+    except asyncio.QueueFull:
+        _dropped += 1
+        return
+    _queued.add(driver_id)
+    _oldest[driver_id] = time.time()
+
+
+def queue_stats() -> dict:
+    """Queue depth, oldest pending job age (s) and dropped-job count, for monitoring."""
+    oldest = min(_oldest.values()) if _oldest else None
+    return {"depth": _queue.qsize() if _queue is not None else 0,
+            "oldest_job_age_s": round(time.time() - oldest, 2) if oldest else 0.0, "dropped": _dropped}
+
+
 async def ingest(driver_id: int, body) -> dict:
     """Validate one GPS fix, store it raw and enqueue it for matching.
 
@@ -128,7 +153,7 @@ async def ingest(driver_id: int, body) -> dict:
         if movement.reason == "STATIONARY" and verdict.status == OK:
             verdict = GpsVerdict(DEGRADED, "STATIONARY")
     win.add(obs)
-    await _queue.put(driver_id)
+    _enqueue(driver_id)
     return {"status": verdict.status, "reason": verdict.reason, "seq": seq}
 
 
@@ -144,6 +169,9 @@ async def _worker_loop() -> None:
             except asyncio.QueueEmpty:
                 break
         _queue.task_done()
+        for d in pending:  # a driver may be queued again from now on (it is being processed with its newest window)
+            _queued.discard(d)
+            _oldest.pop(d, None)
         for driver_id in pending:
             try:
                 await _process(driver_id)

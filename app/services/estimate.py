@@ -25,6 +25,20 @@ def route_guess(lat1, lng1, lat2, lng2, road_factor: str, speed_kmh: str) -> tup
     return round(km, 1), minutes
 
 
+async def route_estimate(lat1, lng1, lat2, lng2, road_factor: str, speed_kmh: str) -> tuple[float, int]:
+    """Road distance/duration from the self-hosted OSRM when enabled; falls back to route_guess on any failure."""
+    from ..config import settings as _cfg
+    if _cfg.map_matching_enabled:
+        from .osrm import OsrmClient
+        try:
+            r = await OsrmClient(timeout=1.5).route((lat1, lng1), (lat2, lng2))
+        except Exception:  # noqa: BLE001
+            r = None
+        if r and r.ok and r.distance_m is not None and r.duration_s is not None:
+            return round(r.distance_m / 1000, 1), max(1, round(r.duration_s / 60))
+    return route_guess(lat1, lng1, lat2, lng2, road_factor, speed_kmh)
+
+
 def money_estimate(*, minutes: int, now: datetime, unit_seconds: int, unit_price: Decimal, min_price: Decimal, decimals: int,
                    night_enabled: bool, night_percent: Decimal, night_start: str, night_end: str,
                    ctype: str, cvalue: Decimal, mode: str, outside: bool, outside_percent: Decimal,

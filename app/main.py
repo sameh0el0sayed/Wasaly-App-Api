@@ -164,6 +164,36 @@ async def health():
     return {"status": "ok", "server_time": utcnow().isoformat(), "redis": await cache.ping()}
 
 
+_REQ = {"total": 0, "errors_5xx": 0, "slow_over_1s": 0, "latency_ms_sum": 0}  # in-process counters (reset on restart)
+
+
+@app.get("/health/details", tags=["system"])
+async def health_details():
+    """Operational snapshot for monitoring/alerts: DB + Redis + OSRM latency, map-matching queue, request counters. No personal data."""
+    from sqlalchemy import text
+
+    from .database import SessionLocal
+    from .services import cache, map_matching, osrm
+    out: dict = {"status": "ok", "server_time": utcnow().isoformat(), "requests": {**_REQ}}
+    t0 = time.time()
+    try:
+        async with SessionLocal() as s:
+            await s.execute(text("SELECT 1"))
+        out["db_ms"] = round((time.time() - t0) * 1000, 1)
+    except Exception:  # noqa: BLE001
+        out["status"], out["db_ms"] = "degraded", None
+    t0 = time.time()
+    out["redis"] = await cache.ping()
+    out["redis_ms"] = round((time.time() - t0) * 1000, 1)
+    if settings.map_matching_enabled:
+        t0 = time.time()
+        ok = await osrm.OsrmClient(timeout=2).health()
+        out["osrm"] = {"ok": ok, "ms": round((time.time() - t0) * 1000, 1), "queue": map_matching.queue_stats()}
+        if not ok:
+            out["status"] = "degraded"  # the API stays usable: raw GPS fallback
+    return out
+
+
 @app.middleware("http")
 async def request_id_middleware(request: Request, call_next):
     """Correlation id on every response (X-Request-ID); no bodies, tokens or coordinates are logged."""
@@ -173,6 +203,10 @@ async def request_id_middleware(request: Request, call_next):
     response = await call_next(request)
     response.headers["X-Request-ID"] = rid
     ms = round((time.time() - t0) * 1000)
+    _REQ["total"] += 1
+    _REQ["latency_ms_sum"] += ms
+    _REQ["errors_5xx"] += response.status_code >= 500
+    _REQ["slow_over_1s"] += ms > 1000
     if ms > 1000 or response.status_code >= 500:
         log.warning("slow/error request id=%s %s %s -> %s in %d ms", rid, request.method, request.url.path, response.status_code, ms)
     return response

@@ -24,10 +24,19 @@ jobs:
           command_timeout: 15m
           script_stop: true
           script: |
+            set -o pipefail
             cd /opt/wasaly-api
             git pull origin master
+            # 1) backup first (kept: last 14); any failure stops the deployment
+            mkdir -p /opt/wasaly-backups
+            docker compose exec -T db pg_dump -U transport -d transport | gzip > /opt/wasaly-backups/pre-deploy-$(date +%Y%m%d-%H%M%S).sql.gz
+            test -s "$(ls -t /opt/wasaly-backups/*.sql.gz | head -1)"
+            ls -t /opt/wasaly-backups/*.sql.gz | tail -n +15 | xargs -r rm -f
+            # 2) build the new image, run migrations with it BEFORE the new API starts (failure stops here, old API keeps running)
+            docker compose build api
+            docker compose run --rm --no-deps api alembic upgrade head
+            # 3) only now start/update the containers
             docker compose up -d --build
-            docker compose exec -T api alembic upgrade head
             docker compose exec -T api python -m scripts.import_translations
             sleep 8
             docker compose ps

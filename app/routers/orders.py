@@ -15,15 +15,20 @@ from ..i18n import localize
 from ..models import Complaint, CounterOffer, Order, OrderOffer, OrderStatusHistory, Payment, Referral, User, utcnow
 from ..schemas import EstimateIn, OptionalReasonIn, OrderCreateIn, PriceRaiseIn, ReasonIn
 from ..serializers import (
-    driver_card, history_out, order_for_admin, order_for_customer, order_for_driver,
-    order_customer_load_options, order_driver_load_options, order_admin_load_options,
-    driver_full_load_options,
+    driver_card,
+    history_out,
+    order_admin_load_options,
+    order_customer_load_options,
+    order_driver_load_options,
+    order_for_admin,
+    order_for_customer,
+    order_for_driver,
 )
 from ..services import favorites as fav
 from ..services import live_test, settings_service
 from ..services import price_increase as pi
 from ..services.dispatch import dispatch_order, has_active_order, work_blockers
-from ..services.estimate import money_estimate, route_guess
+from ..services.estimate import money_estimate, route_estimate
 from ..services.extras import compute_extras, resolve_prefs
 from ..services.files import assert_owned
 from ..services.geo import _haversine_m, find_area, point_in_boundary
@@ -173,7 +178,7 @@ async def estimate(body: EstimateIn, user: User = Depends(customer_user), db: As
     p = await settings_service.get_pricing(db)
     user.last_lat, user.last_lng, user.last_location_at = body.pickup_latitude, body.pickup_longitude, utcnow()  # admin radar only
     await db.commit()
-    km, minutes = route_guess(body.pickup_latitude, body.pickup_longitude, body.destination_latitude,
+    km, minutes = await route_estimate(body.pickup_latitude, body.pickup_longitude, body.destination_latitude,
                               body.destination_longitude, s["estimate_road_factor"], s["estimate_avg_speed_kmh"])
     outside = bool(p.outside_enabled) and not point_in_boundary(body.destination_latitude, body.destination_longitude, p.country_boundary)
     pf = resolve_prefs(body, s)
@@ -252,7 +257,7 @@ async def create_order(body: OrderCreateIn, user: User = Depends(customer_user),
         user.last_lat, user.last_lng, user.last_location_at = body.pickup_latitude, body.pickup_longitude, utcnow()  # admin radar only
     outside = bool(p.outside_enabled) and not point_in_boundary(body.destination_latitude, body.destination_longitude, p.country_boundary)
     s_all = await settings_service.get_all(db)
-    est_km, est_min = route_guess(body.pickup_latitude or body.destination_latitude, body.pickup_longitude or body.destination_longitude,
+    est_km, est_min = await route_estimate(body.pickup_latitude or body.destination_latitude, body.pickup_longitude or body.destination_longitude,
                                   body.destination_latitude, body.destination_longitude,
                                   s_all["estimate_road_factor"], s_all["estimate_avg_speed_kmh"])
     pf = resolve_prefs(body, s_all)
@@ -322,7 +327,6 @@ async def favorite_drivers(limit: int = 10, available_only: bool = True, user: U
     rows = await fav.favorite_rows(db, user.id)
     driver_ids = [d.id for d, _, _ in rows]
     # Batch check online status, blockers, and active orders for all favorite drivers at once
-    from ..services.dispatch import work_blockers
     online_map = {d.id: fav.online(d) for d, _, _ in rows}
     blocker_map = {d.id: work_blockers(d) for d, _, _ in rows}
     active_map = {}
@@ -493,7 +497,6 @@ async def list_counter_offers(order_id: int, all: int = 0, user: User = Depends(
 @router.post("/orders/{order_id}/counter-offers/{counter_id}/accept")
 async def accept_counter_offer(order_id: int, counter_id: int, user: User = Depends(customer_user), db: AsyncSession = Depends(get_db)):
     from ..models import DriverProfile
-    from ..services.dispatch import has_active_order, work_blockers
     o, c = await _my_counter(db, user, order_id, counter_id)
     now = utcnow()
     if c.status == CounterStatus.EXPIRED or (c.status == CounterStatus.PENDING and c.expires_at <= now):

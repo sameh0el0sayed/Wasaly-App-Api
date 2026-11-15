@@ -34,6 +34,7 @@ from ..serializers import user_public
 from ..services import settings_service
 from ..services.audit import audit
 from ..services.files import assert_owned
+from ..services.ratelimit import limit
 
 router = APIRouter(prefix="/api", tags=["auth"])
 whatsapp_webhook_router = APIRouter(prefix="/webhooks", tags=["WhatsApp"])
@@ -55,7 +56,7 @@ def _whatsapp_configured() -> bool:
                 and settings.whatsapp_app_secret)
 
 
-@router.post("/auth/whatsapp/request", status_code=202)
+@router.post("/auth/whatsapp/request", status_code=202, dependencies=[Depends(limit("wa_otp", 10, 3600))])
 async def request_whatsapp_verification(body: WhatsAppVerificationRequestIn,
                                         db: AsyncSession = Depends(get_db)):
     """Creates a short-lived OTP; the user sends it manually to the company WhatsApp number."""
@@ -233,7 +234,7 @@ async def whatsapp_webhook(request: Request, db: AsyncSession = Depends(get_db))
     return {"ok": True}
 
 
-@router.post("/auth/register", status_code=201)
+@router.post("/auth/register", status_code=201, dependencies=[Depends(limit("register", 10, 3600))])
 async def register(body: RegisterIn, db: AsyncSession = Depends(get_db), lang: str = Depends(request_lang)):
     """Creates a pending account. WhatsApp reverse-OTP is enforced only when whatsapp_verification_required=true (default false)."""
     verification = None
@@ -312,7 +313,7 @@ async def register(body: RegisterIn, db: AsyncSession = Depends(get_db), lang: s
             "message": localize("تم التحقق من رقم الهاتف. حسابك الآن قيد المراجعة من الإدارة", user.language)}
 
 
-@router.post("/auth/login")
+@router.post("/auth/login", dependencies=[Depends(limit("login", 20, 300))])
 async def login(body: LoginIn, request: Request, db: AsyncSession = Depends(get_db)):
     user = (await db.execute(select(User).where(User.phone == body.phone))).scalar_one_or_none()
     ip = (request.headers.get("x-forwarded-for", "").split(",")[0].strip() or (request.client.host if request.client else None))
@@ -382,7 +383,7 @@ async def change_password(body: ChangePasswordIn, user: User = Depends(current_u
     return {"access_token": create_access_token(user.id, user.token_version), "token_type": "bearer"}
 
 
-@router.post("/auth/forgot-password", status_code=202)
+@router.post("/auth/forgot-password", status_code=202, dependencies=[Depends(limit("forgot", 5, 3600))])
 async def forgot_password(body: ForgotPasswordIn, db: AsyncSession = Depends(get_db), lang: str = Depends(request_lang)):
     """No OTP: creates a reset request that an admin handles (POST /api/admin/users/{id}/reset-password)."""
     user = (await db.execute(select(User).where(User.phone == body.phone))).scalar_one_or_none()
