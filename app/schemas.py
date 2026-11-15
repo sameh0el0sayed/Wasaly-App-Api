@@ -420,6 +420,7 @@ class SettingsPatch(BaseModel):
     marketing_spend_monthly: Decimal | None = Field(default=None, ge=0)
     benefit_fee_percent: Decimal | None = Field(default=None, ge=0, le=20)
     benefit_fee_fixed: Decimal | None = Field(default=None, ge=0)
+    access_token_minutes: int | None = Field(default=None, ge=0, le=1440)  # 0 = legacy non-expiring; 30 = short token + refresh (SEC-001)
     live_test: bool | None = None
     live_test_message: str | None = Field(default=None, max_length=300)
     benefitpay_enabled: bool | None = None

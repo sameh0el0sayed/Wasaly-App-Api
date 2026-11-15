@@ -12,7 +12,6 @@ from ..config import settings
 from ..database import get_db
 from ..deps import current_user
 from ..models import LoginEvent, Passkey, User, UserDevice, utcnow
-from ..security import create_access_token
 from ..serializers import dt, user_public
 from ..services import cache, settings_service
 from ..services.notifications import notify
@@ -171,8 +170,10 @@ async def login_verify(body: LoginVerifyIn, request: Request, db: AsyncSession =
     p.sign_count, p.last_used_at = v.new_sign_count, now
     user.failed_logins, user.locked_until = 0, None
     user.last_login_at, user.last_login_ip, user.login_count, user.last_seen_at = now, ip, (user.login_count or 0) + 1, now
+    from ..services import sessions
+    tokens = await sessions.issue(db, user)
     await db.commit()
-    return {"user": user_public(user), "access_token": create_access_token(user.id, user.token_version), "token_type": "bearer"}
+    return {"user": user_public(user), **tokens}
 
 
 # ---------------- manage ----------------

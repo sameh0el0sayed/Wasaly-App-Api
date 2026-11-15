@@ -23,6 +23,7 @@ DEFAULTS = {
     "license_job_last_run": "",
     "partners_last_generated": "",
     "whatsapp_verification_required": "false",
+    "access_token_minutes": "0",  # 0 = non-expiring access token (legacy); set 30 once the apps use /auth/token/refresh
     "analytics_cleanup_last_run": "",
     "currency_code": "BHD",
     "unit_price": "0.100",

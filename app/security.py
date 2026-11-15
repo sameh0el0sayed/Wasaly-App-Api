@@ -68,9 +68,10 @@ def _now() -> datetime:
     return datetime.now(UTC)
 
 
-def create_access_token(user_id: int, token_version: int) -> str:
-    payload = {"sub": str(user_id), "tv": token_version, "typ": "access",
-               "iat": _now(), "exp": _now() + timedelta(days=36500)}  # no practical expiry: validity is decided only by token_version
+def create_access_token(user_id: int, token_version: int, minutes: int = 0) -> str:
+    """minutes=0 -> legacy non-expiring token (validity decided only by token_version); >0 -> short-lived token (used with refresh tokens)."""
+    life = timedelta(minutes=minutes) if minutes and minutes > 0 else timedelta(days=36500)
+    payload = {"sub": str(user_id), "tv": token_version, "typ": "access", "iat": _now(), "exp": _now() + life}
     return jwt.encode(payload, settings.secret_key, algorithm="HS256")
 
 

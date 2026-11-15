@@ -8,6 +8,7 @@ from datetime import date, timedelta
 from urllib.parse import quote
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response
+from pydantic import BaseModel, Field
 from sqlalchemy import func, or_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -31,7 +32,7 @@ from ..models import (
 from ..schemas import ChangePasswordIn, ForgotPasswordIn, LoginIn, RegisterIn, WhatsAppVerificationRequestIn
 from ..security import cpr_hash, create_access_token, encrypt, hash_password, normalize_phone, verify_password
 from ..serializers import user_public
-from ..services import settings_service
+from ..services import sessions, settings_service
 from ..services.audit import audit
 from ..services.files import assert_owned
 from ..services.ratelimit import limit
@@ -308,8 +309,8 @@ async def register(body: RegisterIn, db: AsyncSession = Depends(get_db), lang: s
     from ..services.ai_review import wake
     wake()  # new member: the AI review worker wakes up if it was sleeping
     await db.refresh(user, ["driver_profile", "vehicle", "driver_application"])  # new instance: load before user_public()
-    return {"user": user_public(user), "access_token": create_access_token(user.id, user.token_version),
-            "token_type": "bearer", "phone_verified": verification is not None,
+    return {"user": user_public(user), **await _tokens(db, user, getattr(body, "device_id", None)),
+            "phone_verified": verification is not None,
             "message": localize("تم التحقق من رقم الهاتف. حسابك الآن قيد المراجعة من الإدارة", user.language)}
 
 
@@ -343,9 +344,9 @@ async def login(body: LoginIn, request: Request, db: AsyncSession = Depends(get_
                       new_device=bool(body.device_id) and not known))
     now = utcnow()
     user.last_login_at, user.last_login_ip, user.login_count, user.last_seen_at = now, ip, (user.login_count or 0) + 1, now
+    tokens = await _tokens(db, user, body.device_id)
     await db.commit()
-    return {"user": user_public(user), "access_token": create_access_token(user.id, user.token_version),
-            "token_type": "bearer"}
+    return {"user": user_public(user), **tokens}
 
 
 _REFRESH_HITS: dict[int, list[float]] = {}
@@ -365,9 +366,26 @@ async def refresh_token(user: User = Depends(current_user)):
     return {"access_token": create_access_token(user.id, user.token_version), "token_type": "bearer"}
 
 
+async def _tokens(db: AsyncSession, user: User, device_id: str | None = None) -> dict:
+    tokens = await sessions.issue(db, user, device_id)
+    await db.commit()
+    return tokens
+
+
+class RefreshIn(BaseModel):
+    refresh_token: str = Field(min_length=20, max_length=200)
+
+
+@router.post("/auth/token/refresh", dependencies=[Depends(limit("rtoken", 120, 3600))])
+async def token_refresh(body: RefreshIn, db: AsyncSession = Depends(get_db)):
+    """Rotate: returns a new access_token + refresh_token. The old refresh token stops working; reusing it revokes the session."""
+    return await sessions.rotate(db, body.refresh_token)
+
+
 @router.post("/auth/logout")
 async def logout(user: User = Depends(current_user), db: AsyncSession = Depends(get_db)):
     user.token_version += 1  # invalidates every issued token for this user
+    await sessions.revoke_all(db, user.id)
     await db.commit()
     return {"ok": True}
 
