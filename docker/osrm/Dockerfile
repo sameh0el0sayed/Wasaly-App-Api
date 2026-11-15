@@ -1,6 +1,6 @@
 # Self-hosted OSRM backed by the Bahrain OpenStreetMap extract (Geofabrik).
 # No paid API, no public demo server: all road-network processing stays on the VPS.
-FROM osrm/osrm-backend:v5.27.1
+FROM ghcr.io/project-osrm/osrm-backend:v5.27.1
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends curl \
