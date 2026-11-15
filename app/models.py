@@ -178,6 +178,7 @@ class ServiceArea(Base):
     # {"type":"polygon","points":[[lat,lng],...]} or {"type":"circle","center":[lat,lng],"radius_m":1500}
     boundary: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    deleted_at: Mapped[datetime | None] = mapped_column(UTCDateTime, nullable=True, index=True)  # soft delete
 
 
 class PromoCode(Base):
@@ -753,6 +754,7 @@ class Partner(Base):
     beneficiary_name: Mapped[str | None] = mapped_column(String(120), nullable=True)
     tap_destination_id: Mapped[str | None] = mapped_column(String(80), nullable=True)
     created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
+    deleted_at: Mapped[datetime | None] = mapped_column(UTCDateTime, nullable=True, index=True)  # soft delete (statements are kept)
 
 
 class PartnerStatement(Base):

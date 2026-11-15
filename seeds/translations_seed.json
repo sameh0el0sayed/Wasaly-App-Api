@@ -9488,5 +9488,110 @@
   "key": "v27.i_payment_mix",
   "ar": "توزيع طرق الدفع",
   "en": "Payment mix"
+ },
+ {
+  "key": "v28.delete",
+  "ar": "حذف",
+  "en": "Delete"
+ },
+ {
+  "key": "v28.delete_q",
+  "ar": "حذف «{0}»؟",
+  "en": "Delete “{0}”?"
+ },
+ {
+  "key": "v28.bulk_title",
+  "ar": "قبول الكل",
+  "en": "Approve all"
+ },
+ {
+  "key": "v28.kind.driver_photos",
+  "ar": "صور السائقين",
+  "en": "Driver photos"
+ },
+ {
+  "key": "v28.kind.pending_changes",
+  "ar": "التعديلات",
+  "en": "Profile changes"
+ },
+ {
+  "key": "v28.kind.corrections",
+  "ar": "التصحيحات",
+  "en": "Corrections"
+ },
+ {
+  "key": "v28.kind.benefitpay",
+  "ar": "تحويلات بنفت باي",
+  "en": "BenefitPay transfers"
+ },
+ {
+  "key": "v28.skip_preview",
+  "ar": "تخطي المعاينة ({0})",
+  "en": "Skip preview ({0})"
+ },
+ {
+  "key": "v28.exclude",
+  "ar": "استبعاد",
+  "en": "Exclude"
+ },
+ {
+  "key": "v28.skip_all",
+  "ar": "قبول كل المتبقي بدون معاينة",
+  "en": "Approve all remaining"
+ },
+ {
+  "key": "v28.summary",
+  "ar": "سيتم قبول {0} — مستبعد {1}",
+  "en": "{0} to approve — {1} excluded"
+ },
+ {
+  "key": "v28.approve_n",
+  "ar": "قبول {0}",
+  "en": "Approve {0}"
+ },
+ {
+  "key": "v28.password_title",
+  "ar": "تأكيد بكلمة المرور",
+  "en": "Confirm with password"
+ },
+ {
+  "key": "v28.password",
+  "ar": "كلمة مرور المدير",
+  "en": "Admin password"
+ },
+ {
+  "key": "v28.done_n",
+  "ar": "تم قبول {0}",
+  "en": "{0} approved"
+ },
+ {
+  "key": "v28.nothing_pending",
+  "ar": "لا يوجد شيء بانتظار المراجعة",
+  "en": "Nothing pending"
+ },
+ {
+  "key": "v28.back",
+  "ar": "رجوع",
+  "en": "Back"
+ },
+ {
+  "key": "err.INVALID_PASSWORD",
+  "ar": "كلمة المرور غير صحيحة",
+  "en": "Wrong password"
+ },
+ {
+  "key": "err.NOT_PENDING",
+  "ar": "لم يعد بانتظار المراجعة",
+  "en": "No longer pending"
+ },
+ {
+  "key": "err.PARTNER_HAS_UNPAID",
+  "ar": "لدى الشريك كشوف غير مدفوعة",
+  "en": "Partner has unpaid statements"
+ },
+ {
+  "key": "err.AREA_IN_USE",
+  "ar": "المنطقة مستخدمة في طلبات جارية",
+  "en": "Area is used by active orders"
  }
 ]

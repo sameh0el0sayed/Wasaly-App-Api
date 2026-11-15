@@ -21,7 +21,7 @@ def _area(a: ServiceArea) -> dict:
 
 @router.get("/service-areas")
 async def list_areas(admin: User = Depends(admin_user), db: AsyncSession = Depends(get_db)):
-    rows = (await db.execute(select(ServiceArea).order_by(ServiceArea.id))).scalars().all()
+    rows = (await db.execute(select(ServiceArea).where(ServiceArea.deleted_at.is_(None)).order_by(ServiceArea.id))).scalars().all()
     out = []
     for a in rows:
         n = (await db.execute(select(func.count()).select_from(Order).where(Order.service_area_id == a.id, Order.order_status == S.NO_DRIVER_AVAILABLE))).scalar_one()

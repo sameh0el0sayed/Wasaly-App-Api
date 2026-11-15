@@ -143,7 +143,7 @@ async def month_profit(db: AsyncSession, period: str) -> dict:
 
 @admin_router.get("/partners")
 async def list_partners(admin: User = Depends(admin_user), db: AsyncSession = Depends(get_db)):
-    rows = (await db.execute(select(Partner).order_by(Partner.id))).scalars().all()
+    rows = (await db.execute(select(Partner).where(Partner.deleted_at.is_(None)).order_by(Partner.id))).scalars().all()
     return {"items": [_p(p) for p in rows], "active_percent_total": f"{sum((p.percent for p in rows if p.is_active), Decimal(0)):.2f}"}
 
 
