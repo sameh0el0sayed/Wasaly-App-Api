@@ -82,5 +82,24 @@ class Settings(BaseSettings):
     whatsapp_webhook_verify_token: str = ""
     whatsapp_app_secret: str = ""  # used only to validate incoming webhook signatures
 
+    # --- GPS map matching: self-hosted OSRM + OpenStreetMap (no paid API, no per-request charge) ---
+    map_matching_enabled: bool = False  # master switch; when false the API keeps the raw-GPS behaviour
+    osrm_base_url: str = "http://127.0.0.1:5000"  # local OSRM container, never a public demo API
+    osrm_timeout_seconds: float = 5.0
+    osrm_match_workers: int = 2  # concurrent matching workers (rolling windows are batched)
+    osrm_match_min_interval_seconds: float = 2.0  # per-driver throttle: at most one match request this often
+    map_match_window_seconds: float = 30.0  # rolling GPS observation window sent to OSRM
+    map_match_min_points: int = 2  # OSRM needs at least two observations
+    map_match_max_points: int = 100  # hard cap per match request
+    map_match_max_accuracy_m: float = 100.0  # a fix worse than this is degraded, never snapped confidently
+    map_match_confidence_threshold: float = 0.45  # below this the raw validated fix is kept
+    map_match_max_snap_distance_m: float = 120.0  # snapped point farther than this is rejected as a mismatch
+    map_match_min_movement_m: float = 1.0  # below this the vehicle is considered stationary
+    location_history_max_points: int = 60
+    location_history_ttl_seconds: int = 300
+    eta_enabled: bool = False  # live ETA from the self-hosted OSRM routing API
+    eta_cache_seconds: int = 30  # do not re-route unchanged positions
+    h3_resolution: int = 9  # ~170 m cells: driver proximity / road-state key
+
 
 settings = Settings()

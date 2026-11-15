@@ -40,6 +40,7 @@ from ..serializers import (
     offer_load_options, order_driver_load_options, driver_full_load_options,
 )
 from ..services import cache, settings_service
+from ..services import map_matching
 from ..services import price_increase as pi
 from ..services.audit import audit
 from ..services.dispatch import dispatch_order, expire_offers_and_orders, has_active_order, work_blockers
@@ -121,11 +122,13 @@ async def availability(body: AvailabilityIn, user: User = Depends(driver_user), 
             db.add(DriverWorkSession(driver_id=user.id, online_at=utcnow()))
         if mode != "LIVE":
             _clear_location(profile)  # location is kept only while LIVE
+            map_matching.clear_driver(user.id)
         profile.mode = mode
     else:
         # going offline never cancels or changes a trip already in progress; it only stops new offers
         profile.is_online, profile.mode = False, "OFF"
         _clear_location(profile)
+        map_matching.clear_driver(user.id)
         await cache.clear_location(user.id)
         await db.execute(update(DriverWorkSession).where(DriverWorkSession.driver_id == user.id,
                                                          DriverWorkSession.offline_at.is_(None)).values(offline_at=utcnow()))
@@ -160,13 +163,15 @@ async def driver_location(body: DriverLocationIn, user: User = Depends(driver_us
     now = utcnow()
     _push_location(user.id, body.latitude, body.longitude, body.heading)
     in_redis = await cache.set_location(user.id, body.latitude, body.longitude, body.speed_kmh, body.heading)
+    # validate + store the raw fix + enqueue for asynchronous map matching (never blocks the driver app)
+    verdict = await map_matching.ingest(user.id, body)
     # with Redis up PostgreSQL only gets the latest position every location_db_flush_seconds (it still serves dispatch / recovery)
     last = p.last_location_at
     if not in_redis or not last or (now - (last if last.tzinfo else last.replace(tzinfo=now.tzinfo))).total_seconds() >= settings.location_db_flush_seconds:
         p.last_lat, p.last_lng, p.last_location_at = body.latitude, body.longitude, now
         p.last_speed_kmh, p.last_heading = body.speed_kmh, body.heading
         await db.commit()
-    return {"ok": True}
+    return {"ok": True, "gps_status": verdict["status"], "gps_status_reason": verdict.get("reason")}
 
 
 @router.get("/status")

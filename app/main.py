@@ -124,6 +124,8 @@ async def lifespan(app: FastAPI):
         tasks.append(asyncio.create_task(review_loop()))
     else:
         log.warning("Background tasks disabled; AI review worker will not start")
+    from .services import map_matching
+    await map_matching.start()  # no-op unless MAP_MATCHING_ENABLED=true
     yield
     for task in tasks:
         task.cancel()
@@ -132,7 +134,8 @@ async def lifespan(app: FastAPI):
             await task
         except asyncio.CancelledError:
             pass
-    from .services import cache
+    from .services import cache, map_matching
+    await map_matching.stop()
     await cache.close()
 
 

@@ -212,6 +212,7 @@ Before `start-trip` (pickup proof, body `pickup_photo_file_key`) and `arrived-at
 - **Order state machine:** `services/orders.py` (`ALLOWED` table, `transition()` is the only writer of `order_status`).
 - **Storage strategy:** `services/storage_backends.py` (`CloudinaryStorage`, `LocalStorage`, `BACKENDS` registry).
 - **Events:** `services/events.py` in-process bus; `transition()` publishes `OrderStatusChanged`. Handlers can later move to a queue (outbox) when a module is split out.
+- **GPS map matching:** `services/gps.py` (validation/rolling window), `services/osrm.py` (self-hosted OSRM client), `services/map_matching.py` (workers, Redis, SSE broadcast), `services/eta.py` (cached OSRM ETA). No database migration is required: raw/matched locations live in Redis.
 - **Lint:** `ruff check app tests`.
 
 ## Promo codes
@@ -223,6 +224,62 @@ Before `start-trip` (pickup proof, body `pickup_photo_file_key`) and `arrived-at
 `GET /api/stream` (any signed-in user, `Authorization: Bearer`, `Accept: text/event-stream`). Admins receive every order/subscription event, customers and drivers only their own.
 Events (small notifications, the app refetches the resource): `order.created`, `order.status` (`old_status`, `new_status`), `subscription.created`, `subscription.status`; plus `: ping` comments every 15 s.
 Events are published **after the database commit** (never on rollback). In-process hub: with more than one server instance put Redis pub/sub behind `Hub.publish` (`services/realtime.py`).
+Live GPS adds `driver.location.matched` (see below) and keeps the existing `admin.driver_location`.
+
+## GPS map matching (self-hosted OSRM + OpenStreetMap)
+
+Real-time map matching with **no paid API, no subscription and no per-request charge**. The road
+network is the **Bahrain OpenStreetMap extract** (Geofabrik), processed locally by a self-hosted
+**OSRM** container on the same VPS. Nothing is sent to a third party. OSM data © OpenStreetMap
+contributors.
+
+Pipeline (the GPS endpoint never waits for OSRM):
+
+1. `POST /api/driver/location` validates the fix (`services/gps.py`): ranges, null-island, speed,
+   heading, accuracy, impossible jumps, out-of-order timestamps, stationary detection.
+2. The **raw** fix is stored in Redis (`wasaly:driver:raw_location:{id}`) and the driver is enqueued.
+3. Background workers (`services/map_matching.py`) build a rolling window
+   (`MAP_MATCH_WINDOW_SECONDS`, default 30 s) and call `OSRM /match/v1/drive`.
+4. Application confidence = OSRM confidence × GPS accuracy × snap distance. Below
+   `MAP_MATCH_CONFIDENCE_THRESHOLD`, or when OSRM is down, the **validated raw fix is kept** and the
+   status is `DEGRADED` — trip tracking never stops.
+5. The **matched** fix, road name, heading and H3 cell are stored separately
+   (`wasaly:driver:matched_location:{id}`, `wasaly:driver:road_state:{id}`) and broadcast as
+   `driver.location.matched` to the customer on the active trip (admins receive it too). A late
+   result can never overwrite a newer fix (Redis compares the observation timestamp) and unchanged
+   positions are not re-broadcast (sequence numbers are included for ordering).
+
+Redis keys: `wasaly:driver:raw_location:{id}`, `wasaly:driver:matched_location:{id}`,
+`wasaly:driver:road_state:{id}`, `wasaly:driver:location_history:{id}` (rolling diagnostics),
+`wasaly:driver:customer:{id}` (who is allowed to receive the matched stream).
+
+Matched coordinates are used by **nearest-first dispatch** (`services/dispatch.py`, H3 cell stored
+alongside) and by **live ETA** (`ETA_ENABLED=true` -> OSRM `/route/v1/drive`, cached per order + H3
+cell). `GET /api/orders/{id}/driver-location` returns the matched position with `confidence`,
+`gps_status`, `road_name` and `eta_source` (`OSRM` or `STRAIGHT_LINE` fallback).
+
+### OSRM deployment (existing VPS, Docker)
+
+`docker-compose.yml` has an `osrm` service (`docker/osrm`). On first start it downloads
+`https://download.geofabrik.de/asia/bahrain-latest.osm.pbf`, runs `osrm-extract -p /opt/car.lua` and
+`osrm-contract`, stores the graph in the `osrmdata` volume and serves it on `127.0.0.1:5000`
+(in-container port 5000). Restarts reuse the volume. Set in `.env`:
+
+```bash
+MAP_MATCHING_ENABLED=true
+OSRM_BASE_URL=http://osrm:5000      # compose sets this automatically
+ETA_ENABLED=true
+```
+
+Bare-metal alternative (no Docker): `sudo apt-get install -y osrm-backend` then
+`sudo ./scripts/osrm_setup.sh` (same Geofabrik extract, same pipeline). The API falls back to raw
+GPS whenever OSRM is unreachable, so a missing/failed OSRM container never blocks the app.
+
+Configuration (`.env.example`): `MAP_MATCHING_ENABLED`, `OSRM_BASE_URL`, `OSRM_TIMEOUT_SECONDS`,
+`OSRM_MATCH_WORKERS`, `OSRM_MATCH_MIN_INTERVAL_SECONDS`, `MAP_MATCH_WINDOW_SECONDS`,
+`MAP_MATCH_MIN_POINTS`, `MAP_MATCH_MAX_POINTS`, `MAP_MATCH_MAX_ACCURACY_M`,
+`MAP_MATCH_CONFIDENCE_THRESHOLD`, `MAP_MATCH_MAX_SNAP_DISTANCE_M`, `ETA_ENABLED`,
+`ETA_CACHE_SECONDS`, `H3_RESOLUTION`.
 
 ## Languages (Arabic / English)
 - `users.language` (`ar` default | `en`): language of notifications and pushes (written in the recipient's language when created). Set at register (`language`, else the `Accept-Language` header) and changed with `PATCH /api/profile {"language":"en"}`.

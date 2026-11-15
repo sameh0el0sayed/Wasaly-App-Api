@@ -3,7 +3,18 @@ import math
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from ..config import settings
 from ..models import ServiceArea
+
+
+def h3_cell(lat: float, lng: float, resolution: int | None = None) -> str | None:
+    """H3 cell of a (matched) coordinate. Local library, no network; None when h3 is unavailable."""
+    try:
+        import h3
+
+        return h3.latlng_to_cell(lat, lng, int(resolution if resolution is not None else settings.h3_resolution))
+    except Exception:  # noqa: BLE001 - optional dependency
+        return None
 
 
 def _haversine_m(lat1, lon1, lat2, lon2) -> float:

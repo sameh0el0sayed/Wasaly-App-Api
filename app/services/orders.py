@@ -1,3 +1,4 @@
+import logging
 from datetime import datetime
 
 from fastapi import HTTPException
@@ -8,6 +9,8 @@ from ..constants import CounterStatus, OfferStatus
 from ..constants import OrderStatus as S
 from ..models import CounterOffer, Order, OrderOffer, OrderStatusHistory, utcnow
 from . import events
+
+log = logging.getLogger("orders")
 
 ALLOWED: dict[str, set[str]] = {
     S.SCHEDULED: {S.PENDING, S.OFFERED, S.NO_DRIVER_AVAILABLE, S.CANCELLED, S.EXPIRED},
@@ -41,6 +44,20 @@ async def transition(db: AsyncSession, order: Order, new: str, actor_id: int | N
                               changed_by_role=actor_role, changed_at=utcnow(), notes=notes))
     await db.flush()
     await events.publish(events.OrderStatusChanged(order.id, old, new, actor_id, actor_role))
+    await _sync_location_viewer(order, new)
+
+
+async def _sync_location_viewer(order: Order, new: str) -> None:
+    """Who receives this driver's matched-location stream: the customer on the active trip."""
+    from . import cache
+
+    try:
+        if new in S.DRIVER_BUSY and order.driver_id:
+            await cache.set_active_customer(order.driver_id, order.customer_id)
+        elif new in S.FINAL and order.driver_id:
+            await cache.clear_active_customer(order.driver_id)
+    except Exception:  # noqa: BLE001 - realtime audience must never break a transition
+        log.exception("could not sync location viewer for order %s", order.id)
 
 
 async def load_order(db: AsyncSession, order_id: int, for_update: bool = False) -> Order | None:

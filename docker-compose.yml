@@ -35,6 +35,8 @@ services:
       - "127.0.0.1:8003:8000"
     environment:
       REDIS_URL: redis://redis:6379/0
+      # self-hosted OSRM container; the API falls back to raw GPS when it is unreachable
+      OSRM_BASE_URL: http://osrm:5000
     depends_on:
       db:
         condition: service_healthy
@@ -43,5 +45,24 @@ services:
     volumes:
       - ./secrets:/srv/secrets:ro
 
+  # Self-hosted OSRM (OpenStreetMap Bahrain). Free, open-source, no per-request charge.
+  # First start downloads the Geofabrik extract and builds the graph into the osrmdata volume.
+  osrm:
+    build: ./docker/osrm
+    restart: unless-stopped
+    environment:
+      OSM_REGION_URL: https://download.geofabrik.de/asia/bahrain-latest.osm.pbf
+    volumes:
+      - osrmdata:/data
+    ports:
+      - "127.0.0.1:5000:5000"
+    healthcheck:
+      test: ["CMD", "bash", "-c", "echo > /dev/tcp/127.0.0.1/5000"]
+      interval: 10s
+      timeout: 3s
+      retries: 12
+      start_period: 900s
+
 volumes:
   pgdata:
+  osrmdata:

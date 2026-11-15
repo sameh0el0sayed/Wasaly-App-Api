@@ -342,10 +342,24 @@ async def _public_trip(db: AsyncSession, token: str) -> dict:
         raise HTTPException(410, {"code": "SHARE_EXPIRED"})
     drv, p = o.driver, (o.driver.driver_profile if o.driver else None)
     stops = (await db.execute(select(OrderStop).where(OrderStop.order_id == o.id).order_by(OrderStop.seq))).scalars().all()
+    # matched position first (OSRM), then validated raw GPS
+    loc = None
+    if drv and o.order_status not in S.FINAL:
+        m = await cache.get_matched_location(drv.id)
+        if m and m.get("lat") is not None and m.get("ts") is not None:
+            loc = (m["lat"], m["lng"], datetime.fromtimestamp(float(m["ts"]), UTC))
+        elif p and p.last_lat is not None and p.last_lng is not None:
+            loc = (p.last_lat, p.last_lng, p.last_location_at)
     eta = None
-    if p and p.last_lat is not None and o.destination_latitude is not None and o.order_status in S.DRIVER_BUSY:
-        km = _haversine_m(p.last_lat, p.last_lng, o.destination_latitude, o.destination_longitude) / 1000
-        eta = max(1, round(km * 1.3 / 35 * 60))
+    if loc and o.destination_latitude is not None and o.order_status in S.DRIVER_BUSY:
+        from ..services import map_matching
+        live = await map_matching.live_eta(o.id, (loc[0], loc[1]),
+                                           (o.destination_latitude, o.destination_longitude))
+        if live is not None:
+            eta = live["duration_min"]
+        else:
+            km = _haversine_m(loc[0], loc[1], o.destination_latitude, o.destination_longitude) / 1000
+            eta = max(1, round(km * 1.3 / 35 * 60))
     v = drv.vehicle if drv else None
     timeline = [{"key": k, "at": _iso(at)} for k, at in (
         ("ACCEPTED", o.accepted_at), ("DRIVER_ON_THE_WAY", o.driver_on_the_way_at), ("ARRIVED_AT_PICKUP", o.driver_arrived_at),
@@ -357,7 +371,7 @@ async def _public_trip(db: AsyncSession, token: str) -> dict:
             "driver": {"first_name": drv.full_name.split()[0], "photo_url": (_base() + _file_url(drv.profile_photo)) if drv.profile_photo else None,
                        "rating": rating, "vehicle": {"make": v.make, "model": v.model, "color": v.color, "plate_number": v.plate_number} if v else None} if drv else None,
             "vehicle": {"make": v.make, "model": v.model, "color": v.color, "plate_number": v.plate_number} if v else None,
-            "driver_location": {"lat": p.last_lat, "lng": p.last_lng, "at": _iso(p.last_location_at)} if p and p.last_lat is not None and o.order_status not in S.FINAL else None,
+            "driver_location": {"lat": loc[0], "lng": loc[1], "at": _iso(loc[2])} if loc else None,
             "pickup": {"lat": o.pickup_latitude, "lng": o.pickup_longitude, "address": o.pickup_address},
             "destination": {"lat": o.destination_latitude, "lng": o.destination_longitude, "address": o.destination_address},
             "stops": [{"lat": s.lat, "lng": s.lng, "address": s.address, "status": s.status} for s in stops],

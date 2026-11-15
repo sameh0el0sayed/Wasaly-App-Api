@@ -1,14 +1,15 @@
 """Driver eligibility, offer dispatch (10 s offers), expiry handling and document enforcement."""
 import logging
-from datetime import date, timedelta
+from datetime import UTC, date, datetime, timedelta
 
 from sqlalchemy import and_, or_, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from ..config import settings
 from ..constants import AccountStatus, CounterStatus, OfferStatus, ReviewStatus
 from ..constants import OrderStatus as S
 from ..models import CounterOffer, DriverProfile, DriverServiceArea, DriverWorkSession, Notification, Order, OrderOffer, User, utcnow
-from . import settings_service
+from . import cache, settings_service
 from .notifications import notify
 from .orders import close_pending_counters, close_pending_offers, transition
 
@@ -89,9 +90,34 @@ async def eligible_drivers(db: AsyncSession, order: Order) -> list[User]:
     return out
 
 
-def rank_by_distance(drivers: list, order: Order, s: dict) -> list:
-    """Nearest driver to the pickup first. Only LIVE drivers with a fresh position have a distance; the others (NORMAL
-    mode or a stale fix) come after them in their original order. dispatch_max_pickup_km drops LIVE drivers that are too far."""
+def _matched_fix(d: User, matched: dict | None, now: datetime, max_age: timedelta) -> tuple[float, float] | None:
+    """Matched coordinates for a LIVE driver when they are fresh and confident enough.
+    Falls back to the validated raw fix stored on the driver profile."""
+    from .geo import _haversine_m  # noqa: F401  (kept next to the ranking logic)
+
+    p = d.driver_profile
+    if p is None or p.mode != "LIVE":
+        return None
+    m = (matched or {}).get(d.id) or {}
+    m_lat, m_lng, m_ts = m.get("lat"), m.get("lng"), m.get("ts")
+    if m_lat is not None and m_lng is not None and m_ts is not None:
+        try:
+            fresh = now - datetime.fromtimestamp(float(m_ts), tz=UTC) <= max_age
+        except (TypeError, ValueError, OSError):
+            fresh = False
+        if fresh and (m.get("confidence") or 0.0) >= settings.map_match_confidence_threshold:
+            return float(m_lat), float(m_lng)
+    # fallback: validated raw GPS (last position written by POST /api/driver/location)
+    if p.last_lat is not None and p.last_location_at and now - p.last_location_at <= max_age:
+        return p.last_lat, p.last_lng
+    return None
+
+
+def rank_by_distance(drivers: list, order: Order, s: dict, matched: dict | None = None) -> list:
+    """Nearest driver to the pickup first, using matched coordinates when available (H3 cell is
+    stored alongside). Only LIVE drivers with a fresh position have a distance; the others (NORMAL
+    mode or a stale fix) come after them in their original order. dispatch_max_pickup_km drops LIVE
+    drivers that are too far."""
     from .geo import _haversine_m
     if s["dispatch_nearest_first"] != "true" or order.pickup_latitude is None:
         return drivers
@@ -100,9 +126,9 @@ def rank_by_distance(drivers: list, order: Order, s: dict) -> list:
     now = utcnow()
     scored, rest = [], []
     for d in drivers:
-        p = d.driver_profile
-        if p.mode == "LIVE" and p.last_lat is not None and p.last_location_at and now - p.last_location_at <= max_age:
-            km = _haversine_m(p.last_lat, p.last_lng, order.pickup_latitude, order.pickup_longitude) / 1000
+        fix = _matched_fix(d, matched, now, max_age)
+        if fix is not None:
+            km = _haversine_m(fix[0], fix[1], order.pickup_latitude, order.pickup_longitude) / 1000
             if limit_km > 0 and km > limit_km:
                 continue
             scored.append((km, d))
@@ -114,7 +140,8 @@ def rank_by_distance(drivers: list, order: Order, s: dict) -> list:
 async def dispatch_order(db: AsyncSession, order: Order) -> int:
     """Creates timed offers (offer_ttl_seconds setting, default 10 s) for every eligible driver in the pickup area. Returns number of offers."""
     drivers = await eligible_drivers(db, order) if order.service_area_id else []
-    drivers = rank_by_distance(drivers, order, await settings_service.get_all(db))
+    matched = await cache.get_matched_locations([d.id for d in drivers]) if drivers else {}
+    drivers = rank_by_distance(drivers, order, await settings_service.get_all(db), matched)
     if not drivers:
         if order.order_status != S.NO_DRIVER_AVAILABLE:
             await transition(db, order, S.NO_DRIVER_AVAILABLE, None, "SYSTEM", "No eligible driver online in area")
