@@ -10,7 +10,7 @@ from ...database import get_db
 from ...deps import admin_user, paging, super_admin_user
 from ...models import Order, OrderStatusHistory, Payment, User, utcnow
 from ...schemas import PriceAdjustIn, ReasonIn
-from ...serializers import history_out, order_for_admin
+from ...serializers import history_out, order_for_admin, order_admin_load_options
 from ...services.audit import audit
 from ...services.notifications import notify
 from ...services.orders import close_pending_offers, load_order, transition
@@ -40,13 +40,14 @@ async def list_orders(status: str | None = None, customer_id: int | None = None,
     if date_to:
         stmt = stmt.where(Order.created_at < _local_start(date_to + timedelta(days=1)))
     total = (await db.execute(select(func.count()).select_from(stmt.subquery()))).scalar_one()
+    stmt = stmt.options(*order_admin_load_options())
     rows = (await db.execute(stmt.order_by(Order.id.desc()).limit(limit).offset(offset))).scalars().all()
     return {"total": total, "items": [order_for_admin(o) for o in rows]}
 
 
 @router.get("/orders/{order_id}")
 async def get_order(order_id: int, admin: User = Depends(admin_user), db: AsyncSession = Depends(get_db)):
-    o = await load_order(db, order_id)
+    o = (await db.execute(select(Order).where(Order.id == order_id).options(*order_admin_load_options()))).scalar_one_or_none()
     if not o:
         raise HTTPException(404, "Order not found")
     hist = (await db.execute(select(OrderStatusHistory).where(OrderStatusHistory.order_id == o.id).order_by(OrderStatusHistory.id))).scalars().all()
@@ -55,7 +56,7 @@ async def get_order(order_id: int, admin: User = Depends(admin_user), db: AsyncS
 
 @router.post("/orders/{order_id}/cancel")
 async def admin_cancel(order_id: int, body: ReasonIn, admin: User = Depends(admin_user), db: AsyncSession = Depends(get_db)):
-    o = await load_order(db, order_id, for_update=True)
+    o = (await db.execute(select(Order).where(Order.id == order_id).options(*order_admin_load_options()).with_for_update())).scalar_one_or_none()
     if not o:
         raise HTTPException(404, "Order not found")
     if o.order_status in S.FINAL:
@@ -67,13 +68,16 @@ async def admin_cancel(order_id: int, body: ReasonIn, admin: User = Depends(admi
     for uid in {o.customer_id, o.driver_id} - {None}:
         await notify(db, uid, "ORDER_CANCELLED", "تم إلغاء الطلب", f"ألغت الإدارة الطلب: {body.reason}", o.id)
     await db.commit()
-    return order_for_admin(await load_order(db, o.id))
+    o = (await db.execute(select(Order).where(Order.id == o.id).options(*order_admin_load_options()))).scalar_one()
+    return order_for_admin(o)
 
 
 @router.post("/orders/{order_id}/adjust-price")
 async def adjust_price(order_id: int, body: PriceAdjustIn, admin: User = Depends(super_admin_user), db: AsyncSession = Depends(get_db)):
     """Exceptional, super-admin only, reason mandatory, original price preserved + audit trail."""
-    o = await load_order(db, order_id, for_update=True)
+    o = (await db.execute(select(Order).where(Order.id == order_id).options(*order_admin_load_options()).with_for_update())).scalar_one_or_none()
+    if not o:
+        raise HTTPException(404, "Order not found")
     if not o or o.order_status != S.COMPLETED:
         raise HTTPException(409, "Only completed orders can be adjusted")
     if o.payment_status == "PAID" or (o.payment_status == "PENDING_VERIFICATION"):

@@ -19,15 +19,18 @@ from ..models import (
     DriverWorkSession,
     Order,
     OrderStop,
+    Rating,
     Referral,
     ServiceArea,
     SosAlert,
     TripShare,
     User,
+    Vehicle,
     WalletEntry,
     utcnow,
 )
 from ..services import cache, settings_service
+from ..serializers import order_admin_load_options, order_driver_load_options, order_customer_load_options
 from ..services.audit import audit
 from ..services.geo import _haversine_m, find_area
 from ..services.notifications import notify
@@ -83,7 +86,24 @@ async def live_map(service_area_id: int | None = None, include_offline_minutes: 
         areas_of.setdefault(r.driver_id, []).append(r.service_area_id)
     drivers = []
     fresh_locs = await cache.get_locations([d for (d,) in (await db.execute(select(DriverProfile.user_id).where(DriverProfile.is_online.is_(True)))).all()])
-    q = select(User).join(DriverProfile, DriverProfile.user_id == User.id).where(User.account_status == "APPROVED")
+    q = select(User).join(DriverProfile, DriverProfile.user_id == User.id).where(User.account_status == "APPROVED").options(
+        joinedload(User.vehicle),
+        selectinload(User.driver_profile),
+    )
+    driver_ids = [u.id for u in (await db.execute(q)).scalars().unique().all()]
+    # Batch driver rating stats into a single query instead of N+1 stats_for calls
+    rating_map = {}
+    if driver_ids:
+        rating_rows = (await db.execute(
+            select(Rating.ratee_id, func.avg(Rating.stars))
+            .where(Rating.ratee_id.in_(driver_ids), Rating.rater_role == Role.DRIVER)
+            .group_by(Rating.ratee_id)
+        )).all()
+        rating_map = {rid: round(float(avg), 2) if avg is not None else None for rid, avg in rating_rows}
+    q = select(User).join(DriverProfile, DriverProfile.user_id == User.id).where(User.account_status == "APPROVED").options(
+        joinedload(User.vehicle),
+        selectinload(User.driver_profile),
+    )
     for u in (await db.execute(q)).scalars().unique().all():
         p = u.driver_profile
         if not p.is_online:
@@ -104,9 +124,9 @@ async def live_map(service_area_id: int | None = None, include_offline_minutes: 
                         "account_status": u.account_status, "is_online": bool(p.is_online),
                         "license_status": "RENEWAL_PENDING" if u.id in renewal else doc_status(p.license_expiry_date),
                         "open_complaints": open_c.get(u.id, 0), "open_sos": u.id in sos_users,
-                        "rating_avg": (await stats_for(db, u))["rating_avg"], "profile_photo": _file_url(u.profile_photo)})
+                        "rating_avg": rating_map.get(u.id), "profile_photo": _file_url(u.profile_photo)})
     open_sos = {a.order_id for a in (await db.execute(select(SosAlert).where(SosAlert.status != "RESOLVED"))).scalars().all()}
-    oq = select(Order).where(Order.order_status.not_in(list(S.FINAL)))
+    oq = select(Order).where(Order.order_status.not_in(list(S.FINAL))).options(joinedload(Order.customer))
     if service_area_id:
         oq = oq.where(Order.service_area_id == service_area_id)
     orders = []
@@ -118,7 +138,7 @@ async def live_map(service_area_id: int | None = None, include_offline_minutes: 
                        "pickup": {"lat": o.pickup_latitude, "lng": o.pickup_longitude, "address": o.pickup_address},
                        "destination": {"lat": o.destination_latitude, "lng": o.destination_longitude, "address": o.destination_address},
                        "stops": [{"id": s.id, "lat": s.lat, "lng": s.lng, "address": s.address, "status": s.status} for s in stops],
-                       "driver_id": o.driver_id, "customer_name": o.customer.full_name, "created_at": _iso(o.created_at),
+                       "driver_id": o.driver_id, "customer_name": o.customer.full_name if o.customer else None, "created_at": _iso(o.created_at),
                        "is_scheduled": o.scheduled_at is not None, "sos_open": o.id in open_sos})
         if o.service_area_id:
             bucket = searching if o.order_status in S.SEARCHING else active if o.order_status in S.DRIVER_BUSY else None
@@ -313,7 +333,11 @@ async def _public_trip(db: AsyncSession, token: str) -> dict:
     t = (await db.execute(select(TripShare).where(TripShare.token == token))).scalars().first()
     if not t or t.revoked:
         raise HTTPException(404, {"code": "SHARE_NOT_FOUND"})
-    o = await load_order(db, t.order_id)
+    o = (await db.execute(select(Order).where(Order.id == t.order_id)
+                          .options(selectinload(Order.driver).selectinload(User.driver_profile),
+                                   selectinload(Order.driver).joinedload(User.vehicle)))).scalar_one_or_none()
+    if not o:
+        raise HTTPException(404, {"code": "SHARE_NOT_FOUND"})
     if utcnow() > _share_expires(o) and o.order_status in S.FINAL:
         raise HTTPException(410, {"code": "SHARE_EXPIRED"})
     drv, p = o.driver, (o.driver.driver_profile if o.driver else None)
@@ -421,8 +445,16 @@ def stop_out(s: OrderStop) -> dict:
     return {"id": s.id, "seq": s.seq, "address": s.address, "lat": s.lat, "lng": s.lng, "status": s.status, "note": s.note}
 
 
-async def _order_with_stops(db: AsyncSession, o: Order, user: User) -> dict:
+async def _order_with_stops(db: AsyncSession, order_id: int, user: User) -> dict:
     from ..routers.orders import _view
+    if user.role in Role.ADMINS:
+        o = (await db.execute(select(Order).where(Order.id == order_id).options(*order_admin_load_options()))).scalar_one_or_none()
+    elif user.role == Role.DRIVER:
+        o = (await db.execute(select(Order).where(Order.id == order_id).options(*order_driver_load_options()))).scalar_one_or_none()
+    else:
+        o = (await db.execute(select(Order).where(Order.id == order_id).options(*order_customer_load_options()))).scalar_one_or_none()
+    if not o:
+        raise HTTPException(404, "Order not found")
     d = _view(o, user)
     d["stops"] = [stop_out(s) for s in (await db.execute(select(OrderStop).where(OrderStop.order_id == o.id).order_by(OrderStop.seq))).scalars().all()]
     return d
@@ -452,7 +484,7 @@ async def add_stop(order_id: int, body: StopIn, user: User = Depends(customer_us
         await notify(db, o.driver_id, "STOP_ADDED", "تمت إضافة محطة", f"أضاف العميل محطة: {body.address}", o.id)
     await db.commit()
     publish_raw("order.status", {"order_id": o.id}, user_ids=[u for u in (o.customer_id, o.driver_id) if u])
-    return await _order_with_stops(db, await load_order(db, o.id), user)
+    return await _order_with_stops(db, o.id, user)
 
 
 @router.delete("/orders/{order_id}/stops/{stop_id}")
@@ -467,7 +499,7 @@ async def remove_stop(order_id: int, stop_id: int, user: User = Depends(customer
     o.stops_fee = max(Decimal(0), Decimal(o.stops_fee or 0) - Decimal(st.fee or 0))
     await db.delete(st)
     await db.commit()
-    return await _order_with_stops(db, await load_order(db, o.id), user)
+    return await _order_with_stops(db, o.id, user)
 
 
 @router.get("/orders/{order_id}/stops")
@@ -523,7 +555,8 @@ async def reschedule(order_id: int, body: RescheduleIn, user: User = Depends(cus
     _check_schedule(await settings_service.get_all(db), body.scheduled_at)
     o.scheduled_at = _aware(body.scheduled_at)
     await db.commit()
-    return order_for_customer(await load_order(db, o.id))
+    o = (await db.execute(select(Order).where(Order.id == o.id).options(*order_customer_load_options()))).scalar_one()
+    return order_for_customer(o)
 
 
 # ======================= 7) referrals + wallet =======================
@@ -569,13 +602,18 @@ async def reward_referral(db: AsyncSession, customer_id: int, order: Order | Non
     ri, rv = Decimal(s["referral_reward_inviter"]), Decimal(s["referral_reward_invitee"])
     if order is not None and order.referral_id == r.id:
         rv = Decimal(0)  # the invitee already got his reward as a discount on this trip
+    # Batch load users for wallet credit (avoids N+1 db.get)
+    reward_users = {}
     for uid, amt, kind in ((r.inviter_id, ri, "REFERRAL_INVITER"), (customer_id, rv, "REFERRAL_INVITEE")):
         if amt <= 0:
             continue
-        u = await db.get(User, uid)
-        u.wallet_balance = Decimal(u.wallet_balance or 0) + amt
-        db.add(WalletEntry(user_id=uid, amount=amt, kind=kind, ref_id=r.id))
-        await notify(db, uid, "REFERRAL_REWARD", "مكافأة إحالة", f"تمت إضافة {amt} إلى رصيدك.")
+        if uid not in reward_users:
+            reward_users[uid] = (await db.execute(select(User).where(User.id == uid))).scalar_one_or_none()
+        u = reward_users[uid]
+        if u:
+            u.wallet_balance = Decimal(u.wallet_balance or 0) + amt
+            db.add(WalletEntry(user_id=uid, amount=amt, kind=kind, ref_id=r.id))
+            await notify(db, uid, "REFERRAL_REWARD", "مكافأة إحالة", f"تمت إضافة {amt} إلى رصيدك.")
     r.status, r.reward_inviter, r.reward_invitee, r.rewarded_at = "REWARDED", ri, rv, utcnow()
 
 
@@ -584,9 +622,15 @@ async def my_referral(user: User = Depends(customer_user), db: AsyncSession = De
     s = await settings_service.get_all(db)
     code = await ensure_code(db, user)
     rows = (await db.execute(select(Referral).where(Referral.inviter_id == user.id).order_by(Referral.id.desc()))).scalars().all()
+    # Batch load invitees (avoids N+1 db.get)
+    invitee_ids = [r.invitee_id for r in rows]
+    invitee_map = {}
+    if invitee_ids:
+        inv_rows = (await db.execute(select(User).where(User.id.in_(invitee_ids)))).scalars().all()
+        invitee_map = {u.id: u for u in inv_rows}
     pending = []
     for r in rows:
-        inv = await db.get(User, r.invitee_id)
+        inv = invitee_map.get(r.invitee_id)
         pending.append({"name": (inv.full_name[:1] + "***") if inv else "***", "status": "REWARDED" if r.status == "REWARDED" else "REGISTERED"})
     await db.commit()
     amt = s["referral_reward_invitee"]
@@ -611,10 +655,16 @@ async def admin_referrals(status: str | None = None, limit: int = 50, offset: in
         q = q.where(Referral.status == status)
     total = (await db.execute(select(func.count()).select_from(q.subquery()))).scalar_one()
     rows = (await db.execute(q.order_by(Referral.id.desc()).limit(min(limit, 200)).offset(offset))).scalars().all()
+    # Batch load users (avoids N+1 db.get)
+    user_ids = {r.inviter_id for r in rows} | {r.invitee_id for r in rows}
+    user_map = {}
+    if user_ids:
+        u_rows = (await db.execute(select(User).where(User.id.in_(user_ids)))).scalars().all()
+        user_map = {u.id: u for u in u_rows}
     items = []
     for r in rows:
-        a, b = await db.get(User, r.inviter_id), await db.get(User, r.invitee_id)
-        items.append({"id": r.id, "inviter": {"id": a.id, "name": a.full_name}, "invitee": {"id": b.id, "name": b.full_name}, "status": r.status,
+        a, b = user_map.get(r.inviter_id), user_map.get(r.invitee_id)
+        items.append({"id": r.id, "inviter": {"id": a.id, "name": a.full_name} if a else None, "invitee": {"id": b.id, "name": b.full_name} if b else None, "status": r.status,
                       "reward_inviter": str(r.reward_inviter), "reward_invitee": str(r.reward_invitee), "created_at": _iso(r.created_at)})
     return {"total": total, "items": items}
 
@@ -625,10 +675,14 @@ async def revoke_referral(rid: int, admin: User = Depends(_admin), db: AsyncSess
     if not r:
         raise HTTPException(404, "Referral not found")
     if r.status == "REWARDED":  # take the credit back
+        # Batch load users for wallet debit (avoids N+1 db.get)
         for uid, amt in ((r.inviter_id, r.reward_inviter), (r.invitee_id, r.reward_invitee)):
-            u = await db.get(User, uid)
-            u.wallet_balance = max(Decimal(0), Decimal(u.wallet_balance or 0) - Decimal(amt))
-            db.add(WalletEntry(user_id=uid, amount=-Decimal(amt), kind="REVOKED", ref_id=r.id))
+            if amt <= 0:
+                continue
+            u = (await db.execute(select(User).where(User.id == uid))).scalar_one_or_none()
+            if u:
+                u.wallet_balance = max(Decimal(0), Decimal(u.wallet_balance or 0) - Decimal(amt))
+                db.add(WalletEntry(user_id=uid, amount=-Decimal(amt), kind="REVOKED", ref_id=r.id))
     r.status = "REVOKED"
     audit(db, admin.id, "REFERRAL_REVOKED", "referral", r.id)
     await db.commit()
@@ -690,14 +744,31 @@ async def nearby_drivers(lat: float, lng: float, radius_km: float = 5, user: Use
         if km <= radius_km:
             cands.append((km, p.user_id, la, lo, hd))
     items = []
+    cand_ids = [uid for _km, uid, la, lo, hd in sorted(cands)[:20]]
+    if cand_ids:
+        # Batch load users with vehicle and driver_profile (avoids N+1 db.get + lazy loads)
+        cand_users = (await db.execute(
+            select(User).where(User.id.in_(cand_ids))
+            .options(joinedload(User.vehicle), selectinload(User.driver_profile))
+        )).scalars().all()
+        cand_map = {u.id: u for u in cand_users}
+        # Batch rating stats
+        rating_rows = (await db.execute(
+            select(Rating.ratee_id, func.avg(Rating.stars))
+            .where(Rating.ratee_id.in_(cand_ids), Rating.rater_role == Role.DRIVER)
+            .group_by(Rating.ratee_id)
+        )).all()
+        rating_map = {rid: round(float(avg), 2) if avg is not None else None for rid, avg in rating_rows}
+    else:
+        cand_map = {}
+        rating_map = {}
     for _km, uid, la, lo, hd in sorted(cands)[:20]:
-        u = await db.get(User, uid)
+        u = cand_map.get(uid)
         if not u or u.account_status != "APPROVED" or u.deleted_at or not u.vehicle:
             continue
-        st = await stats_for(db, u)
         items.append({"id": u.id, "first_name": u.full_name.split()[0],
                       "photo_url": f"/api/files/download/{create_file_token(u.profile_photo)}" if u.profile_photo else None,
-                      "lat": round(la, 4), "lng": round(lo, 4), "heading": hd, "vehicle_type": u.vehicle.vehicle_type, "rating": st["rating_avg"]})
+                      "lat": round(la, 4), "lng": round(lo, 4), "heading": hd, "vehicle_type": u.vehicle.vehicle_type, "rating": rating_map.get(uid)})
     return {"items": items}
 
 
@@ -730,10 +801,16 @@ async def driver_demand(user: User = Depends(driver_user), db: AsyncSession = De
     searching: dict[int, int] = {}
     for (aid,) in (await db.execute(select(Order.service_area_id).where(Order.order_status.in_(list(S.SEARCHING)), Order.service_area_id.is_not(None)))).all():
         searching[aid] = searching.get(aid, 0) + 1
+    # Batch load all driver-service-area mappings (avoids N+1 per area)
+    area_driver_rows = (await db.execute(select(DriverServiceArea.service_area_id, DriverServiceArea.driver_id))).all()
+    area_drivers: dict[int, set[int]] = {}
+    for aid, did in area_driver_rows:
+        area_drivers.setdefault(aid, set()).add(did)
+    free_ids = {p.user_id for p in free}
     areas = []
     for a in (await db.execute(select(ServiceArea).where(ServiceArea.is_active.is_(True)))).scalars().all():
-        ids = {r.driver_id for r in (await db.execute(select(DriverServiceArea).where(DriverServiceArea.service_area_id == a.id))).scalars().all()}
-        nfree = len([p for p in free if p.user_id in ids])
+        ids = area_drivers.get(a.id, set())
+        nfree = len(ids & free_ids)
         ns = searching.get(a.id, 0)
         areas.append({"id": a.id, "name": a.name, "level": "HIGH" if ns > nfree and ns >= 2 else "MEDIUM" if ns > 0 else "LOW",
                       "orders_searching": ns, "drivers_free": nfree})

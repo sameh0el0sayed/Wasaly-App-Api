@@ -1,7 +1,7 @@
 """Monthly subscriptions: customer (individual / parent), admin (price + driver), driver (daily trips)."""
 
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..constants import AccountStatus
@@ -197,12 +197,18 @@ async def admin_change_driver(sub_id: int, driver_id: int, admin: User = Depends
         raise HTTPException(409, "Cannot change driver in this state")
     await _driver(db, driver_id)
     s.driver_id = driver_id
-    pays = (await db.execute(select(svc.Payment).where(svc.Payment.subscription_id == s.id, svc.Payment.payment_status != "PAID"))).scalars().all()
-    for p in pays:
-        p.driver_id = driver_id
-    for t in (await db.execute(select(SubscriptionTrip).where(SubscriptionTrip.subscription_id == s.id, SubscriptionTrip.status == "SCHEDULED",
-                                                              SubscriptionTrip.trip_date >= svc.today_bh()))).scalars():
-        t.driver_id = driver_id
+    # Batch update unpaid payments for this subscription (avoids per-row save, but still a single UPDATE)
+    await db.execute(
+        update(svc.Payment).where(svc.Payment.subscription_id == s.id, svc.Payment.payment_status != "PAID")
+        .values(driver_id=driver_id)
+    )
+    # Batch update scheduled trips for this subscription (avoids per-row save)
+    await db.execute(
+        update(SubscriptionTrip).where(SubscriptionTrip.subscription_id == s.id,
+                                       SubscriptionTrip.status == "SCHEDULED",
+                                       SubscriptionTrip.trip_date >= svc.today_bh())
+        .values(driver_id=driver_id)
+    )
     audit(db, admin.id, "SUBSCRIPTION_DRIVER_CHANGED", "subscription", s.id, details={"driver_id": driver_id})
     await notify(db, driver_id, "SUBSCRIPTION_ASSIGNED", "اشتراك شهري جديد", f"اشتراك #{s.id}")
     await db.commit()

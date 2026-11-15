@@ -1,12 +1,14 @@
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import delete, func, select
+from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ...constants import OrderStatus
 from ...database import get_db
 from ...deps import admin_user, paging
 from ...models import DriverProfile, DriverServiceArea, Order, ProfileChange, ServiceArea, User, Vehicle, VehicleDocument, utcnow
+from ...serializers import driver_list_load_options
 from ...schemas import DocReviewIn, DriverAreasIn
 from ...security import decrypt
 from ...serializers import money, user_public
@@ -28,6 +30,10 @@ async def list_drivers(online: bool | None = None, status: str | None = None, pa
         stmt = stmt.where(DriverProfile.is_online.is_(online))
     if status:
         stmt = stmt.where(User.account_status == status)
+    stmt = stmt.options(
+        selectinload(User.driver_profile),
+        selectinload(User.vehicle),
+    )
     rows = (await db.execute(stmt.order_by(User.id.desc()).limit(limit).offset(offset))).scalars().unique().all()
     return [{**user_public(u), "online": u.driver_profile.is_online, "license_expiry_date": u.driver_profile.license_expiry_date.isoformat(),
              "vehicle": {"make": u.vehicle.make, "model": u.vehicle.model, "plate_number": u.vehicle.plate_number} if u.vehicle else None} for u in rows]

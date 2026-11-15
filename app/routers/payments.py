@@ -14,7 +14,7 @@ from ..deps import admin_user, ai_review_user, customer_user, paging
 from ..models import AdminAuditLog, DriverPayout, Order, Payment, Subscription, User, utcnow
 from ..schemas import BenefitPayIn, MarkTransferredIn, PaymentConfirmIn, ReasonIn
 from ..security import create_file_token, decrypt
-from ..serializers import dt, money, payment_out, payout_out
+from ..serializers import dt, money, payment_out, payout_out, payment_admin_load_options, payout_admin_load_options
 from ..services import live_test, settings_service, tap
 from ..services.audit import audit
 from ..services.files import assert_owned
@@ -202,9 +202,9 @@ async def admin_payment_view(db: AsyncSession, p: Payment, s: dict | None = None
     s = s if s is not None else await settings_service.get_all(db)
     out = payment_out(p, admin=True)
     out["proof_url"] = _file_url(p.proof_file)
-    out["customer"] = _person(await db.get(User, p.customer_id))
-    out["driver"] = _person(await db.get(User, p.driver_id)) if p.driver_id else None
-    out["verified_by_name"] = (await db.get(User, p.verified_by)).full_name if p.verified_by else None
+    out["customer"] = _person(p.customer)
+    out["driver"] = _person(p.driver) if p.driver else None
+    out["verified_by_name"] = p.verified_by.full_name if p.verified_by else None
     review_log = (await db.execute(select(AdminAuditLog).where(
         AdminAuditLog.entity_type == "payment", AdminAuditLog.entity_id == str(p.id),
         AdminAuditLog.action == "PAYMENT_CONFIRMED",
@@ -213,32 +213,30 @@ async def admin_payment_view(db: AsyncSession, p: Payment, s: dict | None = None
     out["expected_amount"] = money(p.amount - (p.wallet_amount or 0), p.currency_decimals)
     out["company_account"] = {"name": s.get("benefitpay_account_name"), "number": s.get("benefitpay_account_number")}
     out["order"] = None
-    if p.order_id:
-        o = await db.get(Order, p.order_id)
-        if o:
-            out["order"] = {"id": o.id, "service_type": o.service_type, "order_status": o.order_status,
-                            "pickup_address": o.pickup_address, "destination_address": o.destination_address,
-                            "final_price": money(o.final_price, o.currency_decimals),
-                            "customer_total": money(o.customer_total, o.currency_decimals) if o.customer_total is not None else None,
-                            "completed_at": dt(o.completed_at), "created_at": dt(o.created_at)}
+    if p.order_id and p.order:
+        o = p.order
+        out["order"] = {"id": o.id, "service_type": o.service_type, "order_status": o.order_status,
+                        "pickup_address": o.pickup_address, "destination_address": o.destination_address,
+                        "final_price": money(o.final_price, o.currency_decimals),
+                        "customer_total": money(o.customer_total, o.currency_decimals) if o.customer_total is not None else None,
+                        "completed_at": dt(o.completed_at), "created_at": dt(o.created_at)}
     out["subscription"] = None
-    if p.subscription_id:
-        sub = await db.get(Subscription, p.subscription_id)
-        if sub:
-            out["subscription"] = {"id": sub.id, "category": sub.category, "status": sub.status, "passenger_name": sub.passenger_name,
-                                   "pickup_address": sub.pickup_address, "destination_address": sub.destination_address}
+    if p.subscription_id and p.subscription:
+        sub = p.subscription
+        out["subscription"] = {"id": sub.id, "category": sub.category, "status": sub.status, "passenger_name": sub.passenger_name,
+                               "pickup_address": sub.pickup_address, "destination_address": sub.destination_address}
     return out
 
 
 async def admin_payout_view(db: AsyncSession, r: DriverPayout) -> dict:
     out = payout_out(r)
-    drv = await db.get(User, r.driver_id)
+    drv = r.driver
     out["driver"] = _person(drv)
     prof = drv.driver_profile if drv else None
     acc = decrypt(prof.payout_account_encrypted) if prof and prof.payout_account_encrypted else None
     out["payout_account"] = {"method": prof.payout_method if prof else None, "account": ("****" + acc[-4:]) if acc else None,
                              "holder_name": prof.payout_holder_name if prof else None}
-    pay = await db.get(Payment, r.payment_id)
+    pay = r.payment
     out["payment"] = {"id": pay.id, "kind": pay.kind, "order_id": pay.order_id, "amount": money(pay.amount, pay.currency_decimals),
                       "payment_method": pay.payment_method, "paid_at": dt(pay.paid_at)} if pay else None
     return out
@@ -253,6 +251,7 @@ async def admin_payments(status: str | None = None, method: str | None = None, k
     for col, val in ((Payment.payment_status, status), (Payment.payment_method, method), (Payment.kind, kind)):
         if val:
             q = q.where(col == val)
+    q = q.options(*payment_admin_load_options())
     rows = (await db.execute(q.order_by(Payment.id.desc()).limit(limit).offset(offset))).scalars().all()
     s = await settings_service.get_all(db)
     return [await admin_payment_view(db, p, s) for p in rows]
@@ -315,6 +314,7 @@ async def admin_payouts(status: str | None = None, driver_id: int | None = None,
         q = q.where(DriverPayout.status == status)
     if driver_id:
         q = q.where(DriverPayout.driver_id == driver_id)
+    q = q.options(*payout_admin_load_options())
     rows = (await db.execute(q.order_by(DriverPayout.id.desc()).limit(limit).offset(offset))).scalars().all()
     return [await admin_payout_view(db, r) for r in rows]
 

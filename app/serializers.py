@@ -1,6 +1,11 @@
 from decimal import Decimal
 
-from .models import Order, OrderOffer, OrderStatusHistory, User, utcnow
+from sqlalchemy.orm import joinedload, selectinload
+from .models import (
+    Order, OrderOffer, OrderStatusHistory, User,
+    DriverProfile, Vehicle, VehicleDocument, CounterOffer, DriverApplication,
+    Payment, DriverPayout, Subscription, utcnow,
+)
 from .security import decrypt
 
 
@@ -300,3 +305,94 @@ def subscription_out(s, view: str = "customer") -> dict:
 def sub_trip_out(t) -> dict:
     return {"id": t.id, "subscription_id": t.subscription_id, "date": t.trip_date.isoformat(), "leg": t.leg,
             "time": t.scheduled_time, "status": t.status, "completed_at": dt(t.completed_at), "note": t.note}
+
+
+# =====================================================================
+# Eager-loading option builders
+# Call these in router queries: select(Order).options(*order_load_options())
+# =====================================================================
+
+def order_customer_load_options():
+    """Eager load for order_for_customer(): driver + driver_profile."""
+    return [
+        selectinload(Order.driver).selectinload(User.driver_profile),
+    ]
+
+
+def order_driver_load_options():
+    """Eager load for order_for_driver(): customer."""
+    return [
+        joinedload(Order.customer),
+    ]
+
+
+def order_admin_load_options():
+    """Eager load for order_for_admin(): customer, driver, driver.vehicle."""
+    return [
+        joinedload(Order.customer),
+        selectinload(Order.driver).selectinload(User.driver_profile),
+        selectinload(Order.driver).joinedload(User.vehicle),
+    ]
+
+
+def order_full_load_options():
+    """All order relationships (admin detail view)."""
+    return [
+        joinedload(Order.customer),
+        selectinload(Order.driver).selectinload(User.driver_profile),
+        selectinload(Order.driver).joinedload(User.vehicle).selectinload(Vehicle.documents),
+        selectinload(Order.order_status_history),
+    ]
+
+
+def offer_load_options():
+    """Eager load for offer_out(): order, counter."""
+    return [
+        joinedload(OrderOffer.order),
+        selectinload(OrderOffer.counter),
+    ]
+
+
+def driver_full_load_options():
+    """Eager load for driver_card()/driver_block(): driver_profile, vehicle, vehicle.documents, driver_application."""
+    return [
+        selectinload(User.driver_profile),
+        selectinload(User.vehicle).selectinload(Vehicle.documents),
+        selectinload(User.driver_application),
+    ]
+
+
+def driver_list_load_options():
+    """Eager load for driver list views: driver_profile, vehicle."""
+    return [
+        selectinload(User.driver_profile),
+        selectinload(User.vehicle),
+    ]
+
+
+def payment_admin_load_options():
+    """Eager load for admin payment views: customer, driver, order, subscription."""
+    return [
+        joinedload(Payment.customer),
+        joinedload(Payment.driver),
+        joinedload(Payment.order),
+        joinedload(Payment.subscription),
+    ]
+
+
+def payout_admin_load_options():
+    """Eager load for admin payout views: driver, driver.driver_profile, payment."""
+    return [
+        joinedload(DriverPayout.driver).selectinload(User.driver_profile),
+        joinedload(DriverPayout.payment),
+    ]
+
+
+def subscription_driver_load_options():
+    """Eager load for subscription driver view."""
+    return [
+        selectinload(Subscription.driver),
+    ]
+
+
+

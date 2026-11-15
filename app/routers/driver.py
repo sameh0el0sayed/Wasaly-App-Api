@@ -35,7 +35,10 @@ from ..schemas import (
     VehiclePatch,
 )
 from ..security import decrypt, encrypt
-from ..serializers import dt, money, offer_out, order_for_driver, payout_out, vehicle_full
+from ..serializers import (
+    dt, money, offer_out, order_for_driver, payout_out, vehicle_full,
+    offer_load_options, order_driver_load_options, driver_full_load_options,
+)
 from ..services import cache, settings_service
 from ..services import price_increase as pi
 from ..services.audit import audit
@@ -179,6 +182,7 @@ async def offers(list: str = "new", page=Depends(paging), user: User = Depends(d
     await db.commit()
     statuses = [OfferStatus.PENDING, OfferStatus.COUNTERED] if list == "new" else [OfferStatus.EXPIRED]  # COUNTERED = waiting for the customer
     rows = (await db.execute(select(OrderOffer).where(OrderOffer.driver_id == user.id, OrderOffer.offer_status.in_(statuses))
+                             .options(*offer_load_options())
                              .order_by(OrderOffer.id.desc()).limit(limit).offset(offset))).scalars().all()
     enabled = pi.config(await settings_service.get_all(db))["enabled"]
     return [offer_out(o, user.driver_profile, enabled) for o in rows]
@@ -201,6 +205,7 @@ async def accept_offer(offer_id: int, user: User = Depends(driver_user), db: Asy
     """Race-safe: only one driver can win. The conditional UPDATE (driver_id IS NULL) is the lock."""
     await db.execute(select(DriverProfile.id).where(DriverProfile.user_id == user.id).with_for_update())  # serialize per driver
     offer = (await db.execute(select(OrderOffer).where(OrderOffer.id == offer_id, OrderOffer.driver_id == user.id)
+                              .options(*offer_load_options())
                               .with_for_update())).scalar_one_or_none()
     if not offer:
         raise HTTPException(404, "Offer not found")
@@ -229,7 +234,7 @@ async def accept_offer(offer_id: int, user: User = Depends(driver_user), db: Asy
         offer.offer_status, offer.responded_at = OfferStatus.CLOSED, now
         await db.commit()
         raise HTTPException(409, {"code": "ORDER_ALREADY_TAKEN"})
-    order = await load_order(db, offer.order_id)
+    order = (await db.execute(select(Order).where(Order.id == offer.order_id).options(*order_driver_load_options()))).scalar_one_or_none()
     await transition(db, order, S.ACCEPTED, user.id, "DRIVER", "Driver accepted")
     offer.offer_status, offer.responded_at = OfferStatus.ACCEPTED, now
     await close_pending_offers(db, order.id, except_offer_id=offer.id)
@@ -237,7 +242,7 @@ async def accept_offer(offer_id: int, user: User = Depends(driver_user), db: Asy
     await notify(db, order.customer_id, "ORDER_ACCEPTED", "تم قبول طلبك",
                  f"السائق {user.full_name} - {v.make} {v.model} {v.color} ({v.plate_number})", order.id)
     await db.commit()
-    return order_for_driver(await load_order(db, order.id))
+    return order_for_driver((await db.execute(select(Order).where(Order.id == order.id).options(*order_driver_load_options()))).scalar_one())
 
 
 @router.post("/offers/{offer_id}/decline")
@@ -254,8 +259,11 @@ async def decline_offer(offer_id: int, user: User = Depends(driver_user), db: As
 
 
 async def _my_order(db, order_id, user, for_update=True) -> Order:
-    o = await load_order(db, order_id, for_update=for_update)
-    if not o or o.driver_id != user.id:
+    q = select(Order).where(Order.id == order_id, Order.driver_id == user.id).options(*order_driver_load_options())
+    if for_update:
+        q = q.with_for_update()
+    o = (await db.execute(q)).scalar_one_or_none()
+    if not o:
         raise HTTPException(404, "Order not found")
     return o
 
@@ -383,6 +391,7 @@ async def driver_cancel(order_id: int, body: ReasonIn, user: User = Depends(driv
 async def _list(db, user, statuses, page):
     limit, offset = page
     rows = (await db.execute(select(Order).where(Order.driver_id == user.id, Order.order_status.in_(statuses))
+                             .options(*order_driver_load_options())
                              .order_by(Order.id.desc()).limit(limit).offset(offset))).scalars().all()
     return [order_for_driver(o) for o in rows]
 
@@ -532,7 +541,10 @@ async def patch_vehicle(body: VehiclePatch, user: User = Depends(driver_user), d
 @router.get("/orders/{order_id}")  # declared after the static /orders/accepted|active|... routes
 async def get_my_order(order_id: int, user: User = Depends(driver_user), db: AsyncSession = Depends(get_db)):
     """One trip of the signed-in driver (active-trip screen / deep links). 404 when it is not theirs."""
-    o = await _my_order(db, order_id, user, for_update=False)
+    o = (await db.execute(select(Order).where(Order.id == order_id, Order.driver_id == user.id)
+                          .options(*order_driver_load_options()))).scalar_one_or_none()
+    if not o:
+        raise HTTPException(404, "Order not found")
     d = order_for_driver(o)
     from .ratings import my_rating
     d["my_rating"] = await my_rating(db, o.id, user.id)

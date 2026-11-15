@@ -14,7 +14,11 @@ from ..deps import approved_user, customer_user, paging, request_lang
 from ..i18n import localize
 from ..models import Complaint, CounterOffer, Order, OrderOffer, OrderStatusHistory, Payment, Referral, User, utcnow
 from ..schemas import EstimateIn, OptionalReasonIn, OrderCreateIn, PriceRaiseIn, ReasonIn
-from ..serializers import driver_card, history_out, order_for_admin, order_for_customer, order_for_driver
+from ..serializers import (
+    driver_card, history_out, order_for_admin, order_for_customer, order_for_driver,
+    order_customer_load_options, order_driver_load_options, order_admin_load_options,
+    driver_full_load_options,
+)
 from ..services import favorites as fav
 from ..services import live_test, settings_service
 from ..services import price_increase as pi
@@ -109,7 +113,12 @@ async def pricing(db: AsyncSession = Depends(get_db)):
 
 
 async def _visible_order(db: AsyncSession, order_id: int, user: User) -> Order:
-    o = await load_order(db, order_id)
+    if user.role in Role.ADMINS:
+        o = (await db.execute(select(Order).where(Order.id == order_id).options(*order_admin_load_options()))).scalar_one_or_none()
+    elif user.role == Role.DRIVER:
+        o = (await db.execute(select(Order).where(Order.id == order_id).options(*order_driver_load_options()))).scalar_one_or_none()
+    else:
+        o = (await db.execute(select(Order).where(Order.id == order_id).options(*order_customer_load_options()))).scalar_one_or_none()
     if not o or (user.role not in Role.ADMINS and user.id not in (o.customer_id, o.driver_id)):
         raise HTTPException(404, "Order not found")  # 404 (not 403) so ids can't be probed
     return o
@@ -298,12 +307,25 @@ async def create_order(body: OrderCreateIn, user: User = Depends(customer_user),
 @router.get("/favorite-drivers")
 async def favorite_drivers(limit: int = 10, available_only: bool = True, user: User = Depends(customer_user), db: AsyncSession = Depends(get_db)):
     """Home-screen list: drivers this customer rated 4-5 stars (newest first, online ones flagged; ?limit=10). Only drivers online and free now; ?available_only=false lists all favourites. Use an id as `preferred_driver_id` in POST /api/orders for a direct trip."""
+    rows = await fav.favorite_rows(db, user.id)
+    driver_ids = [d.id for d, _, _ in rows]
+    # Batch check online status, blockers, and active orders for all favorite drivers at once
+    from ..services.dispatch import work_blockers
+    online_map = {d.id: fav.online(d) for d, _, _ in rows}
+    blocker_map = {d.id: work_blockers(d) for d, _, _ in rows}
+    active_map = {}
+    if driver_ids:
+        active_rows = (await db.execute(
+            select(Order.driver_id).where(Order.driver_id.in_(driver_ids),
+                                          Order.order_status.in_(S.DRIVER_BUSY))
+        )).scalars().all()
+        active_map = {did: True for did in active_rows}
     items = []
-    for d, stars, trips in await fav.favorite_rows(db, user.id):
-        free = fav.online(d) and not work_blockers(d) and not await has_active_order(db, d.id)
+    for d, stars, trips in rows:
+        free = online_map.get(d.id, False) and not blocker_map.get(d.id, []) and not active_map.get(d.id, False)
         if available_only and not free:
             continue  # home list: only drivers who are online and free right now
-        items.append({**driver_card(d), "my_stars": stars, "trips_together": trips, "is_online": fav.online(d), "is_available": free})
+        items.append({**driver_card(d), "my_stars": stars, "trips_together": trips, "is_online": online_map.get(d.id, False), "is_available": free})
         if len(items) >= max(1, min(limit, 50)):
             break
     return {"items": items}
@@ -318,6 +340,10 @@ async def my_orders(status: str | None = None, page=Depends(paging), user: User 
     if status:
         q = q.where(Order.order_status.in_([S.CANCELLED, S.EXPIRED]) if status == S.CANCELLED else Order.order_status == status)
     total = (await db.execute(select(func.count()).select_from(q.subquery()))).scalar_one()
+    if user.role == Role.CUSTOMER:
+        q = q.options(*order_customer_load_options())
+    else:
+        q = q.options(*order_driver_load_options())
     rows = (await db.execute(q.order_by(Order.id.desc()).limit(limit).offset(offset))).scalars().all()
     return {"total": total, "items": [_view(o, user) for o in rows]}
 
@@ -398,7 +424,7 @@ async def cancel_order(order_id: int, body: OptionalReasonIn, user: User = Depen
         await notify(db, o.customer_id, "CANCEL_FEE_CHARGED", "رسوم إلغاء", f"تم احتساب رسوم إلغاء {fee:.{dec}f} {o.currency}.", o.id)
         await notify(db, had_driver, "CANCEL_FEE_CHARGED", "تعويض إلغاء", "تم احتساب تعويض لك عن إلغاء العميل.", o.id)
     await db.commit()
-    out = order_for_customer(await load_order(db, o.id))
+    out = order_for_customer((await db.execute(select(Order).where(Order.id == o.id).options(*order_customer_load_options()))).scalar_one())
     out["cancel_fee_info"] = fee_out
     return out
 
@@ -416,7 +442,7 @@ async def retry_order(order_id: int, user: User = Depends(customer_user), db: As
     o.retry_count += 1
     await dispatch_order(db, o)
     await db.commit()
-    return order_for_customer(await load_order(db, o.id))
+    return order_for_customer((await db.execute(select(Order).where(Order.id == o.id).options(*order_customer_load_options()))).scalar_one())
 
 
 @router.post("/orders/{order_id}/raise")
@@ -427,7 +453,7 @@ async def raise_order_price(order_id: int, body: PriceRaiseIn, user: User = Depe
         raise HTTPException(404, "Order not found")
     await pi.raise_price(db, o, body.percent, pi.config(await settings_service.get_all(db)))
     await db.commit()
-    return order_for_customer(await load_order(db, o.id))
+    return order_for_customer((await db.execute(select(Order).where(Order.id == o.id).options(*order_customer_load_options()))).scalar_one())
 
 
 async def _my_counter(db, user, order_id: int, counter_id: int) -> tuple[Order, CounterOffer]:
@@ -482,7 +508,7 @@ async def accept_counter_offer(order_id: int, counter_id: int, user: User = Depe
     await close_pending_offers(db, order.id, except_offer_id=offer.id)  # other drivers' offers closed, their counters REJECTED
     await notify(db, driver.id, "COUNTER_ACCEPTED", "تم قبول السعر الجديد", "وافق العميل على السعر الجديد، توجّه للعميل.", order.id)
     await db.commit()
-    return order_for_customer(await load_order(db, order.id))
+    return order_for_customer((await db.execute(select(Order).where(Order.id == order.id).options(*order_customer_load_options()))).scalar_one())
 
 
 @router.post("/orders/{order_id}/counter-offers/{counter_id}/reject")

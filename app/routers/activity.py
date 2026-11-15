@@ -12,6 +12,7 @@ from ..deps import admin_user, current_user
 from ..models import AppOpenEvent, DeviceToken, DriverWorkSession, LocationSnapshot, LoginEvent, Order, OrderOffer, User, UserDevice, utcnow
 from ..schemas import AppOpenIn, LocationConsentIn, LocationSnapshotIn
 from ..serializers import dt
+from sqlalchemy.orm import selectinload
 from ..services import settings_service
 from ..services.activity import is_online
 from ..services.audit import audit
@@ -81,7 +82,7 @@ async def location_snapshot(body: LocationSnapshotIn, user: User = Depends(curre
 async def user_activity(user_id: int, include_location: bool = False, admin: User = Depends(admin_user),
                         db: AsyncSession = Depends(get_db)):
     """Everything useful about one user's usage. Location is returned only with include_location=true and is audited."""
-    u = await db.get(User, user_id)
+    u = (await db.execute(select(User).where(User.id == user_id).options(selectinload(User.driver_profile)))).scalar_one_or_none()
     if not u or u.role not in (Role.CUSTOMER, Role.DRIVER):
         raise HTTPException(404, "User not found")
     s = await settings_service.get_all(db)
@@ -105,24 +106,38 @@ async def user_activity(user_id: int, include_location: bool = False, admin: Use
     opens = (await db.execute(select(AppOpenEvent).where(AppOpenEvent.user_id == u.id).order_by(AppOpenEvent.id.desc()).limit(30))).scalars().all()
     opens30 = (await db.execute(select(func.count()).select_from(AppOpenEvent).where(
         AppOpenEvent.user_id == u.id, AppOpenEvent.created_at >= now - timedelta(days=30)))).scalar_one()
-    ob = select(func.count()).select_from(Order).where((Order.customer_id == u.id) if u.role == Role.CUSTOMER else (Order.driver_id == u.id))
     out["is_online"] = out["online"]
+    # Batch order stats into a single grouped query instead of 3 separate count queries
+    order_stats = dict((await db.execute(
+        select(Order.order_status, func.count())
+        .where((Order.customer_id == u.id) if u.role == Role.CUSTOMER else (Order.driver_id == u.id))
+        .group_by(Order.order_status)
+    )).all())
     out["stats"] = {
         "app_opens": u.app_open_count or 0, "app_opens_30d": opens30, "logins": u.login_count or 0,
-        "orders_total": (await db.execute(ob)).scalar_one(),
-        "completed_orders": (await db.execute(ob.where(Order.order_status == S.COMPLETED))).scalar_one(),
-        "cancelled_orders": (await db.execute(ob.where(Order.order_status == S.CANCELLED))).scalar_one(),
+        "orders_total": sum(order_stats.values()),
+        "completed_orders": order_stats.get(S.COMPLETED, 0),
+        "cancelled_orders": order_stats.get(S.CANCELLED, 0),
         "devices": len(devices)}
     out["logins"] = out["recent_logins"]
     out["app_opens"] = [{"at": dt(e.created_at), "device_id": e.device_id, "app_version": e.app_version} for e in opens]
     out["locations"] = []
     if u.role == Role.CUSTOMER:
-        base = select(func.count()).select_from(Order).where(Order.customer_id == u.id)
+        # Batch customer order stats into a single grouped query
+        cust_stats = dict((await db.execute(
+            select(Order.order_status, Order.payment_status, func.count())
+            .where(Order.customer_id == u.id)
+            .group_by(Order.order_status, Order.payment_status)
+        )).all())
+        total = sum(v for (st, _), v in cust_stats.items())
+        completed = sum(v for (st, ps), v in cust_stats.items() if st == S.COMPLETED)
+        cancelled = sum(v for (st, _), v in cust_stats.items() if st == S.CANCELLED)
+        unpaid = sum(v for (st, ps), v in cust_stats.items() if st == S.COMPLETED and ps != "PAID")
         out["customer_stats"] = {
-            "orders_total": (await db.execute(base)).scalar_one(),
-            "completed": (await db.execute(base.where(Order.order_status == S.COMPLETED))).scalar_one(),
-            "cancelled": (await db.execute(base.where(Order.order_status == S.CANCELLED))).scalar_one(),
-            "unpaid_completed": (await db.execute(base.where(Order.order_status == S.COMPLETED, Order.payment_status != "PAID"))).scalar_one()}
+            "orders_total": total,
+            "completed": completed,
+            "cancelled": cancelled,
+            "unpaid_completed": unpaid}
     else:
         offers = dict((await db.execute(select(OrderOffer.offer_status, func.count()).where(OrderOffer.driver_id == u.id)
                                         .group_by(OrderOffer.offer_status))).all())
@@ -135,8 +150,7 @@ async def user_activity(user_id: int, include_location: bool = False, admin: Use
             "offers_by_status": offers, "offers_total": total_offers,
             "acceptance_rate_percent": round(accepted * 100 / total_offers, 1) if total_offers else None,
             "online_hours_total": round(secs / 3600, 2), "work_sessions": len(sessions),
-            "trips_completed": (await db.execute(select(func.count()).select_from(Order).where(
-                Order.driver_id == u.id, Order.order_status == S.COMPLETED))).scalar_one()}
+            "trips_completed": order_stats.get(S.COMPLETED, 0)}
     if include_location:
         snaps = (await db.execute(select(LocationSnapshot).where(LocationSnapshot.user_id == u.id)
                                   .order_by(LocationSnapshot.id.desc()).limit(50))).scalars().all()

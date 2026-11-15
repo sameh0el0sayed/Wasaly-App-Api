@@ -9,10 +9,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from ...constants import AccountStatus, ReviewStatus, Role
 from ...database import get_db
 from ...deps import admin_user, ai_review_user, paging, super_admin_user
-from ...models import AdminAuditLog, DriverProfile, DriverServiceArea, Order, Rating, User, utcnow
+from ...models import AdminAuditLog, DriverProfile, DriverServiceArea, Order, Rating, User, Vehicle, utcnow
 from ...schemas import AdminCreateIn, ApproveIn, DebtSettleIn, ReasonIn, ReinstateIn, ResetPasswordIn
 from ...security import cpr_hash, decrypt, hash_password
-from ...serializers import driver_block, dt, money, user_public
+from ...serializers import (
+    driver_block, dt, money, user_public,
+    driver_full_load_options, driver_list_load_options,
+)
 from ...services import settings_service
 from ...services.activity import is_online
 from ...services.audit import audit
@@ -54,6 +57,10 @@ async def list_users(role: str | None = None, status: str | None = None, q: str 
             cond.append(User.cpr_hash == cpr_hash(q))
         stmt = stmt.where(or_(*cond))
     total = (await db.execute(select(func.count()).select_from(stmt.subquery()))).scalar_one()
+    stmt = stmt.options(
+        selectinload(User.driver_profile),
+        selectinload(User.driver_application),
+    )
     rows = (await db.execute(stmt.order_by(User.id.desc()).limit(limit).offset(offset))).scalars().unique().all()
     ids = [u.id for u in rows]
     agg = {i: (c, a, o) for i, c, a, o in (await db.execute(
@@ -71,7 +78,11 @@ async def list_users(role: str | None = None, status: str | None = None, q: str 
 
 @router.get("/users/{user_id}")
 async def get_user(user_id: int, reveal_cpr: bool = False, admin: User = Depends(admin_user), db: AsyncSession = Depends(get_db)):
-    u = await db.get(User, user_id)
+    u = (await db.execute(select(User).where(User.id == user_id)
+                          .options(
+                              selectinload(User.driver_profile).selectinload(DriverProfile.vehicle).selectinload(Vehicle.documents),
+                              selectinload(User.driver_application),
+                          ))).scalar_one_or_none()
     if not u or u.role in Role.ADMINS:
         raise HTTPException(404, "User not found")
     from ..ratings import stats_for
