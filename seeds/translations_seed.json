@@ -9613,5 +9613,135 @@
   "key": "delivery.merchantOrder",
   "ar": "طلب من جهة خارجية",
   "en": "External order"
+ },
+ {
+  "key": "v30.merchants_title",
+  "ar": "الجهات (التوصيل لحساب الغير)",
+  "en": "Partners (delivery for others)"
+ },
+ {
+  "key": "v30.add_merchant",
+  "ar": "إضافة جهة",
+  "en": "Add partner"
+ },
+ {
+  "key": "v30.merchant_name",
+  "ar": "اسم الجهة",
+  "en": "Partner name"
+ },
+ {
+  "key": "v30.merchant_phone",
+  "ar": "هاتف الجهة",
+  "en": "Partner phone"
+ },
+ {
+  "key": "v30.api_key",
+  "ar": "مفتاح الجهة (API key)",
+  "en": "API key"
+ },
+ {
+  "key": "v30.signing_secret",
+  "ar": "مفتاح التوقيع",
+  "en": "Signing secret"
+ },
+ {
+  "key": "v30.shown_once",
+  "ar": "يظهر مرة واحدة فقط، انسخه الآن",
+  "en": "Shown only once, copy it now"
+ },
+ {
+  "key": "v30.copy",
+  "ar": "نسخ",
+  "en": "Copy"
+ },
+ {
+  "key": "v30.rotate_key",
+  "ar": "تغيير المفتاح",
+  "en": "Rotate key"
+ },
+ {
+  "key": "v30.rotate_confirm",
+  "ar": "سيتوقف المفتاح القديم فورًا. متابعة؟",
+  "en": "The old key stops working immediately. Continue?"
+ },
+ {
+  "key": "v30.activate",
+  "ar": "تفعيل",
+  "en": "Activate"
+ },
+ {
+  "key": "v30.deactivate",
+  "ar": "تعطيل",
+  "en": "Deactivate"
+ },
+ {
+  "key": "v30.invoice",
+  "ar": "فاتورة الشهر",
+  "en": "Monthly invoice"
+ },
+ {
+  "key": "v30.invoice_count",
+  "ar": "عدد التوصيلات",
+  "en": "Deliveries"
+ },
+ {
+  "key": "v30.invoice_total",
+  "ar": "الإجمالي",
+  "en": "Total"
+ },
+ {
+  "key": "v30.month",
+  "ar": "الشهر",
+  "en": "Month"
+ },
+ {
+  "key": "v30.no_merchants",
+  "ar": "لا توجد جهات بعد",
+  "en": "No partners yet"
+ },
+ {
+  "key": "v30.external_order",
+  "ar": "طلب من جهة خارجية",
+  "en": "External order"
+ },
+ {
+  "key": "v30.prepaid_no_cash",
+  "ar": "مدفوع مسبقًا من الجهة، لا تحصّل أي مبلغ",
+  "en": "Prepaid by the partner, do not collect cash"
+ },
+ {
+  "key": "v30.method.MERCHANT",
+  "ar": "على حساب الجهة",
+  "en": "Billed to partner"
+ },
+ {
+  "key": "err.INVALID_MERCHANT_KEY",
+  "ar": "مفتاح الجهة غير صحيح",
+  "en": "Invalid partner key"
+ },
+ {
+  "key": "err.NO_COORDINATES",
+  "ar": "الإحداثيات مطلوبة",
+  "en": "Coordinates are required"
+ },
+ {
+  "key": "err.OUTSIDE_SERVICE_AREA",
+  "ar": "خارج مناطق الخدمة",
+  "en": "Outside the service area"
+ },
+ {
+  "key": "err.INVALID_WEBHOOK_URL",
+  "ar": "رابط الإشعارات غير صالح",
+  "en": "Invalid webhook URL"
+ },
+ {
+  "key": "err.CANNOT_CANCEL",
+  "ar": "لا يمكن الإلغاء الآن",
+  "en": "Cannot cancel now"
+ },
+ {
+  "key": "err.DELIVERY_NOT_FOUND",
+  "ar": "التوصيلة غير موجودة",
+  "en": "Delivery not found"
  }
 ]
