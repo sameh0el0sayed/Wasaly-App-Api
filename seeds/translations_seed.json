@@ -9593,5 +9593,25 @@
   "key": "err.AREA_IN_USE",
   "ar": "المنطقة مستخدمة في طلبات جارية",
   "en": "Area is used by active orders"
+ },
+ {
+  "key": "admin.merchants",
+  "ar": "التجار (المطاعم)",
+  "en": "Merchants (restaurants)"
+ },
+ {
+  "key": "admin.merchantApiKey",
+  "ar": "مفتاح التاجر",
+  "en": "Merchant API key"
+ },
+ {
+  "key": "admin.signingSecret",
+  "ar": "مفتاح التوقيع",
+  "en": "Signing secret"
+ },
+ {
+  "key": "delivery.merchantOrder",
+  "ar": "طلب مطعم",
+  "en": "Restaurant order"
  }
 ]

@@ -27,6 +27,7 @@ from .routers import (
     chat,
     corrections,
     driver,
+    merchant_api,
     orders,
     payments,
     places,
@@ -123,6 +124,8 @@ async def lifespan(app: FastAPI):
         tasks.append(asyncio.create_task(background_loop()))
         from .services.ai_review import review_loop
         tasks.append(asyncio.create_task(review_loop()))
+        from .services.merchant import webhook_loop
+        tasks.append(asyncio.create_task(webhook_loop()))
     else:
         log.warning("Background tasks disabled; AI review worker will not start")
     from .services import map_matching
@@ -215,5 +218,5 @@ async def request_id_middleware(request: Request, call_next):
 
 for r in (auth.router, auth.whatsapp_webhook_router, app_errors.router, app_errors.admin_router, profile.router, corrections.router, chat.router, orders.router, driver.router, payments.webhook_router, payments.router,
           payments.admin_router, subscriptions.router, subscriptions.admin_router, subscriptions.driver_router,
-          airports.router, promo.router, stream.router, banners.router, places.router, account_deletion.router, account_deletion.admin_router, activity.router, activity.admin_router, ratings.router, v11.router, v11.admin_router, v11.public_router, v14.router, v14.admin_router, v15.router, v15.admin_router, v16.router, v20.admin_router, v21.admin_router, v24.admin_router, v27.admin_router, v28.router, admin.router):
+          airports.router, promo.router, stream.router, banners.router, places.router, account_deletion.router, account_deletion.admin_router, activity.router, activity.admin_router, ratings.router, v11.router, v11.admin_router, v11.public_router, v14.router, v14.admin_router, v15.router, v15.admin_router, v16.router, v20.admin_router, v21.admin_router, v24.admin_router, v27.admin_router, v28.router, merchant_api.router, merchant_api.admin_router, admin.router):
     app.include_router(r)

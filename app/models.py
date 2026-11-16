@@ -934,3 +934,45 @@ class RefreshToken(Base):
     expires_at: Mapped[datetime] = mapped_column(UTCDateTime)
     used_at: Mapped[datetime | None] = mapped_column(UTCDateTime, nullable=True)
     revoked_at: Mapped[datetime | None] = mapped_column(UTCDateTime, nullable=True)
+
+
+class Merchant(Base):
+    """A business (e.g. a Phoenix POS restaurant) that orders Wasaly drivers through the merchant API. Billed monthly, never pays cash."""
+    __tablename__ = "merchants"
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)  # uuid
+    name: Mapped[str] = mapped_column(String(120))
+    phone: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), unique=True)  # hidden CUSTOMER account that owns every order of this merchant
+    api_key_hash: Mapped[str] = mapped_column(String(64), unique=True, index=True)
+    signing_secret_encrypted: Mapped[str] = mapped_column(Text)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    created_by: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
+
+
+class MerchantDelivery(Base):
+    __tablename__ = "merchant_deliveries"
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)  # uuid
+    merchant_id: Mapped[str] = mapped_column(ForeignKey("merchants.id"), index=True)
+    order_id: Mapped[int] = mapped_column(ForeignKey("orders.id"), unique=True)
+    external_ref: Mapped[str] = mapped_column(String(100), index=True)
+    external_number: Mapped[str | None] = mapped_column(String(60), nullable=True)
+    webhook_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    items_summary: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    order_total: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    quoted_price: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    last_status: Mapped[str] = mapped_column(String(20), default="searching")
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
+
+
+class MerchantWebhookEvent(Base):
+    """Outbox: signed status webhooks to the merchant, retried with backoff (1m, 5m, 30m, 2h)."""
+    __tablename__ = "merchant_webhook_events"
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)  # event_id (uuid)
+    delivery_id: Mapped[str] = mapped_column(ForeignKey("merchant_deliveries.id"), index=True)
+    raw_status: Mapped[str] = mapped_column(String(30))  # order status at the time of the event
+    occurred_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
+    state: Mapped[str] = mapped_column(String(10), default="PENDING", index=True)  # PENDING | SENT | FAILED
+    attempts: Mapped[int] = mapped_column(Integer, default=0)
+    next_attempt_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow, index=True)
+    last_error: Mapped[str | None] = mapped_column(String(200), nullable=True)

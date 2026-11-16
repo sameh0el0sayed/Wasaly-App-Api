@@ -221,14 +221,16 @@ async def create_order(body: OrderCreateIn, user: User = Depends(customer_user),
                                                       Order.client_request_id == body.client_request_id))).scalar_one_or_none()
         if ex:
             return order_for_customer(await load_order(db, ex))
-    open_order = (await db.execute(select(Order.id).where(Order.customer_id == user.id,
-                                                          Order.order_status.not_in(S.FINAL | {S.SCHEDULED})).limit(1))).first()
+    from ..services.merchant import is_merchant_user
+    is_merchant = await is_merchant_user(db, user.id)  # a merchant account has many deliveries open at once and is billed monthly
+    open_order = None if is_merchant else (await db.execute(select(Order.id).where(
+        Order.customer_id == user.id, Order.order_status.not_in(S.FINAL | {S.SCHEDULED})).limit(1))).first()
     if open_order:
         raise HTTPException(409, {"code": "OPEN_ORDER_EXISTS", "order_id": open_order[0]})
     s_cfg = await settings_service.get_all(db)
     if s_cfg["maintenance_mode"] == "true":
         raise HTTPException(503, {"code": "MAINTENANCE_MODE", "message": s_cfg["maintenance_message"] or "الخدمة متوقفة مؤقتًا"})
-    if s_cfg["block_new_order_if_unpaid"] == "true":
+    if s_cfg["block_new_order_if_unpaid"] == "true" and not is_merchant:
         unpaid = (await db.execute(select(Order.id, Order.payment_id).where(
             Order.customer_id == user.id, Order.order_status == S.COMPLETED, Order.payment_status != "PAID").limit(1))).first()
         if not unpaid:

@@ -36,17 +36,22 @@ from ..schemas import (
 )
 from ..security import decrypt, encrypt
 from ..serializers import (
-    dt, money, offer_out, order_for_driver, payout_out, vehicle_full,
-    offer_load_options, order_driver_load_options, driver_full_load_options,
+    dt,
+    money,
+    offer_load_options,
+    offer_out,
+    order_driver_load_options,
+    order_for_driver,
+    payout_out,
+    vehicle_full,
 )
-from ..services import cache, settings_service
-from ..services import map_matching
+from ..services import cache, map_matching, settings_service
 from ..services import price_increase as pi
 from ..services.audit import audit
 from ..services.dispatch import dispatch_order, expire_offers_and_orders, has_active_order, work_blockers
 from ..services.files import assert_owned
 from ..services.notifications import notify
-from ..services.orders import close_pending_offers, load_order, transition
+from ..services.orders import close_pending_offers, transition
 from ..services.payments import apply_wallet, create_payment
 from ..services.pricing import (
     apply_discount,
@@ -347,7 +352,12 @@ async def arrived_at_destination(order_id: int, body: ArrivedIn = ArrivedIn(), u
                                amount=o.customer_total, driver_amount=o.driver_earning, company_amount=o.commission,
                                currency=o.currency, decimals=o.currency_decimals)
     o.payment_id = pay.id
-    await apply_wallet(db, pay)  # customer wallet balance is used first
+    from ..services.merchant import is_merchant_user
+    if await is_merchant_user(db, o.customer_id):  # merchant deliveries are billed monthly: settled now so the driver is paid; nothing is collected
+        from ..services.payments import finalize_paid
+        await finalize_paid(db, pay, None, method="MERCHANT")
+    else:
+        await apply_wallet(db, pay)  # customer wallet balance is used first
     shown = f"{money(o.customer_total, o.currency_decimals)} {o.currency}"
     earned = f"{money(o.driver_earning, o.currency_decimals)} {o.currency}"
     await transition(db, o, S.COMPLETED, user.id, "DRIVER",
