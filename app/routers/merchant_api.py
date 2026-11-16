@@ -201,7 +201,7 @@ async def create_delivery(body: DeliveryRequest, m: Merchant = Depends(merchant_
         raise HTTPException(422, {"code": "OUTSIDE_SERVICE_AREA"})
     plat, plng, dlat, dlng = _coords(body)
     label = f"{body.merchant_name or mname} #{body.external_number or body.external_ref[:8]}"
-    notes = "الدفع مسدد من المطعم، لا تحصّل أي مبلغ من المستلم. / Paid by the merchant: do NOT collect any cash."
+    notes = "الدفع مسدد مسبقًا من الجهة الطالبة، لا تحصّل أي مبلغ من المستلم. / Prepaid by the requester: do NOT collect any cash."
     if body.notes:
         notes = f"{body.notes}\n{notes}"
     try:
@@ -261,6 +261,6 @@ async def cancel_delivery(delivery_id: str, body: CancelIn | None = None, m: Mer
     o.cancelled_at, o.cancelled_by, o.cancelled_by_role, o.cancellation_reason = utcnow(), muser_id, Role.CUSTOMER, reason
     await transition(db, o, S.CANCELLED, muser_id, Role.CUSTOMER, reason)
     if had_driver:
-        await notify(db, had_driver, "ORDER_CANCELLED", "تم إلغاء الطلب", "ألغى المطعم الطلب.", o.id)
+        await notify(db, had_driver, "ORDER_CANCELLED", "تم إلغاء الطلب", "ألغت الجهة الطالبة الطلب.", o.id)
     await db.commit()
     return ok({"id": md.id, "status": "cancelled"})

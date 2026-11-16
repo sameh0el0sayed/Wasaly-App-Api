@@ -9596,8 +9596,8 @@
  },
  {
   "key": "admin.merchants",
-  "ar": "التجار (المطاعم)",
-  "en": "Merchants (restaurants)"
+  "ar": "الجهات (التوصيل لحساب الغير)",
+  "en": "Partners (delivery for others)"
  },
  {
   "key": "admin.merchantApiKey",
@@ -9611,7 +9611,7 @@
  },
  {
   "key": "delivery.merchantOrder",
-  "ar": "طلب مطعم",
-  "en": "Restaurant order"
+  "ar": "طلب من جهة خارجية",
+  "en": "External order"
  }
 ]
