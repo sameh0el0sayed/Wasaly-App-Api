@@ -1102,3 +1102,30 @@ class CorporateMember(Base):
     role: Mapped[str] = mapped_column(String(12), default="EMPLOYEE")  # OWNER / MANAGER / EMPLOYEE
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
+
+
+class OpsFinding(Base):
+    """What the AI operations manager noticed. It only suggests: nothing here changes money, bans or orders by itself."""
+    __tablename__ = "ops_findings"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    kind: Mapped[str] = mapped_column(String(24), index=True)  # NO_DRIVER / DRIVER_LATE / DRIVER_SILENT / LONG_TRIP / QUOTE_WAITING / PRICE_ANOMALY / DEMAND_SURGE
+    severity: Mapped[str] = mapped_column(String(8), default="MEDIUM")  # LOW / MEDIUM / HIGH
+    entity_type: Mapped[str] = mapped_column(String(20))
+    entity_id: Mapped[str] = mapped_column(String(40), index=True)
+    message: Mapped[str] = mapped_column(String(400))
+    suggestion: Mapped[str | None] = mapped_column(String(600), nullable=True)
+    data: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    status: Mapped[str] = mapped_column(String(10), default="OPEN", index=True)  # OPEN / ACKED / RESOLVED / DISMISSED
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
+    resolved_by: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True)
+    resolved_at: Mapped[datetime | None] = mapped_column(UTCDateTime, nullable=True)
+
+
+class OpsReport(Base):
+    __tablename__ = "ops_reports"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    period_start: Mapped[datetime] = mapped_column(UTCDateTime)
+    period_end: Mapped[datetime] = mapped_column(UTCDateTime)
+    metrics: Mapped[dict] = mapped_column(JSON)
+    text_ar: Mapped[str] = mapped_column(Text)
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
