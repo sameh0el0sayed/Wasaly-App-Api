@@ -127,7 +127,7 @@ async def add_key(mid: str, body: KeyIn, admin: User = Depends(super_admin_user)
 @admin_router.get("/merchants/{mid}/keys")
 async def list_keys(mid: str, admin: User = Depends(admin_user), db: AsyncSession = Depends(get_db)):
     rows = (await db.execute(select(MerchantKey).where(MerchantKey.merchant_id == mid))).scalars().all()
-    return {"items": [{"key_id": k.id, "label": k.label, "sandbox": k.is_sandbox, "is_active": k.is_active, "created_at": k.created_at.isoformat()} for k in rows]}
+    return {"items": [{"id": k.id, "key_id": k.id, "label": k.label, "prefix": "wk_test_…" if k.is_sandbox else "wk_live_…", "sandbox": k.is_sandbox, "is_active": k.is_active, "created_at": k.created_at.isoformat()} for k in rows]}
 
 
 @admin_router.delete("/merchants/{mid}/keys/{kid}")

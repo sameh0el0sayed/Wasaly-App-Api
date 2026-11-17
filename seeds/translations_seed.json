@@ -9808,5 +9808,515 @@
   "key": "err.QUOTE_NOT_PRICEABLE",
   "ar": "لا يمكن تسعير هذا الطلب",
   "en": "This quote cannot be priced"
+ },
+ {
+  "key": "v37.portal",
+  "ar": "بوابة الجهات",
+  "en": "Partner portal"
+ },
+ {
+  "key": "v37.home",
+  "ar": "الرئيسية",
+  "en": "Home"
+ },
+ {
+  "key": "v37.deliveries",
+  "ar": "التوصيلات",
+  "en": "Deliveries"
+ },
+ {
+  "key": "v37.developers",
+  "ar": "المطوّرون",
+  "en": "Developers"
+ },
+ {
+  "key": "v37.team",
+  "ar": "الفريق",
+  "en": "Team"
+ },
+ {
+  "key": "v37.active_now",
+  "ar": "نشطة الآن",
+  "en": "Active now"
+ },
+ {
+  "key": "v37.active_deliveries",
+  "ar": "التوصيلات الجارية",
+  "en": "Active deliveries"
+ },
+ {
+  "key": "v37.month_delivered",
+  "ar": "تم توصيلها هذا الشهر",
+  "en": "Delivered this month"
+ },
+ {
+  "key": "v37.all",
+  "ar": "الكل",
+  "en": "All"
+ },
+ {
+  "key": "v37.dates",
+  "ar": "التاريخ",
+  "en": "Dates"
+ },
+ {
+  "key": "v37.search_ref",
+  "ar": "رقم المرجع أو الطلب",
+  "en": "Reference / number"
+ },
+ {
+  "key": "v37.branch",
+  "ar": "الفرع",
+  "en": "Branch"
+ },
+ {
+  "key": "v37.total_n",
+  "ar": "الإجمالي: {0}",
+  "en": "Total: {0}"
+ },
+ {
+  "key": "v37.status",
+  "ar": "الحالة",
+  "en": "Status"
+ },
+ {
+  "key": "v37.driver",
+  "ar": "السائق",
+  "en": "Driver"
+ },
+ {
+  "key": "v37.cancel",
+  "ar": "إلغاء التوصيلة",
+  "en": "Cancel delivery"
+ },
+ {
+  "key": "v37.cancel_q",
+  "ar": "إلغاء هذه التوصيلة؟",
+  "en": "Cancel this delivery?"
+ },
+ {
+  "key": "v37.webhook_log",
+  "ar": "سجل الإشعارات (Webhooks)",
+  "en": "Webhook log"
+ },
+ {
+  "key": "v37.webhook_test",
+  "ar": "اختبار رابط الإشعارات",
+  "en": "Test webhook URL"
+ },
+ {
+  "key": "v37.test_sent",
+  "ar": "تم إرسال حدث تجريبي",
+  "en": "Test event sent"
+ },
+ {
+  "key": "v37.add_key",
+  "ar": "مفتاح جديد",
+  "en": "New key"
+ },
+ {
+  "key": "v37.add_test_key",
+  "ar": "مفتاح تجريبي",
+  "en": "Test key"
+ },
+ {
+  "key": "v37.key_label",
+  "ar": "اسم المفتاح",
+  "en": "Key label"
+ },
+ {
+  "key": "v37.add_member",
+  "ar": "إضافة عضو",
+  "en": "Add member"
+ },
+ {
+  "key": "v37.role_OWNER",
+  "ar": "مالك",
+  "en": "Owner"
+ },
+ {
+  "key": "v37.role_MANAGER",
+  "ar": "مدير",
+  "en": "Manager"
+ },
+ {
+  "key": "v37.role_VIEWER",
+  "ar": "مشاهد",
+  "en": "Viewer"
+ },
+ {
+  "key": "v37.st_searching",
+  "ar": "بحث عن سائق",
+  "en": "Searching"
+ },
+ {
+  "key": "v37.st_assigned",
+  "ar": "تم الإسناد",
+  "en": "Assigned"
+ },
+ {
+  "key": "v37.st_picked_up",
+  "ar": "تم الاستلام",
+  "en": "Picked up"
+ },
+ {
+  "key": "v37.st_delivered",
+  "ar": "تم التوصيل",
+  "en": "Delivered"
+ },
+ {
+  "key": "v37.st_cancelled",
+  "ar": "ملغاة",
+  "en": "Cancelled"
+ },
+ {
+  "key": "v37.st_failed",
+  "ar": "فشلت",
+  "en": "Failed"
+ },
+ {
+  "key": "v38.business_account",
+  "ar": "حساب الشركة",
+  "en": "Business account"
+ },
+ {
+  "key": "v38.billed_to",
+  "ar": "تُحتسب على {0}",
+  "en": "Billed to {0}"
+ },
+ {
+  "key": "v38.used_of",
+  "ar": "المستخدم {0} من {1}",
+  "en": "Used {0} of {1}"
+ },
+ {
+  "key": "v38.orders",
+  "ar": "الطلبات",
+  "en": "Orders"
+ },
+ {
+  "key": "v38.employees",
+  "ar": "الموظفون",
+  "en": "Employees"
+ },
+ {
+  "key": "v38.statement",
+  "ar": "الكشف الشهري",
+  "en": "Monthly statement"
+ },
+ {
+  "key": "v38.add_employee",
+  "ar": "إضافة موظف",
+  "en": "Add employee"
+ },
+ {
+  "key": "v38.role_MANAGER",
+  "ar": "مدير",
+  "en": "Manager"
+ },
+ {
+  "key": "v38.role_EMPLOYEE",
+  "ar": "موظف",
+  "en": "Employee"
+ },
+ {
+  "key": "v38.role_OWNER",
+  "ar": "مالك",
+  "en": "Owner"
+ },
+ {
+  "key": "v38.gross",
+  "ar": "الإجمالي",
+  "en": "Gross"
+ },
+ {
+  "key": "v38.discount",
+  "ar": "الخصم",
+  "en": "Discount"
+ },
+ {
+  "key": "v38.net_due",
+  "ar": "الصافي المستحق",
+  "en": "Net due"
+ },
+ {
+  "key": "v38.by_employee",
+  "ar": "حسب الموظف",
+  "en": "By employee"
+ },
+ {
+  "key": "v38.corporates",
+  "ar": "حسابات الشركات",
+  "en": "Corporate accounts"
+ },
+ {
+  "key": "v38.add_corporate",
+  "ar": "إضافة شركة",
+  "en": "Add company"
+ },
+ {
+  "key": "v38.no_corporates",
+  "ar": "لا توجد شركات بعد",
+  "en": "No companies yet"
+ },
+ {
+  "key": "v38.f_name",
+  "ar": "اسم الشركة",
+  "en": "Company name"
+ },
+ {
+  "key": "v38.f_owner_phone",
+  "ar": "هاتف المالك",
+  "en": "Owner phone"
+ },
+ {
+  "key": "v38.f_cr_number",
+  "ar": "السجل التجاري",
+  "en": "CR number"
+ },
+ {
+  "key": "v38.f_business_type",
+  "ar": "نوع النشاط",
+  "en": "Business type"
+ },
+ {
+  "key": "v38.f_contact_phone",
+  "ar": "هاتف التواصل",
+  "en": "Contact phone"
+ },
+ {
+  "key": "v38.f_contact_email",
+  "ar": "البريد",
+  "en": "Contact email"
+ },
+ {
+  "key": "v38.f_discount_percent",
+  "ar": "نسبة الخصم %",
+  "en": "Discount %"
+ },
+ {
+  "key": "v38.f_monthly_limit",
+  "ar": "الحد الشهري (فارغ = بلا حد)",
+  "en": "Monthly limit (empty = none)"
+ },
+ {
+  "key": "v38.f_account_manager",
+  "ar": "مدير الحساب",
+  "en": "Account manager"
+ },
+ {
+  "key": "v39.kind",
+  "ar": "نوع الجهة",
+  "en": "Partner type"
+ },
+ {
+  "key": "v39.kind_MERCHANT",
+  "ar": "متجر / نشاط",
+  "en": "Business"
+ },
+ {
+  "key": "v39.kind_AGGREGATOR",
+  "ar": "منصة توصيل",
+  "en": "Delivery platform"
+ },
+ {
+  "key": "v39.kind_SHIPPING",
+  "ar": "شركة شحن",
+  "en": "Shipping company"
+ },
+ {
+  "key": "v39.pricing_mode",
+  "ar": "طريقة التسعير",
+  "en": "Pricing mode"
+ },
+ {
+  "key": "v39.pm_STANDARD",
+  "ar": "سعر وصلي",
+  "en": "Standard"
+ },
+ {
+  "key": "v39.pm_FIXED",
+  "ar": "سعر ثابت",
+  "en": "Fixed"
+ },
+ {
+  "key": "v39.pm_DISTANCE",
+  "ar": "حسب المسافة",
+  "en": "By distance"
+ },
+ {
+  "key": "v39.f_name",
+  "ar": "اسم الجهة",
+  "en": "Partner name"
+ },
+ {
+  "key": "v39.f_phone",
+  "ar": "هاتف الجهة",
+  "en": "Partner phone"
+ },
+ {
+  "key": "v39.f_fixed_fee",
+  "ar": "السعر الثابت / الحد الأدنى",
+  "en": "Fixed fee / minimum"
+ },
+ {
+  "key": "v39.f_base_fee",
+  "ar": "الرسوم الأساسية",
+  "en": "Base fee"
+ },
+ {
+  "key": "v39.f_per_km",
+  "ar": "لكل كم",
+  "en": "Per km"
+ },
+ {
+  "key": "v39.f_rate_limit_per_min",
+  "ar": "حد الطلبات بالدقيقة",
+  "en": "Rate limit / min"
+ },
+ {
+  "key": "v39.portal_users",
+  "ar": "مستخدمو البوابة",
+  "en": "Portal users"
+ },
+ {
+  "key": "v39.portal_user",
+  "ar": "مستخدم بوابة",
+  "en": "Portal user"
+ },
+ {
+  "key": "v39.pu_phone",
+  "ar": "الهاتف",
+  "en": "Phone"
+ },
+ {
+  "key": "v39.pu_full_name",
+  "ar": "الاسم (لحساب جديد)",
+  "en": "Full name (new account)"
+ },
+ {
+  "key": "v39.pu_password",
+  "ar": "كلمة المرور (لحساب جديد)",
+  "en": "Password (new account)"
+ },
+ {
+  "key": "v39.pu_hint",
+  "ar": "الاسم وكلمة المرور مطلوبان فقط إذا لم يكن للرقم حساب",
+  "en": "Name and password only if the phone has no account"
+ },
+ {
+  "key": "v39.ops_title",
+  "ar": "مدير العمليات الذكي",
+  "en": "AI operations"
+ },
+ {
+  "key": "v39.daily_report",
+  "ar": "تقرير آخر 24 ساعة",
+  "en": "Last 24 h report"
+ },
+ {
+  "key": "v39.ack",
+  "ar": "استلمت",
+  "en": "Acknowledge"
+ },
+ {
+  "key": "v39.resolve",
+  "ar": "تم الحل",
+  "en": "Resolve"
+ },
+ {
+  "key": "v39.fs_OPEN",
+  "ar": "مفتوحة",
+  "en": "Open"
+ },
+ {
+  "key": "v39.fs_ACKED",
+  "ar": "مستلمة",
+  "en": "Acknowledged"
+ },
+ {
+  "key": "v39.fs_RESOLVED",
+  "ar": "محلولة",
+  "en": "Resolved"
+ },
+ {
+  "key": "v39.fs_DISMISSED",
+  "ar": "متجاهلة",
+  "en": "Dismissed"
+ },
+ {
+  "key": "v39.k_NO_DRIVER",
+  "ar": "لا يوجد سائق",
+  "en": "No driver"
+ },
+ {
+  "key": "v39.k_DRIVER_LATE",
+  "ar": "سائق متأخر",
+  "en": "Driver late"
+ },
+ {
+  "key": "v39.k_DRIVER_SILENT",
+  "ar": "سائق لا يرسل موقعه",
+  "en": "Driver silent"
+ },
+ {
+  "key": "v39.k_LONG_TRIP",
+  "ar": "رحلة طويلة",
+  "en": "Long trip"
+ },
+ {
+  "key": "v39.k_QUOTE_WAITING",
+  "ar": "تسعيرة بانتظار",
+  "en": "Quote waiting"
+ },
+ {
+  "key": "v39.k_PRICE_ANOMALY",
+  "ar": "سعر غير طبيعي",
+  "en": "Price anomaly"
+ },
+ {
+  "key": "v39.k_DEMAND_SURGE",
+  "ar": "ارتفاع الطلب",
+  "en": "Demand surge"
+ },
+ {
+  "key": "v39.finance_title",
+  "ar": "المالية",
+  "en": "Finance"
+ },
+ {
+  "key": "v39.clean",
+  "ar": "لا توجد مشاكل في المطابقة",
+  "en": "Reconciliation is clean"
+ },
+ {
+  "key": "v39.issues",
+  "ar": "مشاكل المطابقة",
+  "en": "Reconciliation issues"
+ },
+ {
+  "key": "v39.by_service",
+  "ar": "حسب الخدمة",
+  "en": "By service"
+ },
+ {
+  "key": "v39.receivables",
+  "ar": "المستحقات",
+  "en": "Receivables"
+ },
+ {
+  "key": "err.PORTAL_ACCESS_DENIED",
+  "ar": "ليس لديك صلاحية لهذه البوابة",
+  "en": "You don't have access to this portal"
+ },
+ {
+  "key": "err.NOT_CORPORATE_MEMBER",
+  "ar": "لست عضوًا في حساب شركة",
+  "en": "You are not a member of a business account"
+ },
+ {
+  "key": "err.CORPORATE_LIMIT_REACHED",
+  "ar": "تم بلوغ الحد الشهري لحساب الشركة",
+  "en": "The company's monthly limit was reached"
  }
 ]

@@ -71,8 +71,8 @@ async def receivables(month: str | None = None, admin: User = Depends(admin_user
                                .where(*done).group_by(Merchant.id, Merchant.name, Merchant.kind))).all()
     c_rows = (await db.execute(select(Corporate.id, Corporate.name, Corporate.discount_percent, func.count(), func.coalesce(func.sum(Order.customer_total), 0))
                                .join(Order, Order.corporate_id == Corporate.id).where(*done).group_by(Corporate.id, Corporate.name, Corporate.discount_percent))).all()
-    merchants = [{"id": i, "name": n, "kind": k, "deliveries": c, "due": _d(t)} for i, n, k, c, t in m_rows]
-    corps = [{"id": i, "name": n, "orders": c, "gross": _d(t), "discount_percent": f"{p:.2f}", "net_due": _d(Decimal(t) * (100 - p) / 100)} for i, n, p, c, t in c_rows]
+    merchants = [{"id": i, "name": n, "kind": k, "deliveries": c, "due": _d(t), "net_due": _d(t), "total": _d(t)} for i, n, k, c, t in m_rows]
+    corps = [{"id": i, "name": n, "orders": c, "gross": _d(t), "discount_percent": f"{p:.2f}", "net_due": _d(Decimal(t) * (100 - p) / 100), "total": _d(t)} for i, n, p, c, t in c_rows]
     return {"month": start.strftime("%Y-%m"), "currency": "BHD", "merchants": merchants, "corporates": corps,
             "total_due": _d(sum(Decimal(x["due"]) for x in merchants) + sum(Decimal(x["net_due"]) for x in corps))}
 
