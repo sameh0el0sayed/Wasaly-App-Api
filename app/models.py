@@ -952,8 +952,25 @@ class Merchant(Base):
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), unique=True)  # hidden CUSTOMER account that owns every order of this merchant
     api_key_hash: Mapped[str] = mapped_column(String(64), unique=True, index=True)
     signing_secret_encrypted: Mapped[str] = mapped_column(Text)
+    kind: Mapped[str] = mapped_column(String(12), default="MERCHANT")  # MERCHANT / AGGREGATOR (delivery platforms) / SHIPPING (freight companies)
+    pricing_mode: Mapped[str] = mapped_column(String(10), default="STANDARD")  # STANDARD = Wasaly delivery price, FIXED = fixed_fee per delivery, DISTANCE = base_fee + per_km * km (min fixed_fee)
+    fixed_fee: Mapped[Decimal | None] = mapped_column(Numeric(10, 3), nullable=True)
+    base_fee: Mapped[Decimal | None] = mapped_column(Numeric(10, 3), nullable=True)
+    per_km: Mapped[Decimal | None] = mapped_column(Numeric(10, 3), nullable=True)
+    rate_limit_per_min: Mapped[int] = mapped_column(Integer, default=600)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     created_by: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
+
+
+class MerchantKey(Base):
+    """Extra API keys of a merchant (per environment / per system); each can be revoked on its own."""
+    __tablename__ = "merchant_keys"
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    merchant_id: Mapped[str] = mapped_column(ForeignKey("merchants.id"), index=True)
+    key_hash: Mapped[str] = mapped_column(String(64), unique=True, index=True)
+    label: Mapped[str | None] = mapped_column(String(60), nullable=True)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
 
 
@@ -964,6 +981,8 @@ class MerchantDelivery(Base):
     order_id: Mapped[int] = mapped_column(ForeignKey("orders.id"), unique=True)
     external_ref: Mapped[str] = mapped_column(String(100), index=True)
     external_number: Mapped[str | None] = mapped_column(String(60), nullable=True)
+    sub_merchant_ref: Mapped[str | None] = mapped_column(String(100), nullable=True, index=True)  # restaurant / branch inside an aggregator
+    sub_merchant_name: Mapped[str | None] = mapped_column(String(120), nullable=True)
     webhook_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
     items_summary: Mapped[str | None] = mapped_column(String(500), nullable=True)
     order_total: Mapped[str | None] = mapped_column(String(20), nullable=True)
