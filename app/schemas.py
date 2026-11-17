@@ -195,6 +195,7 @@ class OrderCreateIn(PreferencesIn):
     accept_capacity_terms: bool = False
     scheduled_at: datetime | None = None  # scheduled trip (ISO, UTC or with offset)
     preferred_driver_id: int | None = None  # direct trip with a driver the customer rated 4-5 stars (see GET /api/favorite-drivers)
+    corporate_id: int | None = None  # book on a corporate account (caller must be an active member); billed on the monthly statement
     choose_driver: bool = True  # default ON: the customer picks among the drivers who respond; send false for "first driver to accept wins"
 
     v_phones = field_validator("contact_phone", "receiver_phone")(lambda cls, v: _phone(v))

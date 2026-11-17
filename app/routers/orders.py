@@ -222,7 +222,10 @@ async def create_order(body: OrderCreateIn, user: User = Depends(customer_user),
         if ex:
             return order_for_customer(await load_order(db, ex))
     from ..services.merchant import is_merchant_user
-    is_merchant = await is_merchant_user(db, user.id)  # a merchant account has many deliveries open at once and is billed monthly
+    if body.corporate_id:
+        from .corporate import check_booking_allowed
+        await check_booking_allowed(db, user.id, body.corporate_id)
+    is_merchant = await is_merchant_user(db, user.id) or bool(body.corporate_id)  # corporate bookings are billed monthly too; a merchant account has many deliveries open at once and is billed monthly
     open_order = None if is_merchant else (await db.execute(select(Order.id).where(
         Order.customer_id == user.id, Order.order_status.not_in(S.FINAL | {S.SCHEDULED})).limit(1))).first()
     if open_order:

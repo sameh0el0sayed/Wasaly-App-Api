@@ -7,7 +7,7 @@
 | 3 Pickup | BACKEND DONE (disabled until the owner enables it; Flutter screens pending) |
 | 4 Recovery | BACKEND DONE on the same engine (vehicle info / can_move / emergency / equipment) |
 | 5 Freight + quotations | BACKEND DONE (auto price + manual quote over thresholds, admin pricing of quotes, manual dispatch) |
-| 6 Corporate accounts | TODO (reuse the merchant/billing pattern: employees, monthly statements, corporate pricing) |
+| 6 Corporate accounts | BACKEND DONE - migration 0024 (members OWNER/MANAGER/EMPLOYEE, monthly statement with discount, monthly limit, bulk booking) |
 | 7 AI operations manager + intelligent dispatch | TODO (proposal approved: suggests, never changes money/bans; every action audited) |
 | 8 Reports, reconciliation, analytics | TODO |
 | 9 Tests, security review, compliance, production | TODO |

@@ -341,6 +341,7 @@ class Order(Base):
     vehicle_category_id: Mapped[int | None] = mapped_column(ForeignKey("vehicle_categories.id"), nullable=True)
     quote_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
     agreed_price: Mapped[Decimal | None] = mapped_column(Numeric(12, 3), nullable=True)
+    corporate_id: Mapped[int | None] = mapped_column(Integer, nullable=True, index=True)  # corporate account billed monthly for this order
     service_details: Mapped[dict | None] = mapped_column(JSON, nullable=True)  # dimensions, items, helpers, loading, vehicle info, equipment...
     extras_fee: Mapped[Decimal] = mapped_column(Numeric(12, 3), default=0)  # airport + preference fees, part of the trip price
     extras_breakdown: Mapped[list] = mapped_column(JSON, default=list)
@@ -1053,4 +1054,32 @@ class ServiceQuote(Base):
     expires_at: Mapped[datetime | None] = mapped_column(UTCDateTime, nullable=True)
     order_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
     admin_note: Mapped[str | None] = mapped_column(String(300), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
+
+
+class Corporate(Base):
+    """Business account: several employees book on one monthly statement, optional agreed discount and monthly credit limit."""
+    __tablename__ = "corporates"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(String(160))
+    cr_number: Mapped[str | None] = mapped_column(String(40), nullable=True)
+    business_type: Mapped[str | None] = mapped_column(String(40), nullable=True)  # MOVING / FREIGHT / RETAIL / WAREHOUSE / CONSTRUCTION / DEALERSHIP / CAR_RENTAL / FLEET / OTHER
+    contact_phone: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    contact_email: Mapped[str | None] = mapped_column(String(160), nullable=True)
+    discount_percent: Mapped[Decimal] = mapped_column(Numeric(5, 2), default=0)  # corporate pricing, applied on the monthly statement
+    monthly_limit: Mapped[Decimal | None] = mapped_column(Numeric(12, 3), nullable=True)  # credit ceiling per calendar month (UTC); null = unlimited
+    account_manager: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    created_by: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
+
+
+class CorporateMember(Base):
+    __tablename__ = "corporate_members"
+    __table_args__ = (UniqueConstraint("corporate_id", "user_id", name="uq_corporate_member"),)
+    id: Mapped[int] = mapped_column(primary_key=True)
+    corporate_id: Mapped[int] = mapped_column(ForeignKey("corporates.id"), index=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
+    role: Mapped[str] = mapped_column(String(12), default="EMPLOYEE")  # OWNER / MANAGER / EMPLOYEE
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)

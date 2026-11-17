@@ -355,9 +355,9 @@ async def arrived_at_destination(order_id: int, body: ArrivedIn = ArrivedIn(), u
                                currency=o.currency, decimals=o.currency_decimals)
     o.payment_id = pay.id
     from ..services.merchant import is_merchant_user
-    if await is_merchant_user(db, o.customer_id):  # merchant deliveries are billed monthly: settled now so the driver is paid; nothing is collected
+    if o.corporate_id or await is_merchant_user(db, o.customer_id):  # merchant / corporate orders are billed monthly: settled now so the driver is paid; nothing is collected
         from ..services.payments import finalize_paid
-        await finalize_paid(db, pay, None, method="MERCHANT")
+        await finalize_paid(db, pay, None, method="CORPORATE" if o.corporate_id else "MERCHANT")
     else:
         await apply_wallet(db, pay)  # customer wallet balance is used first
     shown = f"{money(o.customer_total, o.currency_decimals)} {o.currency}"
