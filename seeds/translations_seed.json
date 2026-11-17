@@ -10318,5 +10318,15 @@
   "key": "err.CORPORATE_LIMIT_REACHED",
   "ar": "تم بلوغ الحد الشهري لحساب الشركة",
   "en": "The company's monthly limit was reached"
+ },
+ {
+  "key": "v36.photos_optional",
+  "ar": "صور الحمولة (اختياري)",
+  "en": "Photos (optional)"
+ },
+ {
+  "key": "v36.photo",
+  "ar": "صورة",
+  "en": "Photo"
  }
 ]
