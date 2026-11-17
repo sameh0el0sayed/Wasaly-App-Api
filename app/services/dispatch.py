@@ -62,6 +62,11 @@ async def eligible_drivers(db: AsyncSession, order: Order) -> list[User]:
                    User.id.not_in(select(OrderOffer.driver_id).where(OrderOffer.order_id == order.id, OrderOffer.offer_status == OfferStatus.ACCEPTED))))  # a driver who cancelled is not re-offered
     if order.preferred_driver_id:  # direct trip: only the driver the customer picked
         stmt = stmt.where(User.id == order.preferred_driver_id)
+    if order.service_code and order.service_code != "RIDES":  # unified services: ONLY approved providers of this service with a fitting vehicle category
+        from ..models import ProviderCategory
+        ok = select(ProviderCategory.driver_id).where(ProviderCategory.service_code == order.service_code, ProviderCategory.status == "APPROVED",
+                                                      ProviderCategory.vehicle_category_id == order.vehicle_category_id)
+        stmt = stmt.where(User.id.in_(ok))
     out = []
     cfg = await settings_service.get_all(db)
     default_gender = cfg["default_driver_gender"]

@@ -9743,5 +9743,70 @@
   "key": "err.DELIVERY_NOT_FOUND",
   "ar": "التوصيلة غير موجودة",
   "en": "Delivery not found"
+ },
+ {
+  "key": "err.SERVICE_DISABLED",
+  "ar": "هذه الخدمة غير متاحة حاليًا",
+  "en": "This service is currently unavailable"
+ },
+ {
+  "key": "err.SERVICE_NOT_FOUND",
+  "ar": "الخدمة غير موجودة",
+  "en": "Service not found"
+ },
+ {
+  "key": "err.INVALID_VEHICLE_CATEGORY",
+  "ar": "فئة المركبة غير صحيحة",
+  "en": "Invalid vehicle category"
+ },
+ {
+  "key": "err.VEHICLE_TOO_SMALL",
+  "ar": "حمولتك أكبر من سعة هذه المركبة، اختر فئة أكبر",
+  "en": "Your cargo is larger than this vehicle, choose a bigger category"
+ },
+ {
+  "key": "err.EQUIPMENT_NOT_AVAILABLE",
+  "ar": "المعدات المطلوبة غير متوفرة في هذه الفئة",
+  "en": "Required equipment is not available in this category"
+ },
+ {
+  "key": "err.QUOTE_EXPIRED",
+  "ar": "انتهت صلاحية عرض السعر",
+  "en": "The quote has expired"
+ },
+ {
+  "key": "err.QUOTE_NOT_AVAILABLE",
+  "ar": "عرض السعر غير متاح",
+  "en": "Quote not available"
+ },
+ {
+  "key": "err.QUOTE_NOT_FOUND",
+  "ar": "عرض السعر غير موجود",
+  "en": "Quote not found"
+ },
+ {
+  "key": "err.PRICING_NOT_CONFIGURED",
+  "ar": "لم تُضبط أسعار هذه الخدمة بعد",
+  "en": "Pricing is not configured for this service"
+ },
+ {
+  "key": "err.DRIVER_NOT_ELIGIBLE",
+  "ar": "السائق غير مؤهل لهذا الطلب",
+  "en": "Driver is not eligible for this order"
+ },
+ {
+  "key": "err.ALREADY_APPROVED",
+  "ar": "معتمد مسبقًا",
+  "en": "Already approved"
+ },
+ {
+  "key": "err.ORDER_NOT_ASSIGNABLE",
+  "ar": "لا يمكن إسناد الطلب في حالته الحالية",
+  "en": "Order cannot be assigned in its current state"
+ },
+ {
+  "key": "err.QUOTE_NOT_PRICEABLE",
+  "ar": "لا يمكن تسعير هذا الطلب",
+  "en": "This quote cannot be priced"
  }
 ]

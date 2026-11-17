@@ -336,6 +336,12 @@ class Order(Base):
     discount_amount: Mapped[Decimal | None] = mapped_column(Numeric(12, 3), nullable=True)
     promo_fixed: Mapped[Decimal | None] = mapped_column(Numeric(12, 3), nullable=True)  # fixed discount (referral code)
     referral_id: Mapped[int | None] = mapped_column(Integer, nullable=True)  # referral whose code was used on this order
+    # unified services (Pickup / Freight / Recovery): fixed price agreed before booking; Rides keep time-based pricing
+    service_code: Mapped[str | None] = mapped_column(String(20), nullable=True, index=True)
+    vehicle_category_id: Mapped[int | None] = mapped_column(ForeignKey("vehicle_categories.id"), nullable=True)
+    quote_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    agreed_price: Mapped[Decimal | None] = mapped_column(Numeric(12, 3), nullable=True)
+    service_details: Mapped[dict | None] = mapped_column(JSON, nullable=True)  # dimensions, items, helpers, loading, vehicle info, equipment...
     extras_fee: Mapped[Decimal] = mapped_column(Numeric(12, 3), default=0)  # airport + preference fees, part of the trip price
     extras_breakdown: Mapped[list] = mapped_column(JSON, default=list)
     is_outside_bahrain: Mapped[bool] = mapped_column(Boolean, default=False)  # destination outside the country boundary
@@ -976,3 +982,75 @@ class MerchantWebhookEvent(Base):
     attempts: Mapped[int] = mapped_column(Integer, default=0)
     next_attempt_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow, index=True)
     last_error: Mapped[str | None] = mapped_column(String(200), nullable=True)
+
+
+class ServiceCategory(Base):
+    """RIDES | PICKUP | FREIGHT | RECOVERY. Each can be switched on/off independently by an admin."""
+    __tablename__ = "service_categories"
+    code: Mapped[str] = mapped_column(String(20), primary_key=True)
+    name_ar: Mapped[str] = mapped_column(String(80))
+    name_en: Mapped[str] = mapped_column(String(80))
+    is_active: Mapped[bool] = mapped_column(Boolean, default=False)
+    sort_order: Mapped[int] = mapped_column(Integer, default=0)
+    config: Mapped[dict | None] = mapped_column(JSON, nullable=True)  # booking form hints, quote validity, rules
+
+
+class VehicleCategory(Base):
+    __tablename__ = "vehicle_categories"
+    __table_args__ = (UniqueConstraint("service_code", "code", name="uq_vehicle_category"),)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    service_code: Mapped[str] = mapped_column(ForeignKey("service_categories.code"), index=True)
+    code: Mapped[str] = mapped_column(String(30))
+    name_ar: Mapped[str] = mapped_column(String(80))
+    name_en: Mapped[str] = mapped_column(String(80))
+    max_weight_kg: Mapped[Decimal | None] = mapped_column(Numeric(10, 2), nullable=True)
+    max_length_cm: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    max_width_cm: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    max_height_cm: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    equipment: Mapped[list | None] = mapped_column(JSON, nullable=True)  # what this vehicle carries (e.g. winch, ramps, lift)
+    price_multiplier: Mapped[Decimal] = mapped_column(Numeric(6, 3), default=1)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+
+
+class PricingProfile(Base):
+    """Independent, admin-editable price model per service. Commission fields are optional: empty = same as the Rides commission."""
+    __tablename__ = "pricing_profiles"
+    service_code: Mapped[str] = mapped_column(ForeignKey("service_categories.code"), primary_key=True)
+    params: Mapped[dict] = mapped_column(JSON, default=dict)
+    commission_type: Mapped[str | None] = mapped_column(String(10), nullable=True)
+    commission_value: Mapped[Decimal | None] = mapped_column(Numeric(10, 3), nullable=True)
+    commission_mode: Mapped[str | None] = mapped_column(String(10), nullable=True)
+    updated_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow, onupdate=utcnow)
+
+
+class ProviderCategory(Base):
+    """A driver/provider authorised (after admin approval) for one service with one vehicle category."""
+    __tablename__ = "provider_categories"
+    __table_args__ = (UniqueConstraint("driver_id", "service_code", name="uq_provider_service"),)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    driver_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
+    service_code: Mapped[str] = mapped_column(ForeignKey("service_categories.code"))
+    vehicle_category_id: Mapped[int | None] = mapped_column(ForeignKey("vehicle_categories.id"), nullable=True)
+    status: Mapped[str] = mapped_column(String(20), default="PENDING_APPROVAL", index=True)  # PENDING_APPROVAL | APPROVED | REJECTED
+    documents: Mapped[dict | None] = mapped_column(JSON, nullable=True)  # permits / insurance file keys
+    note: Mapped[str | None] = mapped_column(String(300), nullable=True)
+    reviewed_by: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
+
+
+class ServiceQuote(Base):
+    """Price shown BEFORE confirmation. QUOTED -> ACCEPTED (order created) | DECLINED | EXPIRED. MANUAL_PENDING: an admin sets the price."""
+    __tablename__ = "service_quotes"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    customer_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
+    service_code: Mapped[str] = mapped_column(ForeignKey("service_categories.code"))
+    vehicle_category_id: Mapped[int | None] = mapped_column(ForeignKey("vehicle_categories.id"), nullable=True)
+    request: Mapped[dict] = mapped_column(JSON)
+    breakdown: Mapped[list | None] = mapped_column(JSON, nullable=True)
+    price: Mapped[Decimal | None] = mapped_column(Numeric(12, 3), nullable=True)
+    currency: Mapped[str] = mapped_column(String(3), default="BHD")
+    status: Mapped[str] = mapped_column(String(16), default="QUOTED", index=True)
+    expires_at: Mapped[datetime | None] = mapped_column(UTCDateTime, nullable=True)
+    order_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    admin_note: Mapped[str | None] = mapped_column(String(300), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)

@@ -340,6 +340,8 @@ async def arrived_at_destination(order_id: int, body: ArrivedIn = ArrivedIn(), u
     night = bool(o.night_enabled) and is_night_start(o.trip_started_at, ZoneInfo(settings.timezone), o.night_start, o.night_end)
     surcharge = night_surcharge(base, o.night_percent, o.currency_decimals) if night else base - base
     increase = increase_amount(base + surcharge, o.price_increase_percent, o.currency_decimals)  # accepted raise / counter-offer
+    if o.agreed_price is not None:  # Pickup / Freight / Recovery: the price the customer approved before booking, no time-based calculation
+        base, surcharge, increase, night = o.agreed_price, base - base, base - base, False
     price = base + surcharge + increase + (o.extras_fee or 0)  # trip price incl. night surcharge, price increase and fixed extras (airport/preferences); commission is calculated on this
     o.base_price, o.night_applied, o.night_surcharge, o.price_increase_amount = base, night, surcharge, increase
     o.actual_duration_seconds, o.final_price = secs, price
