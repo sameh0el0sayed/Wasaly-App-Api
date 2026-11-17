@@ -10,6 +10,7 @@
 | 6 Corporate accounts | BACKEND DONE - migration 0024 (members OWNER/MANAGER/EMPLOYEE, monthly statement with discount, monthly limit, bulk booking) |
 | 6b Partner integrations (v32: kinds, pricing modes, keys, batch, sub-merchants, services via API) | BACKEND DONE - migration 0025 | |
 | 6c Partner sandbox, granular webhook events, live location, quote-priced webhook (v34) | BACKEND DONE - migration 0027 |
+| 6d Partner portal API (v35: staff accounts, own deliveries/invoices/keys/team, admin grants access) | BACKEND DONE - migration 0028 |
 | 7 AI operations manager + intelligent dispatch | BACKEND DONE - migration 0026 (rule-based scan every 3 min: no driver, late driver, silent driver, long trip, waiting quotes, price anomalies, demand surge; suggests only; audited as AI; daily report) |
 | 8 Reports, reconciliation, analytics | BACKEND DONE - /api/admin/finance (reconciliation with issue detection, receivables from partners and corporates, daily series, CSV) |
 | 9 Tests, security review, compliance | PARTIAL - docs/SECURITY_REVIEW.md done (route audit passed, checklist); automated tests and external pen-test left to the owner (he runs tests himself) |

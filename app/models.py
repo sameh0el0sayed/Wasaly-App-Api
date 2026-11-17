@@ -1133,3 +1133,15 @@ class OpsReport(Base):
     metrics: Mapped[dict] = mapped_column(JSON)
     text_ar: Mapped[str] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
+
+
+class MerchantMember(Base):
+    """Staff of a partner (platform / shipping company / business) who may use the partner portal. They log in with a normal Wasaly account."""
+    __tablename__ = "merchant_members"
+    __table_args__ = (UniqueConstraint("merchant_id", "user_id", name="uq_merchant_member"),)
+    id: Mapped[int] = mapped_column(primary_key=True)
+    merchant_id: Mapped[str] = mapped_column(ForeignKey("merchants.id"), index=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
+    role: Mapped[str] = mapped_column(String(10), default="VIEWER")  # OWNER (team + keys + cancel) / MANAGER (cancel + invoices) / VIEWER (read only)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
