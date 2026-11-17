@@ -11,7 +11,7 @@
 | 6b Partner integrations (v32: kinds, pricing modes, keys, batch, sub-merchants, services via API) | BACKEND DONE - migration 0025 |
 | 7 AI operations manager + intelligent dispatch | BACKEND DONE - migration 0026 (rule-based scan every 3 min: no driver, late driver, silent driver, long trip, waiting quotes, price anomalies, demand surge; suggests only; audited as AI; daily report) |
 | 8 Reports, reconciliation, analytics | BACKEND DONE - /api/admin/finance (reconciliation with issue detection, receivables from partners and corporates, daily series, CSV) |
-| 9 Tests, security review, compliance, production | TODO |
+| 9 Tests, security review, compliance | PARTIAL - docs/SECURITY_REVIEW.md done (route audit passed, checklist); automated tests and external pen-test left to the owner (he runs tests himself) |
 
 Rules kept: Rides pricing untouched; no new service is live until an admin enables it AND configures its pricing; indicative seed rates are editable;
 unapproved providers never receive bookings of a service; any price change needs customer approval (quote -> accept).
