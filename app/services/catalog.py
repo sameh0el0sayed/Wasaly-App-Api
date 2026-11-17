@@ -30,7 +30,7 @@ PROFILES = {  # BHD, indicative - review in the admin dashboard before enabling 
     "FREIGHT": {"base_fare": "15.000", "per_km": "0.600", "per_minute": "0.100", "min_fare": "25.000", "loading_fee": "10.000", "unloading_fee": "10.000",
                 "helper_fee": "8.000", "per_extra_stop": "5.000", "waiting_per_minute": "0.300", "free_waiting_minutes": "30", "demand_multiplier": "1",
                 "quote_valid_minutes": "120", "quote_over_weight_kg": "7000", "quote_over_km": "60", "equipment_fees": {"LIFT": "15.000", "CRANE": "40.000"}},
-    "RECOVERY": {"base_fare": "10.000", "per_km": "0.400", "per_minute": "0.000", "min_fare": "12.000", "emergency_fee": "5.000", "waiting_per_minute": "0.200",
+    "RECOVERY": {"base_fare": "5.000", "per_km": "0.400", "per_minute": "0.000", "min_fare": "5.000", "emergency_fee": "5.000", "waiting_per_minute": "0.200",
                  "free_waiting_minutes": "15", "demand_multiplier": "1", "quote_valid_minutes": "30", "equipment_fees": {"WINCH": "8.000", "LOW_RAMP": "5.000"}},
 }
 
@@ -53,6 +53,9 @@ async def seed_catalog() -> None:
         for svc, params in PROFILES.items():
             if svc not in pp:
                 db.add(PricingProfile(service_code=svc, params=params))
+        rec = await db.get(PricingProfile, "RECOVERY")  # owner decision: flatbed starts at 5 BHD (only replaces the untouched first seed)
+        if rec and rec.params.get("base_fare") == "10.000" and rec.params.get("min_fare") == "12.000":
+            rec.params = {**rec.params, "base_fare": "5.000", "min_fare": "5.000"}
         await db.commit()
 
 
