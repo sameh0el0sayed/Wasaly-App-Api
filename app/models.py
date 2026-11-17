@@ -970,6 +970,7 @@ class MerchantKey(Base):
     merchant_id: Mapped[str] = mapped_column(ForeignKey("merchants.id"), index=True)
     key_hash: Mapped[str] = mapped_column(String(64), unique=True, index=True)
     label: Mapped[str | None] = mapped_column(String(60), nullable=True)
+    is_sandbox: Mapped[bool] = mapped_column(Boolean, default=False)  # test key: simulated deliveries, no real orders or drivers
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
 
@@ -995,8 +996,11 @@ class MerchantWebhookEvent(Base):
     """Outbox: signed status webhooks to the merchant, retried with backoff (1m, 5m, 30m, 2h)."""
     __tablename__ = "merchant_webhook_events"
     id: Mapped[str] = mapped_column(String(36), primary_key=True)  # event_id (uuid)
-    delivery_id: Mapped[str] = mapped_column(ForeignKey("merchant_deliveries.id"), index=True)
-    raw_status: Mapped[str] = mapped_column(String(30))  # order status at the time of the event
+    delivery_id: Mapped[str | None] = mapped_column(ForeignKey("merchant_deliveries.id"), index=True, nullable=True)
+    merchant_id: Mapped[str | None] = mapped_column(String(36), nullable=True)  # quote events (no delivery yet)
+    quote_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    webhook_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    raw_status: Mapped[str] = mapped_column(String(30))  # order status at the time of the event (or QUOTE_PRICED)
     occurred_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
     state: Mapped[str] = mapped_column(String(10), default="PENDING", index=True)  # PENDING | SENT | FAILED
     attempts: Mapped[int] = mapped_column(Integer, default=0)

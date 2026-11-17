@@ -4,7 +4,7 @@ import uuid
 from datetime import UTC, datetime
 from decimal import Decimal
 
-from fastapi import APIRouter, Depends, Header, HTTPException
+from fastapi import APIRouter, Depends, Header, HTTPException, Request
 from pydantic import BaseModel, Field, ValidationError
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -13,9 +13,9 @@ from ..constants import AccountStatus, Role
 from ..constants import OrderStatus as S
 from ..database import get_db
 from ..deps import admin_user, super_admin_user
-from ..models import Merchant, MerchantDelivery, MerchantKey, Order, User, utcnow
+from ..models import DriverProfile, Merchant, MerchantDelivery, MerchantKey, Order, ServiceQuote, User, utcnow
 from ..schemas import EstimateIn, OrderCreateIn
-from ..security import encrypt, hash_password
+from ..security import decrypt, encrypt, hash_password
 from ..services import merchant as M
 from ..services.audit import audit
 from ..services.notifications import notify
@@ -108,6 +108,7 @@ async def rotate_key(mid: str, admin: User = Depends(super_admin_user), db: Asyn
 
 class KeyIn(BaseModel):
     label: str | None = Field(default=None, max_length=60)
+    sandbox: bool = False  # test key: simulated deliveries, no real orders, no drivers
 
 
 @admin_router.post("/merchants/{mid}/keys", status_code=201)
@@ -115,18 +116,18 @@ async def add_key(mid: str, body: KeyIn, admin: User = Depends(super_admin_user)
     """Extra API key (e.g. one per system or environment). Shown once; revoke it alone without touching the others."""
     if not await db.get(Merchant, mid):
         raise HTTPException(404, "Merchant not found")
-    raw = "wk_live_" + secrets.token_urlsafe(32)
-    k = MerchantKey(id=str(uuid.uuid4()), merchant_id=mid, key_hash=M.hash_key(raw), label=body.label)
+    raw = ("wk_test_" if body.sandbox else "wk_live_") + secrets.token_urlsafe(32)
+    k = MerchantKey(id=str(uuid.uuid4()), merchant_id=mid, key_hash=M.hash_key(raw), label=body.label, is_sandbox=body.sandbox)
     db.add(k)
     audit(db, admin.id, "MERCHANT_KEY_ADDED", "merchant", mid, details={"key_id": k.id, "label": body.label})
     await db.commit()
-    return {"key_id": k.id, "label": k.label, "api_key": raw}
+    return {"key_id": k.id, "label": k.label, "sandbox": k.is_sandbox, "api_key": raw}
 
 
 @admin_router.get("/merchants/{mid}/keys")
 async def list_keys(mid: str, admin: User = Depends(admin_user), db: AsyncSession = Depends(get_db)):
     rows = (await db.execute(select(MerchantKey).where(MerchantKey.merchant_id == mid))).scalars().all()
-    return {"items": [{"key_id": k.id, "label": k.label, "is_active": k.is_active, "created_at": k.created_at.isoformat()} for k in rows]}
+    return {"items": [{"key_id": k.id, "label": k.label, "sandbox": k.is_sandbox, "is_active": k.is_active, "created_at": k.created_at.isoformat()} for k in rows]}
 
 
 @admin_router.delete("/merchants/{mid}/keys/{kid}")
@@ -196,18 +197,20 @@ async def merchant_invoice(mid: str, month: str, admin: User = Depends(admin_use
 
 
 # ---------------- merchant API ----------------
-async def merchant_auth(x_merchant_key: str | None = Header(default=None), db: AsyncSession = Depends(get_db)) -> Merchant:
-    m = None
+async def merchant_auth(request: Request, x_merchant_key: str | None = Header(default=None), db: AsyncSession = Depends(get_db)) -> Merchant:
+    m, sandbox = None, False
     if x_merchant_key:
         h = M.hash_key(x_merchant_key)
         m = (await db.execute(select(Merchant).where(Merchant.api_key_hash == h))).scalar_one_or_none()
         if not m:
-            m = (await db.execute(select(Merchant).join(MerchantKey, MerchantKey.merchant_id == Merchant.id).where(
-                MerchantKey.key_hash == h, MerchantKey.is_active.is_(True)))).scalar_one_or_none()
+            row = (await db.execute(select(Merchant, MerchantKey.is_sandbox).join(MerchantKey, MerchantKey.merchant_id == Merchant.id).where(
+                MerchantKey.key_hash == h, MerchantKey.is_active.is_(True)))).first()
+            m, sandbox = (row[0], row[1]) if row else (None, False)
     if not m or not m.is_active:
         raise HTTPException(401, {"code": "INVALID_MERCHANT_KEY"})
     if await _hit(f"rl:merchant:{m.id}", 60) > m.rate_limit_per_min:
         raise HTTPException(429, {"code": "RATE_LIMITED", "retry_after_seconds": 60}, headers={"Retry-After": "60"})
+    request.state.sandbox = sandbox
     return m
 
 
@@ -249,6 +252,22 @@ async def _quote(db, user: User, r: DeliveryRequest) -> dict:
         raise HTTPException(422, {"code": "INVALID_REQUEST", "message": str(e)[:200]}) from e
 
 
+def _sbx(request: Request) -> bool:
+    return bool(getattr(request.state, "sandbox", False))
+
+
+def _sbx_state(delivery_id: str) -> dict:
+    """Simulated delivery: the id carries its creation time, so no data is stored. searching 0-30 s, assigned 30-60 s, picked_up 60-120 s, delivered after."""
+    try:
+        _, ref, ts, cancelled = delivery_id.split("~")
+        age = datetime.now(UTC).timestamp() - int(ts)
+    except ValueError as e:
+        raise HTTPException(404, {"code": "DELIVERY_NOT_FOUND"}) from e
+    st = "cancelled" if cancelled == "1" else "searching" if age < 30 else "assigned" if age < 60 else "picked_up" if age < 120 else "delivered"
+    drv = {"name": "Test Driver", "phone": "+97300000000", "vehicle": "Test Car 000000"} if st in ("assigned", "picked_up", "delivered") else None
+    return {"id": delivery_id, "external_ref": ref, "status": st, "driver": drv, "price": "1.500", "currency": "BHD", "tracking_url": None, "eta_minutes": 10, "sandbox": True}
+
+
 def custom_price(m: Merchant, km) -> Decimal | None:
     """Negotiated price of this account (None = standard Wasaly delivery price)."""
     if m.pricing_mode == "FIXED" and m.fixed_fee is not None:
@@ -265,7 +284,9 @@ async def me(m: Merchant = Depends(merchant_auth)):
 
 
 @router.post("/deliveries/quote")
-async def quote(body: DeliveryRequest, m: Merchant = Depends(merchant_auth), db: AsyncSession = Depends(get_db)):
+async def quote(body: DeliveryRequest, request: Request, m: Merchant = Depends(merchant_auth), db: AsyncSession = Depends(get_db)):
+    if _sbx(request):
+        return ok({"price": "1.500", "currency": "BHD", "eta_minutes": 10, "distance_km": "3.0", "sandbox": True})
     user = await db.get(User, m.user_id)
     q = await _quote(db, user, body)
     if not q.get("pickup_in_service_area"):
@@ -275,7 +296,9 @@ async def quote(body: DeliveryRequest, m: Merchant = Depends(merchant_auth), db:
 
 
 @router.post("/deliveries", status_code=201)
-async def create_delivery(body: DeliveryRequest, m: Merchant = Depends(merchant_auth), db: AsyncSession = Depends(get_db)):
+async def create_delivery(body: DeliveryRequest, request: Request, m: Merchant = Depends(merchant_auth), db: AsyncSession = Depends(get_db)):
+    if _sbx(request):
+        return ok(_sbx_state(f"sbx~{body.external_ref[:60]}~{int(datetime.now(UTC).timestamp())}~0"))
     mid, mname, muser_id = m.id, m.name, m.user_id
     # idempotent on external_ref while the previous delivery is not cancelled
     prev = (await db.execute(select(MerchantDelivery).where(MerchantDelivery.merchant_id == mid, MerchantDelivery.external_ref == body.external_ref)
@@ -333,7 +356,9 @@ async def _mine(db, m: Merchant, delivery_id: str) -> MerchantDelivery:
 
 
 @router.get("/deliveries/{delivery_id}")
-async def get_delivery(delivery_id: str, m: Merchant = Depends(merchant_auth), db: AsyncSession = Depends(get_db)):
+async def get_delivery(delivery_id: str, request: Request, m: Merchant = Depends(merchant_auth), db: AsyncSession = Depends(get_db)):
+    if _sbx(request):
+        return ok(_sbx_state(delivery_id))
     md = await _mine(db, m, delivery_id)
     return ok(await M.build_delivery(db, md))
 
@@ -343,7 +368,10 @@ class CancelIn(BaseModel):
 
 
 @router.post("/deliveries/{delivery_id}/cancel")
-async def cancel_delivery(delivery_id: str, body: CancelIn | None = None, m: Merchant = Depends(merchant_auth), db: AsyncSession = Depends(get_db)):
+async def cancel_delivery(delivery_id: str, request: Request, body: CancelIn | None = None, m: Merchant = Depends(merchant_auth), db: AsyncSession = Depends(get_db)):
+    if _sbx(request):
+        d = delivery_id.split("~")
+        return ok(_sbx_state("~".join(d[:3] + ["1"])) if len(d) == 4 else _sbx_state(delivery_id))
     md = await _mine(db, m, delivery_id)
     muser_id = m.user_id
     o = await load_order(db, md.order_id, for_update=True)
@@ -367,12 +395,12 @@ class BatchIn(BaseModel):
 
 
 @router.post("/deliveries/batch")
-async def create_batch(body: BatchIn, m: Merchant = Depends(merchant_auth), db: AsyncSession = Depends(get_db)):
+async def create_batch(body: BatchIn, request: Request, m: Merchant = Depends(merchant_auth), db: AsyncSession = Depends(get_db)):
     """Up to 20 deliveries per call; each succeeds or fails on its own (same idempotency on external_ref)."""
     out = []
     for i, d in enumerate(body.deliveries):
         try:
-            r = await create_delivery(d, m, db)
+            r = await create_delivery(d, request, m, db)
             out.append({"index": i, "external_ref": d.external_ref, "ok": True, "delivery": r["data"]})
         except HTTPException as e:
             await db.rollback()
@@ -388,14 +416,25 @@ async def merchant_services(m: Merchant = Depends(merchant_auth), db: AsyncSessi
 
 
 @router.post("/services/{code}/quote", status_code=201)
-async def service_quote(code: str, body: QuoteIn, m: Merchant = Depends(merchant_auth), db: AsyncSession = Depends(get_db)):
+async def service_quote(code: str, body: QuoteIn, request: Request, m: Merchant = Depends(merchant_auth), db: AsyncSession = Depends(get_db)):
     """Freight / Pickup / Recovery quote with weight, dimensions, vehicle category... Big or unpriced jobs come back MANUAL_PENDING: poll GET until QUOTED."""
+    if _sbx(request):
+        raise HTTPException(400, {"code": "SANDBOX_NOT_SUPPORTED", "message": "Use deliveries in sandbox; services need a live key."})
     user = await db.get(User, m.user_id)
-    return ok(await create_quote(code.upper(), body, user, db))
+    res = await create_quote(code.upper(), body, user, db)
+    if body.webhook_url:  # tell the partner when a manual quote gets its price
+        if not M.safe_webhook_url(body.webhook_url):
+            raise HTTPException(422, {"code": "INVALID_WEBHOOK_URL"})
+        q = await db.get(ServiceQuote, res["id"])
+        q.request = {**(q.request or {}), "merchant_id": m.id, "webhook_url": body.webhook_url}
+        await db.commit()
+    return ok(res)
 
 
 @router.get("/services/quotes/{quote_id}")
-async def service_quote_get(quote_id: int, m: Merchant = Depends(merchant_auth), db: AsyncSession = Depends(get_db)):
+async def service_quote_get(quote_id: int, request: Request, m: Merchant = Depends(merchant_auth), db: AsyncSession = Depends(get_db)):
+    if _sbx(request):
+        raise HTTPException(400, {"code": "SANDBOX_NOT_SUPPORTED"})
     return ok(await get_quote(quote_id, await db.get(User, m.user_id), db))
 
 
@@ -407,8 +446,10 @@ class AcceptIn(BaseModel):
 
 
 @router.post("/services/quotes/{quote_id}/accept", status_code=201)
-async def service_quote_accept(quote_id: int, body: AcceptIn, m: Merchant = Depends(merchant_auth), db: AsyncSession = Depends(get_db)):
+async def service_quote_accept(quote_id: int, body: AcceptIn, request: Request, m: Merchant = Depends(merchant_auth), db: AsyncSession = Depends(get_db)):
     """Confirm the quoted price: creates the booking and links it to your reference (status webhooks and the monthly invoice work as for deliveries)."""
+    if _sbx(request):
+        raise HTTPException(400, {"code": "SANDBOX_NOT_SUPPORTED"})
     if body.webhook_url and not M.safe_webhook_url(body.webhook_url):
         raise HTTPException(422, {"code": "INVALID_WEBHOOK_URL"})
     mid, uid = m.id, m.user_id
@@ -422,3 +463,44 @@ async def service_quote_accept(quote_id: int, body: AcceptIn, m: Merchant = Depe
     db.add(md)
     await db.commit()
     return ok({"id": md.id, "status": "searching", "price": md.quoted_price, "currency": "BHD", "service_code": res.get("service_code")})
+
+
+@router.get("/deliveries/{delivery_id}/location")
+async def delivery_location(delivery_id: str, request: Request, m: Merchant = Depends(merchant_auth), db: AsyncSession = Depends(get_db)):
+    """Live driver position for tracking screens (poll every 10-15 s). Null unless the driver is on this delivery and sharing location (LIVE, fresh < 2 min)."""
+    if _sbx(request):
+        return ok({"lat": 26.2285, "lng": 50.586, "updated_at": datetime.now(UTC).isoformat(), "sandbox": True})
+    md = await _mine(db, m, delivery_id)
+    o = await db.get(Order, md.order_id)
+    if not o.driver_id or o.order_status not in (S.ACCEPTED, S.DRIVER_ON_THE_WAY, S.ARRIVED_AT_PICKUP, S.IN_PROGRESS, S.ARRIVED_AT_DESTINATION):
+        return ok(None)
+    dp = (await db.execute(select(DriverProfile).where(DriverProfile.user_id == o.driver_id))).scalar_one_or_none()
+    if not dp or dp.mode != "LIVE" or dp.last_lat is None or not dp.last_location_at or (utcnow() - dp.last_location_at).total_seconds() > 120:
+        return ok(None)
+    return ok({"lat": dp.last_lat, "lng": dp.last_lng, "updated_at": dp.last_location_at.isoformat()})
+
+
+class WebhookTestIn(BaseModel):
+    url: str = Field(max_length=500)
+
+
+@router.post("/webhooks/test")
+async def webhook_test(body: WebhookTestIn, m: Merchant = Depends(merchant_auth)):
+    """Send one signed sample event to your URL so you can verify the X-Wasaly-Signature check (HMAC-SHA256 of the raw body with your signing secret)."""
+    import hashlib
+    import hmac
+    import json
+
+    import httpx
+    if not M.safe_webhook_url(body.url):
+        raise HTTPException(422, {"code": "INVALID_WEBHOOK_URL"})
+    raw = json.dumps({"event_id": str(uuid.uuid4()), "event": "driver_assigned", "delivery_id": "test", "external_ref": "TEST-1", "status": "assigned",
+                      "driver": {"name": "Test Driver", "phone": "+97300000000", "vehicle": "Test Car 000000"}, "price": "1.500", "tracking_url": None,
+                      "eta_minutes": 10, "occurred_at": datetime.now(UTC).isoformat(), "test": True}, separators=(",", ":")).encode()
+    sig = hmac.new(decrypt(m.signing_secret_encrypted).encode(), raw, hashlib.sha256).hexdigest()
+    try:
+        async with httpx.AsyncClient(timeout=10, follow_redirects=False) as c:
+            r = await c.post(body.url, content=raw, headers={"Content-Type": "application/json", "X-Wasaly-Signature": sig})
+        return ok({"delivered": 200 <= r.status_code < 300, "http_status": r.status_code})
+    except Exception as e:  # noqa: BLE001
+        return ok({"delivered": False, "error": str(e)[:200]})

@@ -87,6 +87,10 @@ async def build_delivery(db, md: MerchantDelivery, order: Order | None = None) -
             "tracking_url": None, "eta_minutes": order.est_duration_min}
 
 
+EVENT_OF = {S.ACCEPTED: "driver_assigned", S.DRIVER_ON_THE_WAY: "driver_on_the_way", S.ARRIVED_AT_PICKUP: "arrived_at_pickup", S.IN_PROGRESS: "picked_up",
+            S.ARRIVED_AT_DESTINATION: "arrived_at_destination", S.COMPLETED: "delivered", S.CANCELLED: "cancelled", S.EXPIRED: "failed"}
+
+
 @events.on(events.OrderStatusChanged)
 async def _on_order_status(ev: events.OrderStatusChanged) -> None:
     """Queue a webhook when the merchant-facing status really changed. Own session: runs inside another request's transaction."""
@@ -95,29 +99,46 @@ async def _on_order_status(ev: events.OrderStatusChanged) -> None:
         if not md:
             return
         new = coarse_status(ev.new_status)
-        if new == md.last_status or not md.webhook_url:
+        if not md.webhook_url or ev.new_status not in EVENT_OF and new == md.last_status:
             return
         md.last_status = new
         db.add(MerchantWebhookEvent(id=str(uuid.uuid4()), delivery_id=md.id, raw_status=ev.new_status))
         await db.commit()
 
 
+async def queue_quote_event(db, q) -> None:
+    """A manual quote of a partner got its price: tell the partner (only when it registered a webhook_url with the quote)."""
+    r = q.request or {}
+    if r.get("webhook_url") and r.get("merchant_id"):
+        db.add(MerchantWebhookEvent(id=str(uuid.uuid4()), merchant_id=r["merchant_id"], quote_id=q.id, webhook_url=r["webhook_url"], raw_status="QUOTE_PRICED"))
+
+
 async def _send(db, ev: MerchantWebhookEvent) -> None:
-    md = await db.get(MerchantDelivery, ev.delivery_id)
-    merchant = await db.get(Merchant, md.merchant_id)
-    order = await db.get(Order, md.order_id)
-    payload = await build_delivery(db, md, order)
-    body = {"event_id": ev.id, "delivery_id": md.id, "external_ref": md.external_ref, "status": payload["status"],
-            "driver": payload["driver"], "price": payload["price"], "tracking_url": payload["tracking_url"],
-            "eta_minutes": payload["eta_minutes"], "occurred_at": ev.occurred_at.isoformat()}
+    if ev.quote_id is not None:
+        from ..models import ServiceQuote
+        q = await db.get(ServiceQuote, ev.quote_id)
+        merchant = await db.get(Merchant, ev.merchant_id)
+        url = ev.webhook_url
+        body = {"event_id": ev.id, "event": "quote_priced", "quote_id": q.id, "service_code": q.service_code, "status": q.status,
+                "price": f"{q.price:.3f}" if q.price is not None else None, "currency": q.currency,
+                "expires_at": q.expires_at.isoformat() if q.expires_at else None, "occurred_at": ev.occurred_at.isoformat()}
+    else:
+        md = await db.get(MerchantDelivery, ev.delivery_id)
+        merchant = await db.get(Merchant, md.merchant_id)
+        order = await db.get(Order, md.order_id)
+        payload = await build_delivery(db, md, order)
+        url = md.webhook_url
+        body = {"event_id": ev.id, "event": EVENT_OF.get(ev.raw_status), "delivery_id": md.id, "external_ref": md.external_ref, "status": payload["status"],
+                "driver": payload["driver"], "price": payload["price"], "tracking_url": payload["tracking_url"],
+                "eta_minutes": payload["eta_minutes"], "occurred_at": ev.occurred_at.isoformat()}
     raw = json.dumps(body, ensure_ascii=False, separators=(",", ":")).encode()
     sig = hmac.new(decrypt(merchant.signing_secret_encrypted).encode(), raw, hashlib.sha256).hexdigest()
     ev.attempts += 1
     try:
-        if not safe_webhook_url(md.webhook_url):
+        if not safe_webhook_url(url):
             raise ValueError("unsafe webhook url")
         async with httpx.AsyncClient(timeout=10, follow_redirects=False) as c:
-            r = await c.post(md.webhook_url, content=raw, headers={"Content-Type": "application/json", "X-Wasaly-Signature": sig})
+            r = await c.post(url, content=raw, headers={"Content-Type": "application/json", "X-Wasaly-Signature": sig})
         if 200 <= r.status_code < 300:
             ev.state, ev.last_error = "SENT", None
             return

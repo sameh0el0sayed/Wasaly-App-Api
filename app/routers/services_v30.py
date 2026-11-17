@@ -58,6 +58,7 @@ class QuoteIn(BaseModel):
     notes: str | None = Field(default=None, max_length=1000)
     photos: list[str] = Field(default_factory=list, max_length=8)
     # cargo (Pickup / Freight)
+    webhook_url: str | None = Field(default=None, max_length=500)  # merchant API only: called when a manual quote gets its price
     cargo_description: str | None = Field(default=None, max_length=1000)
     cargo_type: str | None = Field(default=None, max_length=60)
     items_count: int | None = Field(default=None, ge=1, le=1000)
@@ -448,6 +449,8 @@ async def admin_price_quote(qid: int, body: PriceIn, admin: User = Depends(admin
     q.breakdown = [{"key": "MANUAL_QUOTE", "amount": f"{body.price:.3f}"}]
     q.expires_at = utcnow() + timedelta(minutes=body.valid_minutes)
     audit(db, admin.id, "QUOTE_PRICED", "quote", qid, details={"price": str(body.price)})
+    from ..services.merchant import queue_quote_event
+    await queue_quote_event(db, q)
     await notify(db, cid, "QUOTE_READY", "عرض السعر جاهز", f"{body.price:.3f} {q.currency} - يرجى المراجعة والموافقة.")
     await db.commit()
     return _quote_out(q)
