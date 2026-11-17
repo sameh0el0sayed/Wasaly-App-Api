@@ -10328,5 +10328,10 @@
   "key": "v36.photo",
   "ar": "صورة",
   "en": "Photo"
+ },
+ {
+  "key": "v36.admin_title",
+  "ar": "إدارة الخدمات",
+  "en": "Services management"
  }
 ]
