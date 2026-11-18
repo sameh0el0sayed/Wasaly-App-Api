@@ -28,6 +28,25 @@ def tap_fee(amount: Decimal, s: dict, decimals: int, prefix: str = "tap") -> Dec
     return fee.quantize(quantum(decimals), ROUND_HALF_UP)
 
 
+FEE_CATEGORIES = {"BENEFIT": ("fee_benefit", "Benefit"), "LOCAL": ("fee_card_local", "Local Visa/Mastercard"),
+                  "REGIONAL": ("fee_card_regional", "Regional Visa/Mastercard"), "GLOBAL": ("fee_card_global", "Global Visa/Mastercard/Amex")}
+
+
+def tap_fee_detail(amount: Decimal, s: dict, decimals: int, category: str) -> dict:
+    """What the customer pays on top for a Tap payment: (amount x percent + fixed + per-transaction share of Tap's monthly fee) + VAT.
+    Every number comes from settings and is returned so the app can show it."""
+    key = FEE_CATEGORIES[category][0]
+    pct, fixed = Decimal(s[f"{key}_percent"]), Decimal(s[f"{key}_fixed"])
+    share, vat_pct = Decimal(s["tap_monthly_share"]), Decimal(s["tap_vat_percent"])
+    q = quantum(decimals)
+    pct_part = (amount * pct / 100).quantize(q, ROUND_HALF_UP)
+    sub = pct_part + fixed + share
+    vat = (sub * vat_pct / 100).quantize(q, ROUND_HALF_UP)
+    f = lambda v: f"{v:.{decimals}f}"  # noqa: E731
+    return {"category": category, "label": FEE_CATEGORIES[category][1], "percent": str(pct), "percent_amount": f(pct_part), "fixed": f(fixed),
+            "monthly_share": f(share), "subtotal": f(sub), "vat_percent": str(vat_pct), "vat": f(vat), "total": f(sub + vat)}
+
+
 async def create_payment(db: AsyncSession, *, kind: str, customer_id: int, driver_id: int | None, amount: Decimal,
                          driver_amount: Decimal, company_amount: Decimal, currency: str, decimals: int,
                          order_id: int | None = None, subscription_id: int | None = None) -> Payment:

@@ -5,20 +5,21 @@ from decimal import Decimal
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import HTMLResponse
+from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..config import settings
 from ..database import get_db
 from ..deps import admin_user, ai_review_user, customer_user, paging
-from ..models import AdminAuditLog, DriverPayout, Order, Payment, Subscription, User, utcnow
+from ..models import AdminAuditLog, DriverPayout, Payment, User, utcnow
 from ..schemas import BenefitPayIn, MarkTransferredIn, PaymentConfirmIn, ReasonIn
 from ..security import create_file_token, decrypt
-from ..serializers import dt, money, payment_out, payout_out, payment_admin_load_options, payout_admin_load_options
+from ..serializers import dt, money, payment_admin_load_options, payment_out, payout_admin_load_options, payout_out
 from ..services import live_test, settings_service, tap
 from ..services.audit import audit
 from ..services.files import assert_owned
-from ..services.payments import attempt_payout, finalize_paid, notify_admins, tap_fee
+from ..services.payments import FEE_CATEGORIES, attempt_payout, finalize_paid, notify_admins, tap_fee_detail
 
 log = logging.getLogger("payments")
 router = APIRouter(prefix="/api/payments", tags=["payments"])
@@ -39,9 +40,13 @@ async def _mine(db: AsyncSession, user: User, payment_id: int) -> Payment:
 async def payment_methods(user: User = Depends(customer_user), db: AsyncSession = Depends(get_db)):
     """What the payment screen shows: enabled methods, Tap fee, and the company BenefitPay account. All from settings."""
     s = await settings_service.get_all(db)
+    vat, share = Decimal(s["tap_vat_percent"]) / 100 + 1, Decimal(s["tap_monthly_share"])
+    cats = [{"code": c, "label": lbl, "fee_percent": s[f"{k}_percent"], "fee_fixed": s[f"{k}_fixed"]} for c, (k, lbl) in FEE_CATEGORIES.items()]
+    legacy = lambda k: {"fee_percent": f"{Decimal(s[f'{k}_percent']) * vat:.3f}", "fee_fixed": f"{(Decimal(s[f'{k}_fixed']) + share) * vat:.3f}"}  # noqa: E731  percent and fixed incl. VAT and the per-transaction share
     return {"methods": [m for m, on in (("TAP", live_test.tap_on(s)), ("BENEFIT", live_test.benefit_on(s)), ("BENEFITPAY", s["benefitpay_enabled"] == "true")) if on],
-            "tap": {"fee_percent": s["tap_fee_percent"], "fee_fixed": s["tap_fee_fixed"]},
-            "benefit": {"fee_percent": s["benefit_fee_percent"], "fee_fixed": s["benefit_fee_fixed"]},
+            "tap": {**legacy("fee_card_local"), "vat_percent": s["tap_vat_percent"], "per_transaction_fixed": s["tap_monthly_share"], "categories": cats,
+                    "formula": "(amount x percent + fixed + per_transaction_fixed) x (1 + vat_percent/100)"},
+            "benefit": legacy("fee_benefit"),
             "benefitpay": {"free": True, "fee_percent": "0", "fee_fixed": "0", "account_name": s["benefitpay_account_name"], "account_number": s["benefitpay_account_number"],
                            "instructions": s["benefitpay_instructions"]}}
 
@@ -63,8 +68,23 @@ async def get_payment(payment_id: int, user: User = Depends(customer_user), db: 
     return payment_out(p, await settings_service.get_all(db))
 
 
+class TapIn(BaseModel):
+    card_type: str = "LOCAL"  # LOCAL | REGIONAL | GLOBAL (also Amex); Apple/Google/Samsung Pay: the type of the card behind them
+
+
+@router.get("/{payment_id}/fees")
+async def payment_fees(payment_id: int, user: User = Depends(customer_user), db: AsyncSession = Depends(get_db)):
+    """Exact Tap fee for this payment per method/card type, so the screen shows the final number BEFORE the customer chooses."""
+    p = await _mine(db, user, payment_id)
+    s = await settings_service.get_all(db)
+    due = p.amount - (p.wallet_amount or 0)
+    return {"amount_due": f"{due:.{p.currency_decimals}f}", "currency": p.currency,
+            "options": [{**(d := tap_fee_detail(due, s, p.currency_decimals, c)), "charged": f"{due + Decimal(d['total']):.{p.currency_decimals}f}"} for c in FEE_CATEGORIES],
+            "no_fee_methods": ["BENEFITPAY", "WALLET"]}
+
+
 @router.post("/{payment_id}/tap")
-async def pay_with_tap(payment_id: int, user: User = Depends(customer_user), db: AsyncSession = Depends(get_db)):
+async def pay_with_tap(payment_id: int, body: TapIn | None = None, user: User = Depends(customer_user), db: AsyncSession = Depends(get_db)):
     """Creates a Tap charge and returns the hosted payment page URL. The gateway fee is added to what the customer pays."""
     p = await _mine(db, user, payment_id)
     if p.payment_status in ("PAID", "PENDING_VERIFICATION"):
@@ -73,7 +93,10 @@ async def pay_with_tap(payment_id: int, user: User = Depends(customer_user), db:
     live_test.block_tap(s)
     if s["tap_enabled"] != "true":
         raise HTTPException(409, {"code": "METHOD_DISABLED", "method": "TAP"})
-    return await _tap_charge(db, user, p, s, "TAP", "src_all", "tap")
+    cat = (body.card_type if body else "LOCAL").upper()
+    if cat not in ("LOCAL", "REGIONAL", "GLOBAL"):
+        raise HTTPException(422, {"code": "INVALID_CARD_TYPE"})
+    return await _tap_charge(db, user, p, s, "TAP", "src_all", cat)
 
 
 @router.post("/{payment_id}/benefit")
@@ -86,12 +109,13 @@ async def pay_with_benefit(payment_id: int, user: User = Depends(customer_user),
     live_test.block_tap(s)
     if s["benefit_enabled"] != "true":
         raise HTTPException(409, {"code": "METHOD_DISABLED", "method": "BENEFIT"})
-    return await _tap_charge(db, user, p, s, "BENEFIT", "src_bh.benefit", "benefit")
+    return await _tap_charge(db, user, p, s, "BENEFIT", "src_bh.benefit", "BENEFIT")
 
 
-async def _tap_charge(db: AsyncSession, user: User, p: Payment, s: dict, method: str, source: str, prefix: str):
+async def _tap_charge(db: AsyncSession, user: User, p: Payment, s: dict, method: str, source: str, category: str):
     due = p.amount - (p.wallet_amount or 0)  # the wallet already covered part of it
-    fee = tap_fee(due, s, p.currency_decimals, prefix)
+    detail = tap_fee_detail(due, s, p.currency_decimals, category)
+    fee = Decimal(detail["total"])
     charged = due + fee
     base = settings.public_base_url.rstrip("/")
     ref = f"PAY-{p.id}"
@@ -107,6 +131,7 @@ async def _tap_charge(db: AsyncSession, user: User, p: Payment, s: dict, method:
         raise HTTPException(502, {"code": "TAP_BAD_RESPONSE"})
     p.payment_method, p.payment_status = method, "PENDING_PAYMENT"
     p.gateway_fee, p.charged_amount, p.transaction_reference, p.tap_url = fee, charged, charge["id"], url
+    p.fee_category, p.fee_detail = category, detail
     p.reject_reason = None
     await db.commit()
     return payment_out(p)
@@ -151,6 +176,11 @@ async def _verify_and_apply(db: AsyncSession, charge_id: str) -> Payment | None:
             log.error("Tap charge %s does not match payment %s", charge_id, p.id)
             await notify_admins(db, "PAYMENT_MISMATCH", "دفعة Tap غير مطابقة", f"payment #{p.id} charge {charge_id}")
             return p
+        src = charge.get("source") or {}
+        brand = str(src.get("payment_method") or (charge.get("card") or {}).get("brand") or "").upper()[:30] or None
+        p.card_brand = brand
+        if brand and ((brand.startswith("AMERICAN") and p.fee_category not in ("GLOBAL", None)) or (brand == "BENEFIT" and p.fee_category not in ("BENEFIT", None))):
+            await notify_admins(db, "FEE_MISMATCH", "نوع بطاقة مختلف عن المختار", f"payment #{p.id}: chosen {p.fee_category}, Tap reports {brand}")
         await finalize_paid(db, p, None, p.payment_method)
     elif status in TAP_FAILED and p.payment_status == "PENDING_PAYMENT":
         p.payment_status = "FAILED"

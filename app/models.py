@@ -458,6 +458,9 @@ class Payment(Base):
     wallet_amount: Mapped[Decimal] = mapped_column(Numeric(12, 3), default=0, server_default="0")  # paid from the customer wallet
     gateway_fee: Mapped[Decimal] = mapped_column(Numeric(12, 3), default=0)  # Tap fee, paid by the customer
     charged_amount: Mapped[Decimal | None] = mapped_column(Numeric(12, 3), nullable=True)  # amount + gateway_fee (Tap)
+    fee_category: Mapped[str | None] = mapped_column(String(10), nullable=True)  # BENEFIT / LOCAL / REGIONAL / GLOBAL (card type the customer chose)
+    fee_detail: Mapped[dict | None] = mapped_column(JSON, nullable=True)  # percent, fixed, monthly share, VAT: what the customer was shown
+    card_brand: Mapped[str | None] = mapped_column(String(30), nullable=True)  # what Tap reported after payment (VISA, MASTERCARD, AMERICAN_EXPRESS, BENEFIT...)
     payment_method: Mapped[str | None] = mapped_column(String(20), nullable=True)  # TAP | BENEFITPAY
     # UNPAID | PENDING_PAYMENT (Tap link issued) | PENDING_VERIFICATION (BenefitPay proof sent) | PAID | REJECTED | FAILED
     payment_status: Mapped[str] = mapped_column(String(24), default="UNPAID", index=True)

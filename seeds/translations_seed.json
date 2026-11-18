@@ -10333,5 +10333,45 @@
   "key": "v36.admin_title",
   "ar": "إدارة الخدمات",
   "en": "Services management"
+ },
+ {
+  "key": "v40.card_type",
+  "ar": "نوع البطاقة",
+  "en": "Card type"
+ },
+ {
+  "key": "v40.ct_LOCAL",
+  "ar": "بطاقة بحرينية",
+  "en": "Bahrain card"
+ },
+ {
+  "key": "v40.ct_REGIONAL",
+  "ar": "بطاقة خليجية",
+  "en": "Regional (GCC) card"
+ },
+ {
+  "key": "v40.ct_GLOBAL",
+  "ar": "بطاقة دولية / أمريكان إكسبرس",
+  "en": "International card / Amex"
+ },
+ {
+  "key": "v40.fee_line",
+  "ar": "رسوم الدفع الإلكتروني",
+  "en": "Online payment fee"
+ },
+ {
+  "key": "v40.fee_incl_vat",
+  "ar": "شاملة ضريبة القيمة المضافة",
+  "en": "Including VAT"
+ },
+ {
+  "key": "v40.no_fee",
+  "ar": "بدون رسوم",
+  "en": "No fee"
+ },
+ {
+  "key": "v40.total_to_pay",
+  "ar": "الإجمالي المطلوب",
+  "en": "Total to pay"
  }
 ]

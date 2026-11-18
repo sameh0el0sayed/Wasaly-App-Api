@@ -417,6 +417,16 @@ class SettingsPatch(BaseModel):
     estimate_road_factor: Decimal | None = Field(default=None, ge=1, le=3)
     estimate_avg_speed_kmh: Decimal | None = Field(default=None, ge=5, le=120)
     tap_enabled: bool | None = None
+    tap_vat_percent: Decimal | None = Field(default=None, ge=0, le=30)
+    tap_monthly_share: Decimal | None = Field(default=None, ge=0)
+    fee_benefit_percent: Decimal | None = Field(default=None, ge=0, le=20)
+    fee_benefit_fixed: Decimal | None = Field(default=None, ge=0)
+    fee_card_local_percent: Decimal | None = Field(default=None, ge=0, le=20)
+    fee_card_local_fixed: Decimal | None = Field(default=None, ge=0)
+    fee_card_regional_percent: Decimal | None = Field(default=None, ge=0, le=20)
+    fee_card_regional_fixed: Decimal | None = Field(default=None, ge=0)
+    fee_card_global_percent: Decimal | None = Field(default=None, ge=0, le=20)
+    fee_card_global_fixed: Decimal | None = Field(default=None, ge=0)
     benefit_enabled: bool | None = None
     marketing_spend_monthly: Decimal | None = Field(default=None, ge=0)
     benefit_fee_percent: Decimal | None = Field(default=None, ge=0, le=20)

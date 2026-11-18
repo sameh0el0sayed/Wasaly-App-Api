@@ -1,10 +1,17 @@
 from decimal import Decimal
 
 from sqlalchemy.orm import joinedload, selectinload
+
 from .models import (
-    Order, OrderOffer, OrderStatusHistory, User,
-    DriverProfile, Vehicle, VehicleDocument, CounterOffer, DriverApplication,
-    Payment, DriverPayout, Subscription, utcnow,
+    DriverPayout,
+    Order,
+    OrderOffer,
+    OrderStatusHistory,
+    Payment,
+    Subscription,
+    User,
+    Vehicle,
+    utcnow,
 )
 from .security import decrypt
 
@@ -252,7 +259,7 @@ def driver_block(u: User, reveal: bool = False) -> dict | None:
 def payment_out(p, settings_map: dict | None = None, admin: bool = False) -> dict:
     d = p.currency_decimals
     out = {"id": p.id, "kind": p.kind, "order_id": p.order_id, "subscription_id": p.subscription_id,
-           "amount": money(p.amount, d), "wallet_amount": money(p.wallet_amount or 0, d), "amount_due": money(p.amount - (p.wallet_amount or 0), d), "gateway_fee": money(p.gateway_fee, d), "charged_amount": money(p.charged_amount, d),
+           "amount": money(p.amount, d), "wallet_amount": money(p.wallet_amount or 0, d), "amount_due": money(p.amount - (p.wallet_amount or 0), d), "gateway_fee": money(p.gateway_fee, d), "charged_amount": money(p.charged_amount, d), "fee_category": p.fee_category, "fee_detail": p.fee_detail, "card_brand": p.card_brand,
            "currency": p.currency, "currency_decimals": d, "payment_method": p.payment_method,
            "payment_status": p.payment_status, "tap_url": p.tap_url if p.payment_status == "PENDING_PAYMENT" else None,
            "proof_file": p.proof_file, "reference": p.transaction_reference, "reject_reason": p.reject_reason,

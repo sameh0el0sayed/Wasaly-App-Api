@@ -41,6 +41,13 @@ DEFAULTS = {
     "tap_fee_percent": "3.245",   # Tap Beginner package, local Visa/MC 2.95% + 10% VAT; charged to the customer on top
     "tap_fee_fixed": "0.110",  # 100 fils + 10% VAT
     "tap_enabled": "true",
+    # Tap fees (Beginner package) paid by the CUSTOMER on Tap payments only. Defaults, editable in admin, shown to the customer before paying.
+    "tap_vat_percent": "10",  # VAT charged by Tap on every fee (Bahrain)
+    "tap_monthly_share": "0.200",  # Tap's monthly fee (10 BHD) recovered as a fixed amount on EACH Tap transaction
+    "fee_benefit_percent": "1.95", "fee_benefit_fixed": "0.100",
+    "fee_card_local_percent": "2.95", "fee_card_local_fixed": "0.100",
+    "fee_card_regional_percent": "3.95", "fee_card_regional_fixed": "0.100",
+    "fee_card_global_percent": "3.95", "fee_card_global_fixed": "0.100",  # also American Express; Apple/Google/Samsung Pay follow the card behind them
     "live_test": "false",  # live-test mode: Tap (online card payment) is switched off everywhere
     "live_test_message": "",
     "marketing_spend_monthly": "0",  # used for CAC in the growth dashboard
