@@ -47,8 +47,10 @@ async def guard(request: Request) -> None:
         raise HTTPException(503, "control link not configured")
     body = await request.body()
     ip = (request.headers.get("x-forwarded-for", "").split(",")[0].strip() or (request.client.host if request.client else None))
-    if not command.verify(link, request.method, request.url.path, body, request.headers.get("x-phoenix-key"),
-                          request.headers.get("x-phoenix-timestamp"), request.headers.get("x-phoenix-signature"), ip):
+    why = command.verify_reason(link, request.method, request.url.path, body, request.headers.get("x-phoenix-key"),
+                                request.headers.get("x-phoenix-timestamp"), request.headers.get("x-phoenix-signature"), ip)
+    if why:
+        command.log.warning("control 401 %s %s reason=%s ip=%s", request.method, request.url.path, why, ip)
         raise HTTPException(401, "Unauthorized")
 
 

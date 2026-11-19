@@ -74,20 +74,32 @@ def ip_allowed(allowed: str, ip: str | None) -> bool:
         return False
 
 
-def verify(link: dict, method: str, path: str, body: bytes, key: str | None, ts: str | None, sig: str | None, ip: str | None) -> bool:
+def verify_reason(link: dict, method: str, path: str, body: bytes, key: str | None, ts: str | None, sig: str | None, ip: str | None) -> str | None:
+    """None = valid, otherwise a short reason (logged server-side only; the client always gets a bare 401)."""
+    key, ts, sig = (key or "").strip(), (ts or "").strip(), (sig or "").strip().lower()
+    if not key or not hmac.compare_digest(key, link["key_id"].strip()):
+        return "key_id_mismatch"
     try:
-        if not key or not hmac.compare_digest(key, link["key_id"]):
-            return False
-        if abs(time.time() - int(ts or "")) > 300:
-            return False
-        p = canonical_path(path)
-        if not p:
-            return False
-        if not hmac.compare_digest(sign(link["secret"], method, p, body, ts), sig or ""):
-            return False
-        return ip_allowed(link["allowed_ips"], ip)
-    except (ValueError, TypeError):
-        return False
+        t = float(ts)
+    except ValueError:
+        return "bad_timestamp"
+    if t > 1e12:  # tolerate milliseconds
+        t /= 1000
+    skew = abs(time.time() - t)
+    if skew > 300:
+        return f"timestamp_skew_{int(skew)}s"
+    p = canonical_path(path)
+    if not p:
+        return "bad_path"
+    secret = link["secret"].strip()
+    for tsv in {ts, str(int(t))}:  # sign over the timestamp exactly as sent
+        if hmac.compare_digest(sign(secret, method, p, body, tsv), sig):
+            return None if ip_allowed(link["allowed_ips"], ip) else f"ip_not_allowed_{ip}"
+    return "signature_mismatch"
+
+
+def verify(link: dict, method: str, path: str, body: bytes, key: str | None, ts: str | None, sig: str | None, ip: str | None) -> bool:
+    return verify_reason(link, method, path, body, key, ts, sig, ip) is None
 
 
 def new_secret() -> str:
