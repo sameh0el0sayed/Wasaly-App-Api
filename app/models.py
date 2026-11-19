@@ -490,6 +490,8 @@ class DriverPayout(Base):
     failure_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
     transferred_at: Mapped[datetime | None] = mapped_column(UTCDateTime, nullable=True)
+    driver: Mapped["User"] = relationship(foreign_keys=[driver_id])
+    payment: Mapped["Payment"] = relationship(foreign_keys=[payment_id])
 
 
 class Subscription(Base):
