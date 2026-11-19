@@ -244,6 +244,8 @@ async def enforce_driver_documents(db: AsyncSession, warn: bool = False) -> None
         if p.is_online and blockers:
             await force_offline(db, u.id)
             await notify(db, u.id, "DOCUMENT_EXPIRED", "مستند منتهي", "تم إيقاف عملك حتى تجديد المستند واعتماده.")
+            from . import command as _cmd
+            _cmd.emit("warning", "driver.document_expired", f"انتهت صلاحية مستند السائق {u.full_name}", ", ".join(blockers), {"driver_id": u.id})
         if warn:
             soon = []
             for d in (u.vehicle.documents if u.vehicle else []):

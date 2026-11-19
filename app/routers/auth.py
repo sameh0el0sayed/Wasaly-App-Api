@@ -306,6 +306,8 @@ async def register(body: RegisterIn, db: AsyncSession = Depends(get_db), lang: s
         audit(db, None, "WHATSAPP_PHONE_VERIFIED", "user", user.id,
               details={"verification_id": verification.verification_id})
     await db.commit()
+    from ..services import command as _cmd
+    _cmd.emit("info", "tenant.signup", f"تسجيل جديد: {user.full_name} ({user.role})", None, {"user_id": user.id, "role": user.role})
     from ..services.ai_review import wake
     wake()  # new member: the AI review worker wakes up if it was sleeping
     await db.refresh(user, ["driver_profile", "vehicle", "driver_application"])  # new instance: load before user_public()
@@ -329,6 +331,8 @@ async def login(body: LoginIn, request: Request, db: AsyncSession = Depends(get_
             if user.failed_logins >= int(s["login_max_failed_attempts"]):
                 user.locked_until = utcnow() + timedelta(minutes=int(s["login_lockout_minutes"]))
                 user.failed_logins = 0
+                from ..services import command as _cmd
+                _cmd.emit("warning", "security.login_lockout", f"قفل حساب بعد محاولات فاشلة: {user.full_name}", None, {"user_id": user.id, "ip": ip})
             await db.commit()
         raise HTTPException(401, "Invalid phone or password")
     if user.account_status == "DELETED":  # checked after the password so the state is not revealed to strangers

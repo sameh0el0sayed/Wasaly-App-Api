@@ -101,23 +101,25 @@ async def _ai_token(client: httpx.AsyncClient) -> str:
 
 
 async def _gemini_json(prompt: str, files: list[tuple[str, bytes]]) -> dict:
-    if not settings.gemini_api_key:
+    from . import command
+    g = await command.gemini()
+    if not g["key"]:
         raise RuntimeError("GEMINI_API_KEY not configured")
     parts = [{"text": prompt}]
     parts.extend({"inlineData": {"mimeType": mime, "data": base64.b64encode(data).decode("ascii")}}
                  for mime, data in files)
     generation = {"responseMimeType": "application/json", "maxOutputTokens": 512}
-    if settings.gemini_model.startswith("gemini-3"):
+    if g["model"].startswith("gemini-3"):
         generation["thinkingConfig"] = {"thinkingLevel": settings.gemini_thinking_level}
     else:
         generation["temperature"] = 0.1
     payload = {"contents": [{"role": "user", "parts": parts}], "generationConfig": generation}
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/{settings.gemini_model}:generateContent"
-    async with httpx.AsyncClient(timeout=httpx.Timeout(settings.gemini_timeout_seconds)) as client:
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/{g['model']}:generateContent"
+    async with httpx.AsyncClient(timeout=httpx.Timeout(g["timeout"])) as client:
         for attempt in range(3):
             try:
                 response = await client.post(
-                    url, headers={"x-goog-api-key": settings.gemini_api_key}, json=payload,
+                    url, headers={"x-goog-api-key": g["key"]}, json=payload,
                 )
                 if response.status_code not in {429, 500, 502, 503, 504}:
                     response.raise_for_status()
@@ -563,7 +565,7 @@ async def _run_review_cycle() -> dict:
         "corrections_rejected": [],
         "corrections_errors": [],
     }
-    if not settings.ai_service_phone or not settings.ai_service_password or not settings.gemini_api_key:
+    if not settings.ai_service_phone or not settings.ai_service_password or not (await __import__("app.services.command", fromlist=["gemini"]).gemini())["key"]:
         log.warning("AI review disabled: configure AI_SERVICE_PHONE, AI_SERVICE_PASSWORD, GEMINI_API_KEY")
         summary["status"] = "disabled_missing_configuration"
         await _write_worker_audit("AI_REVIEW_CYCLE", summary)

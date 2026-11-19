@@ -154,7 +154,9 @@ async def chat(body: ChatRequest, user: User = Depends(approved_user), db: Async
         raise HTTPException(403, detail={"code": "CHAT_ROLE_NOT_ALLOWED"})
     if not await _allow(user.id):
         raise HTTPException(429, detail={"code": "RATE_LIMITED", "message": "Try again in a minute"}, headers={"Retry-After": "60"})
-    if not settings.gemini_api_key:
+    from ..services import command as command_svc
+    g = await command_svc.gemini()
+    if not g["key"]:
         raise HTTPException(503, detail={"code": "AI_UNAVAILABLE", "message": "Chat service is not configured"})
 
     conversation = None
@@ -192,20 +194,20 @@ async def chat(body: ChatRequest, user: User = Depends(approved_user), db: Async
                f"Current time in Bahrain: {now_local}. User location: "
                f"{'unknown' if ctx.lat is None else f'{ctx.lat},{ctx.lng}'}. UI language: {lang}.")
     generation_config = {"maxOutputTokens": 2048}
-    if settings.gemini_model.startswith("gemini-3"):
+    if g["model"].startswith("gemini-3"):
         generation_config["thinkingConfig"] = {"thinkingLevel": settings.gemini_thinking_level}
     else:
         generation_config["temperature"] = 0.4
     contents = history + [{"role": "user", "parts": [{"text": body.message}]}]
     tools = [{"functionDeclarations": declarations(user)}]
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/{settings.gemini_model}:generateContent"
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/{g['model']}:generateContent"
     reply = ""
     try:
-        async with httpx.AsyncClient(timeout=httpx.Timeout(settings.gemini_timeout_seconds)) as client:
+        async with httpx.AsyncClient(timeout=httpx.Timeout(g["timeout"])) as client:
             for _ in range(6):
                 payload = {"system_instruction": {"parts": [{"text": prompt}]}, "contents": contents, "tools": tools,
                            "generationConfig": generation_config}
-                response = await client.post(url, headers={"x-goog-api-key": settings.gemini_api_key}, json=payload)
+                response = await client.post(url, headers={"x-goog-api-key": g["key"]}, json=payload)
                 response.raise_for_status()
                 content = response.json()["candidates"][0]["content"]
                 parts = content.get("parts", [])

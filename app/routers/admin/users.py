@@ -81,7 +81,8 @@ async def list_users(role: str | None = None, status: str | None = None, q: str 
 async def get_user(user_id: int, reveal_cpr: bool = False, admin: User = Depends(admin_user), db: AsyncSession = Depends(get_db)):
     u = (await db.execute(select(User).where(User.id == user_id)
                           .options(
-                              selectinload(User.driver_profile).selectinload(DriverProfile.vehicle).selectinload(Vehicle.documents),
+                              selectinload(User.driver_profile),
+                              selectinload(User.vehicle).selectinload(Vehicle.documents),
                               selectinload(User.driver_application),
                           ))).scalar_one_or_none()
     if not u or u.role in Role.ADMINS:

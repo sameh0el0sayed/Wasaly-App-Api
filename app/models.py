@@ -1148,3 +1148,24 @@ class MerchantMember(Base):
     role: Mapped[str] = mapped_column(String(10), default="VIEWER")  # OWNER (team + keys + cancel) / MANAGER (cancel + invoices) / VIEWER (read only)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
+
+
+class CommandLink(Base):
+    """Single-row link to Phoenix Command & Control (PCC). The shared secret is encrypted at rest."""
+    __tablename__ = "command_link"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    key_id: Mapped[str] = mapped_column(String(60), default="phoenix-command")
+    secret_encrypted: Mapped[str | None] = mapped_column(Text, nullable=True)
+    allowed_ips: Mapped[str | None] = mapped_column(Text, nullable=True)
+    command_url: Mapped[str] = mapped_column(String(300), default="https://phoenixsystems.online/control-api")
+    enabled: Mapped[bool] = mapped_column(Boolean, default=False)
+    updated_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow, onupdate=utcnow)
+
+
+class OwnerConfig(Base):
+    """Owner unified settings pushed from PCC (payment credentials, AI, tax, company). DB overrides .env; secrets encrypted."""
+    __tablename__ = "owner_config"
+    key: Mapped[str] = mapped_column(String(60), primary_key=True)
+    value: Mapped[str] = mapped_column(Text, default="")
+    is_secret: Mapped[bool] = mapped_column(Boolean, default=False)
+    updated_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow, onupdate=utcnow)

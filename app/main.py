@@ -1,6 +1,7 @@
 import asyncio
 import logging
 import time
+import traceback
 from contextlib import asynccontextmanager
 from pathlib import Path
 
@@ -25,6 +26,8 @@ from .routers import (
     auth,
     banners,
     chat,
+    command_link,
+    control,
     corporate,
     corrections,
     driver,
@@ -121,6 +124,9 @@ async def background_loop() -> None:
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await bootstrap()
+    from .services import command as _command
+    _command.install_ring()
+    _command.register_handlers()
     from .routers.v14 import seed_translations
     await seed_translations()
     from .services.catalog import seed_catalog
@@ -138,6 +144,7 @@ async def lifespan(app: FastAPI):
         tasks.append(asyncio.create_task(webhook_loop()))
         from .services.ops_manager import ops_loop
         tasks.append(asyncio.create_task(ops_loop()))
+        tasks.append(asyncio.create_task(_command.watch_loop()))
     else:
         log.warning("Background tasks disabled; AI review worker will not start")
     from .services import map_matching
@@ -210,19 +217,50 @@ async def health_details():
     return out
 
 
+_MAINT_OPEN = ("/control/v1", "/health", "/api/admin", "/api/v1/admin", "/api/auth", "/api/app-config", "/docs", "/openapi.json", "/api/payments/tap")
+
+
+async def _maintenance_state() -> tuple[bool, str]:
+    from .services import command, settings_service
+    if time.time() - command.maint["at"] > 5:
+        try:
+            async with SessionLocal() as s:
+                cfg = await settings_service.get_all(s)
+            command.maint.update(at=time.time(), on=cfg["maintenance_mode"] == "true", msg=cfg["maintenance_message"])
+        except Exception:  # noqa: BLE001 - never block traffic because the flag could not be read
+            command.maint["at"] = time.time()
+    return command.maint["on"], command.maint["msg"]
+
+
 @app.middleware("http")
 async def request_id_middleware(request: Request, call_next):
-    """Correlation id on every response (X-Request-ID); no bodies, tokens or coordinates are logged."""
+    """Correlation id on every response (X-Request-ID); no bodies, tokens or coordinates are logged.
+    Also: maintenance mode (503 for customer traffic; control, health and admin keep working) and error.unhandled events for PCC."""
     import uuid
+
+    from .services import command
     rid = request.headers.get("x-request-id") or uuid.uuid4().hex[:12]
     t0 = time.time()
-    response = await call_next(request)
+    path = request.url.path
+    if not any(x in path for x in _MAINT_OPEN) and request.method != "OPTIONS":
+        on, msg = await _maintenance_state()
+        if on:
+            return JSONResponse({"detail": msg or "الخدمة متوقفة مؤقتًا للصيانة", "maintenance": True}, status_code=503)
+    try:
+        response = await call_next(request)
+    except Exception as e:  # noqa: BLE001
+        tb = traceback.format_exc()
+        log.error("unhandled %s %s: %s\n%s", request.method, path, type(e).__name__, tb[-1200:])
+        command.emit_error(type(e).__name__, path, tb)
+        raise
     response.headers["X-Request-ID"] = rid
     ms = round((time.time() - t0) * 1000)
     _REQ["total"] += 1
     _REQ["latency_ms_sum"] += ms
     _REQ["errors_5xx"] += response.status_code >= 500
     _REQ["slow_over_1s"] += ms > 1000
+    if response.status_code in (500, 502, 504) and not path.startswith("/control/v1"):
+        command.emit_error(f"HTTP{response.status_code}", path, f"{request.method} {path} -> {response.status_code}")
     if ms > 1000 or response.status_code >= 500:
         log.warning("slow/error request id=%s %s %s -> %s in %d ms", rid, request.method, request.url.path, response.status_code, ms)
     return response
@@ -230,5 +268,5 @@ async def request_id_middleware(request: Request, call_next):
 
 for r in (auth.router, auth.whatsapp_webhook_router, app_errors.router, app_errors.admin_router, profile.router, corrections.router, chat.router, orders.router, driver.router, payments.webhook_router, payments.router,
           payments.admin_router, subscriptions.router, subscriptions.admin_router, subscriptions.driver_router,
-          airports.router, promo.router, stream.router, banners.router, places.router, account_deletion.router, account_deletion.admin_router, activity.router, activity.admin_router, ratings.router, v11.router, v11.admin_router, v11.public_router, v14.router, v14.admin_router, v15.router, v15.admin_router, v16.router, v20.admin_router, v21.admin_router, v24.admin_router, v27.admin_router, v28.router, merchant_api.router, merchant_api.admin_router, services_v30.router, services_v30.admin_router, corporate.router, corporate.admin_router, ops.admin_router, finance.admin_router, portal.router, portal.admin_router, admin.router):
+          airports.router, promo.router, stream.router, banners.router, places.router, account_deletion.router, account_deletion.admin_router, activity.router, activity.admin_router, ratings.router, v11.router, v11.admin_router, v11.public_router, v14.router, v14.admin_router, v15.router, v15.admin_router, v16.router, v20.admin_router, v21.admin_router, v24.admin_router, v27.admin_router, v28.router, merchant_api.router, merchant_api.admin_router, services_v30.router, services_v30.admin_router, corporate.router, corporate.admin_router, ops.admin_router, finance.admin_router, portal.router, portal.admin_router, command_link.router, control.router, admin.router):
     app.include_router(r)

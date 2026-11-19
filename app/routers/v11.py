@@ -231,6 +231,9 @@ async def raise_sos(order_id: int, body: SosIn, user: User = Depends(approved_us
     await _notify_admins(db, "SOS_ALERT", "تنبيه طوارئ", f"{user.full_name} ({user.role}) رحلة #{o.id}", o.id)
     await db.commit()
     publish_raw("admin.sos", {"sos_id": a.id, "order_id": o.id})
+    from ..services import command as _cmd
+    _cmd.emit("critical", "sos.activated", f"طوارئ SOS - رحلة #{o.id}: {user.full_name} ({user.role})", body.note,
+              {"sos_id": a.id, "order_id": o.id, "user_id": user.id, "role": user.role, "lat": body.lat, "lng": body.lng})
     return {"sos_id": a.id, "status": a.status, "admin_phone": s["support_phone"]}
 
 

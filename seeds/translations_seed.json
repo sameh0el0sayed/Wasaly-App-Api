@@ -10373,5 +10373,85 @@
   "key": "v40.total_to_pay",
   "ar": "الإجمالي المطلوب",
   "en": "Total to pay"
+ },
+ {
+  "key": "v41.command_link.title",
+  "ar": "ربط لوحة Phoenix Command",
+  "en": "Phoenix Command link"
+ },
+ {
+  "key": "v41.command_link.secret",
+  "ar": "مفتاح الربط المشترك",
+  "en": "Shared link key"
+ },
+ {
+  "key": "v41.command_link.secret_hint",
+  "ar": "الصق المفتاح الجديد للاستبدال، أو اتركه فارغًا للإبقاء على الحالي",
+  "en": "Paste a new key to replace it, or leave empty to keep the current one"
+ },
+ {
+  "key": "v41.command_link.key_id",
+  "ar": "معرّف المفتاح",
+  "en": "Key ID"
+ },
+ {
+  "key": "v41.command_link.allowed_ips",
+  "ar": "عناوين IP المسموحة (اختياري)",
+  "en": "Allowed IP addresses (optional)"
+ },
+ {
+  "key": "v41.command_link.command_url",
+  "ar": "رابط اللوحة",
+  "en": "Dashboard URL"
+ },
+ {
+  "key": "v41.command_link.enabled",
+  "ar": "تفعيل الربط",
+  "en": "Enable link"
+ },
+ {
+  "key": "v41.command_link.save",
+  "ar": "حفظ",
+  "en": "Save"
+ },
+ {
+  "key": "v41.command_link.generate",
+  "ar": "توليد مفتاح جديد",
+  "en": "Generate new key"
+ },
+ {
+  "key": "v41.command_link.generated_once",
+  "ar": "انسخ المفتاح الآن، لن يظهر مرة أخرى",
+  "en": "Copy the key now, it will not be shown again"
+ },
+ {
+  "key": "v41.command_link.copy",
+  "ar": "نسخ",
+  "en": "Copy"
+ },
+ {
+  "key": "v41.command_link.test",
+  "ar": "اختبار الاتصال",
+  "en": "Test connection"
+ },
+ {
+  "key": "v41.command_link.test_ok",
+  "ar": "تم الاتصال بنجاح",
+  "en": "Connection successful"
+ },
+ {
+  "key": "v41.command_link.test_failed",
+  "ar": "فشل الاتصال",
+  "en": "Connection failed"
+ },
+ {
+  "key": "v41.command_link.saved",
+  "ar": "تم حفظ إعدادات الربط",
+  "en": "Link settings saved"
+ },
+ {
+  "key": "v41.command_link.not_set",
+  "ar": "غير مضبوط",
+  "en": "Not set"
  }
 ]

@@ -151,6 +151,8 @@ async def pay_with_benefitpay(payment_id: int, body: BenefitPayIn, user: User = 
     p.proof_file, p.transaction_reference, p.reject_reason = body.proof_file_key, body.reference, None
     p.gateway_fee, p.charged_amount = Decimal(0), p.amount - (p.wallet_amount or 0)
     await notify_admins(db, "PAYMENT_PROOF", "إيصال BenefitPay جديد", f"دفعة #{p.id} بانتظار التأكيد")
+    from ..services import command as _cmd
+    _cmd.emit("info", "payment.pending_review", f"إيصال BenefitPay بانتظار المراجعة: دفعة #{p.id}", None, {"payment_id": p.id, "amount": str(p.amount)})
     await db.commit()
     from ..services.ai_review import wake
     wake()
@@ -185,6 +187,8 @@ async def _verify_and_apply(db: AsyncSession, charge_id: str) -> Payment | None:
     elif status in TAP_FAILED and p.payment_status == "PENDING_PAYMENT":
         p.payment_status = "FAILED"
         p.reject_reason = f"TAP_{status}"
+        from ..services import command as _cmd
+        _cmd.emit("warning", "payment.failed", f"فشل دفع Tap: دفعة #{p.id}", f"TAP_{status}", {"payment_id": p.id, "amount": str(p.amount)})
     return p
 
 
