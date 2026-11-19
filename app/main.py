@@ -162,7 +162,16 @@ async def lifespan(app: FastAPI):
     await cache.close()
 
 
-app = FastAPI(title="Bahrain Transport & Delivery API", version="1.0.0", lifespan=lifespan, root_path="/wasaly-api",
+def _version() -> str:
+    """Written by the deploy job as 1.6.<commit count>: grows by one with every push to master."""
+    try:
+        return (Path(__file__).resolve().parent.parent / "VERSION").read_text().strip() or "1.6.0"
+    except OSError:
+        return "1.6.0"
+
+
+APP_VERSION = _version()
+app = FastAPI(title="Bahrain Transport & Delivery API", version=APP_VERSION, lifespan=lifespan, root_path="/wasaly-api",
               description="Backend for customer app, driver app and admin dashboard. New registrations use WhatsApp reverse-OTP; the backend does not send OTP messages. Driver LIVE mode shares location only with consent. "
                           "All prices, times and permissions are enforced server-side.")
 app.add_middleware(CORSMiddleware, allow_origins=settings.cors_origins, allow_methods=["*"], allow_headers=["*"])
@@ -184,7 +193,7 @@ async def validation_handler(request: Request, exc: RequestValidationError):
 @app.get("/health", tags=["system"])
 async def health():
     from .services import cache
-    return {"status": "ok", "server_time": utcnow().isoformat(), "redis": await cache.ping()}
+    return {"status": "ok", "version": APP_VERSION, "server_time": utcnow().isoformat(), "redis": await cache.ping()}
 
 
 _REQ = {"total": 0, "errors_5xx": 0, "slow_over_1s": 0, "latency_ms_sum": 0}  # in-process counters (reset on restart)

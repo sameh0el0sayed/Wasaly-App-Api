@@ -5,3 +5,4 @@ secrets/*
 storage/
 __pycache__/
 .pytest_cache/
+VERSION

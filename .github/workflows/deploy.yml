@@ -27,6 +27,7 @@ jobs:
             set -o pipefail
             cd /opt/wasaly-api
             git pull origin master
+            echo "1.6.$(git rev-list --count HEAD)" > VERSION   # version +1 on every push; read by the API (/health and PCC)
             # 1) backup first (kept: last 14); any failure stops the deployment
             mkdir -p /opt/wasaly-backups
             docker compose exec -T db pg_dump -U transport -d transport | gzip > /opt/wasaly-backups/pre-deploy-$(date +%Y%m%d-%H%M%S).sql.gz
