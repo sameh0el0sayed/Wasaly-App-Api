@@ -73,6 +73,10 @@ async def live_map(service_area_id: int | None = None, include_offline_minutes: 
                    customer_active_minutes: int = 30, admin: User = Depends(_admin), db: AsyncSession = Depends(get_db)):
     from ..models import Complaint, ProfileChange
     from ..serializers import _file_url
+    if (await settings_service.get_all(db)).get("live_map_enabled", "false") != "true":
+        return {"server_time": utcnow().isoformat(), "enabled": False, "drivers": [], "orders": [], "areas": [],
+                "summary": {"drivers_online": 0, "drivers_busy": 0, "customers_active": 0, "orders_searching": 0, "open_sos": 0, "open_complaints": 0},
+                **({"customers": []} if include_customers else {})}
     from ..services.license import doc_status
     now = utcnow()
     open_c: dict[int, int] = {}

@@ -16,6 +16,7 @@ DEFAULTS = {
     "role_switch_enabled": "true",
     "customer_to_driver_enabled": "true",
     "i18n_version": "0",
+    "live_map_enabled": "false",  # admin live map: off until the apps are in real use (the endpoint then returns an empty payload without touching the DB)
     "license_expiry_warn_days": "30,7,1",
     "license_expiry_block_offers": "true",
     "analytics_enabled": "true",
