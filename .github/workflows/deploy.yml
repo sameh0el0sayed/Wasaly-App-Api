@@ -45,13 +45,6 @@ jobs:
             code=$(curl -s -o /dev/null -w "%{http_code}" https://phoenixsystems.online/wasaly-api/health)
             echo "health: $code"
             test "$code" = "200"
-            # 4) nginx: no-cache header on the PCC /control/ location (idempotent; never fails the deploy, reverts on a bad config)
-            F=$(grep -rl "location /control/ {" /etc/nginx/ 2>/dev/null | head -1 || true)
-            if [ -n "$F" ] && command -v nginx >/dev/null && ! grep -q 'Cache-Control "no-cache"' "$F"; then
-              cp "$F" /opt/wasaly-backups/nginx-control.bak
-              sed -i '/location \/control\/ {/a\    add_header Cache-Control "no-cache" always;' "$F"
-              if nginx -t; then systemctl reload nginx && echo "nginx: no-cache added to $F"; else cp /opt/wasaly-backups/nginx-control.bak "$F"; echo "nginx: config test failed, reverted"; fi
-            else
-              echo "nginx: control location already set or not found"
-            fi
+            # 4) nginx no-cache header on /control/ (script never fails the deploy)
+            bash scripts/nginx_control_nocache.sh || true
             docker compose logs api --tail=20
