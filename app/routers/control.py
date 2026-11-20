@@ -147,7 +147,10 @@ async def health(request: Request, db: AsyncSession = Depends(get_db)):
     except Exception:  # noqa: BLE001
         dbs = "down"
     s = await settings_service.get_all(db) if dbs == "ok" else {}
-    return {"status": "ok" if dbs == "ok" else "degraded", "version": request.app.version, "maintenance": s.get("maintenance_mode") == "true", "db": dbs}
+    from ..services import phoenix_id as pid
+    sso = (await pid.cfg())["enabled"]
+    return {"status": "ok" if dbs == "ok" else "degraded", "version": request.app.version, "maintenance": s.get("maintenance_mode") == "true", "db": dbs,
+            "sso_enabled": sso, "phoenix_id_reachable": await pid.reachable() if sso else False}
 
 
 @router.get("/metrics")
@@ -700,3 +703,15 @@ async def trip_cancel(oid: int, request: Request, a: User = Depends(actor_dep), 
     b = await body_json(request)
     reason = str(b.get("reason") or "PCC").strip()
     return await admin_orders.admin_cancel(oid, ReasonIn(reason=reason if len(reason) >= 2 else "PCC"), a, db)
+
+
+# ---------------------------------------------------------------- Phoenix ID migration export ----------
+@router.get("/users/export")
+async def users_export(a: User = Depends(actor_dep), db: AsyncSession = Depends(get_db)):
+    """One-off export for 'User migration' in PCC. Contains password hashes (argon2id): reachable only with the HMAC key."""
+    role_of = {Role.CUSTOMER: "customer", Role.DRIVER: "driver", Role.ADMIN: "admin", Role.SUPER_ADMIN: "admin"}
+    rows = (await db.execute(select(User).where(User.role.in_(list(role_of)), User.phone.is_not(None), User.account_status != "DELETED").order_by(User.id))).scalars().all()
+    pcc_audit(db, a, "USERS_EXPORTED", "user", "all", details={"count": len(rows)})
+    await db.commit()
+    return [{"system_user_id": str(u.id), "phone": u.phone, "email": None, "email_verified": False, "name": u.full_name, "name_ar": u.full_name,
+             "password_hash": u.password_hash, "hash_algo": "argon2id", "roles": [role_of[u.role]], "tenant_ids": []} for u in rows]

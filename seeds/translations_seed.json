@@ -10453,5 +10453,105 @@
   "key": "v41.command_link.not_set",
   "ar": "غير مضبوط",
   "en": "Not set"
+ },
+ {
+  "key": "v42.phoenix_id.title",
+  "ar": "Phoenix ID",
+  "en": "Phoenix ID"
+ },
+ {
+  "key": "v42.phoenix_id.enabled",
+  "ar": "تفعيل الدخول عبر Phoenix ID",
+  "en": "Enable Phoenix ID sign-in"
+ },
+ {
+  "key": "v42.phoenix_id.client_id",
+  "ar": "معرّف التطبيق (Client ID)",
+  "en": "Client ID"
+ },
+ {
+  "key": "v42.phoenix_id.issuer",
+  "ar": "عنوان المُصدِر (Issuer)",
+  "en": "Issuer URL"
+ },
+ {
+  "key": "v42.phoenix_id.client_secret",
+  "ar": "السر (Client secret)",
+  "en": "Client secret"
+ },
+ {
+  "key": "v42.phoenix_id.client_secret_hint",
+  "ar": "اتركه فارغًا للإبقاء على القيمة الحالية. غير مطلوب للتطبيق المحمول.",
+  "en": "Leave empty to keep the current value. Not needed for the mobile app."
+ },
+ {
+  "key": "v42.phoenix_id.test",
+  "ar": "اختبار الاكتشاف",
+  "en": "Test discovery"
+ },
+ {
+  "key": "v42.phoenix_id.test_ok",
+  "ar": "تم الوصول إلى Phoenix ID",
+  "en": "Phoenix ID is reachable"
+ },
+ {
+  "key": "v42.phoenix_id.test_failed",
+  "ar": "تعذر الوصول إلى Phoenix ID",
+  "en": "Phoenix ID is unreachable"
+ },
+ {
+  "key": "v42.phoenix_id.saved",
+  "ar": "تم حفظ إعدادات Phoenix ID",
+  "en": "Phoenix ID settings saved"
+ },
+ {
+  "key": "v42.phoenix_id.sign_in",
+  "ar": "الدخول عبر Phoenix ID",
+  "en": "Sign in with Phoenix ID"
+ },
+ {
+  "key": "v42.phoenix_id.or",
+  "ar": "أو",
+  "en": "or"
+ },
+ {
+  "key": "v42.phoenix_id.registration_required",
+  "ar": "لا يوجد حساب وصلي مرتبط بحساب Phoenix ID هذا. سجّل في التطبيق أولًا ثم اربط الحساب.",
+  "en": "No Wasaly account is linked to this Phoenix ID. Register in the app first, then link it."
+ },
+ {
+  "key": "v42.phoenix_id.role_not_allowed",
+  "ar": "حساب Phoenix ID هذا لا يملك صلاحية الدخول بهذا الدور.",
+  "en": "This Phoenix ID account is not allowed to sign in with this role."
+ },
+ {
+  "key": "v42.phoenix_id.unreachable",
+  "ar": "خدمة Phoenix ID غير متاحة الآن. حاول لاحقًا أو استخدم الدخول العادي.",
+  "en": "Phoenix ID is unavailable right now. Try later or use the regular sign-in."
+ },
+ {
+  "key": "v42.phoenix_id.session_ended",
+  "ar": "انتهت جلستك. سجّل الدخول من جديد.",
+  "en": "Your session has ended. Please sign in again."
+ },
+ {
+  "key": "v42.phoenix_id.viewing_as",
+  "ar": "أنت تتصفح بصلاحية مستخدم آخر",
+  "en": "You are viewing as another user"
+ },
+ {
+  "key": "v42.phoenix_id.link_account",
+  "ar": "ربط حسابي بـ Phoenix ID",
+  "en": "Link my account to Phoenix ID"
+ },
+ {
+  "key": "v42.phoenix_id.linked",
+  "ar": "تم ربط الحساب",
+  "en": "Account linked"
+ },
+ {
+  "key": "v42.phoenix_id.sign_out",
+  "ar": "تسجيل الخروج من Phoenix ID",
+  "en": "Sign out of Phoenix ID"
  }
 ]

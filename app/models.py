@@ -74,6 +74,7 @@ class User(Base):
     language: Mapped[str] = mapped_column(String(2), default="ar", server_default="ar")  # notification language (ar | en)
     must_change_password: Mapped[bool] = mapped_column(Boolean, default=False)
     token_version: Mapped[int] = mapped_column(Integer, default=0)
+    phoenix_sub: Mapped[str | None] = mapped_column(String(64), unique=True, index=True, nullable=True)  # Phoenix ID subject (SSO link)
     failed_logins: Mapped[int] = mapped_column(Integer, default=0)
     locked_until: Mapped[datetime | None] = mapped_column(UTCDateTime, nullable=True)
     created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
