@@ -348,7 +348,6 @@ def order_full_load_options():
         joinedload(Order.customer),
         selectinload(Order.driver).selectinload(User.driver_profile),
         selectinload(Order.driver).joinedload(User.vehicle).selectinload(Vehicle.documents),
-        selectinload(Order.order_status_history),
     ]
 
 

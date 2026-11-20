@@ -477,6 +477,10 @@ class Payment(Base):
     paid_at: Mapped[datetime | None] = mapped_column(UTCDateTime, nullable=True)
     created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
     updated_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow, onupdate=utcnow)
+    customer: Mapped["User"] = relationship(foreign_keys=[customer_id], lazy="selectin")
+    driver: Mapped["User | None"] = relationship(foreign_keys=[driver_id], lazy="selectin")
+    order: Mapped["Order | None"] = relationship(foreign_keys=[order_id], lazy="selectin")
+    subscription: Mapped["Subscription | None"] = relationship(foreign_keys=[subscription_id], lazy="selectin")
 
 
 class DriverPayout(Base):
@@ -537,6 +541,7 @@ class Subscription(Base):
     reject_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
     updated_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow, onupdate=utcnow)
+    driver: Mapped["User | None"] = relationship(foreign_keys=[driver_id], lazy="selectin")
 
 
 class SubscriptionTrip(Base):
