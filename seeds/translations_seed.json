@@ -10553,5 +10553,15 @@
   "key": "v42.phoenix_id.sign_out",
   "ar": "تسجيل الخروج من Phoenix ID",
   "en": "Sign out of Phoenix ID"
+ },
+ {
+  "key": "v43.login.phoenix_id_button",
+  "ar": "الدخول عبر Phoenix ID",
+  "en": "Sign in with Phoenix ID"
+ },
+ {
+  "key": "v43.login.local_disabled",
+  "ar": "تسجيل الدخول بكلمة المرور معطّل، استخدم Phoenix ID",
+  "en": "Password sign-in is disabled, use Phoenix ID"
  }
 ]
