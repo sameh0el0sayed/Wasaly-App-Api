@@ -1,8 +1,9 @@
 name: Deploy to VPS
 
 on:
-  push:
-    branches: [master]
+  # PAUSED until further notice (GitHub billing) - deploy manually with: phx-deploy wasaly
+  # push:
+  #   branches: [master]
   workflow_dispatch:
 
 concurrency:
