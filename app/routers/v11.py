@@ -74,7 +74,6 @@ async def live_map(service_area_id: int | None = None, include_offline_minutes: 
     from ..models import Complaint, ProfileChange
     from ..serializers import _file_url
     from ..services.license import doc_status
-    from .ratings import stats_for
     now = utcnow()
     open_c: dict[int, int] = {}
     for uid, n in (await db.execute(select(Complaint.user_id, func.count()).where(Complaint.user_id.is_not(None), Complaint.status.not_in(("CLOSED", "RESOLVED"))).group_by(Complaint.user_id))).all():
@@ -91,7 +90,8 @@ async def live_map(service_area_id: int | None = None, include_offline_minutes: 
         joinedload(User.vehicle),
         selectinload(User.driver_profile),
     )
-    driver_ids = [u.id for u in (await db.execute(q)).scalars().unique().all()]
+    driver_users = (await db.execute(q)).scalars().unique().all()  # loaded once, reused below
+    driver_ids = [u.id for u in driver_users]
     # Batch driver rating stats into a single query instead of N+1 stats_for calls
     rating_map = {}
     if driver_ids:
@@ -101,11 +101,7 @@ async def live_map(service_area_id: int | None = None, include_offline_minutes: 
             .group_by(Rating.ratee_id)
         )).all()
         rating_map = {rid: round(float(avg), 2) if avg is not None else None for rid, avg in rating_rows}
-    q = select(User).join(DriverProfile, DriverProfile.user_id == User.id).where(User.account_status == "APPROVED").options(
-        joinedload(User.vehicle),
-        selectinload(User.driver_profile),
-    )
-    for u in (await db.execute(q)).scalars().unique().all():
+    for u in driver_users:
         p = u.driver_profile
         if not p.is_online:
             if not (include_offline_minutes and p.last_location_at and _aware(p.last_location_at) >= now - timedelta(minutes=include_offline_minutes)):
@@ -133,8 +129,13 @@ async def live_map(service_area_id: int | None = None, include_offline_minutes: 
     orders = []
     searching: dict[int, int] = {}
     active: dict[int, int] = {}
-    for o in (await db.execute(oq)).scalars().all():
-        stops = (await db.execute(select(OrderStop).where(OrderStop.order_id == o.id).order_by(OrderStop.seq))).scalars().all()
+    live_orders = (await db.execute(oq)).scalars().all()
+    stops_of: dict[int, list] = {}
+    if live_orders:  # one query for all stops instead of one per order
+        for st in (await db.execute(select(OrderStop).where(OrderStop.order_id.in_([x.id for x in live_orders])).order_by(OrderStop.seq))).scalars().all():
+            stops_of.setdefault(st.order_id, []).append(st)
+    for o in live_orders:
+        stops = stops_of.get(o.id, [])
         orders.append({"id": o.id, "status": o.order_status, "service_type": o.service_type,
                        "pickup": {"lat": o.pickup_latitude, "lng": o.pickup_longitude, "address": o.pickup_address},
                        "destination": {"lat": o.destination_latitude, "lng": o.destination_longitude, "address": o.destination_address},
