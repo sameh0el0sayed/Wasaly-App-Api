@@ -140,7 +140,7 @@ async def _create_from_claims(db: AsyncSession, claims: dict, info: dict) -> Use
     from ..security import hash_password
     src = {**info, **claims}
     roles = src.get("roles") or []
-    role = Role.ADMIN if ("owner" in roles or "admin" in roles) else Role.CUSTOMER  # driver onboarding (vehicle, documents) happens inside the app
+    role = Role.ADMIN if ("owner" in roles or "admin" in roles) else Role.DRIVER if "driver" in roles else Role.CUSTOMER
     phone = None
     if src.get("phone_number") or src.get("phone"):
         try:
@@ -151,10 +151,17 @@ async def _create_from_claims(db: AsyncSession, claims: dict, info: dict) -> Use
             phone = None  # the phone belongs to another local account: do not steal it
     name = (src.get("name") or src.get("preferred_username") or "Phoenix user")[:120]
     lang = "ar" if str(src.get("locale") or "ar").lower().startswith("ar") else "en"
-    u = User(full_name=name, phone=phone, password_hash=hash_password(_s.token_urlsafe(32)), role=role, account_status=AccountStatus.APPROVED,
+    u = User(full_name=name, phone=phone, password_hash=hash_password(_s.token_urlsafe(32)), role=role,
+             account_status=AccountStatus.PENDING_APPROVAL if role == Role.DRIVER else AccountStatus.APPROVED,
              phone_verified=bool(phone and src.get("phone_number_verified")) or bool(phone), language=lang, phoenix_sub=src["sub"])
     db.add(u)
     await db.flush()
+    if role == Role.DRIVER:  # placeholder profile: expired license => cannot go online until the driver enters real license/vehicle data in the app, then an admin approves
+        from datetime import date, timedelta
+
+        from ..models import DriverProfile
+        db.add(DriverProfile(user_id=u.id, license_number_encrypted=encrypt(""), license_expiry_date=date.today() - timedelta(days=1)))
+        await db.flush()
     audit(db, u.id, "PHOENIX_ID_AUTO_CREATED", "user", u.id, details={"role": role})
     return u
 
