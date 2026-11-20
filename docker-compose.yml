@@ -51,7 +51,8 @@ services:
     build:
       context: ./docker/osrm
       args:
-        OSM_REGION_URL: https://download.geofabrik.de/asia/bahrain-latest.osm.pbf
+        OSM_REGION_URL: https://download.geofabrik.de/asia/gcc-states-latest.osm.pbf
+        BBOX: "50.3,25.5,50.9,26.4"  # Bahrain, clipped at build time
     image: wasaly-osrm:stable  # named tag so 'docker image prune' never removes it
     restart: unless-stopped
     volumes:
