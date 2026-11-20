@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-# Downloads the Bahrain OSM extract once, builds the OSRM graph and serves it.
+# Builds the OSRM graph and serves it.
 # The dataset lives in a Docker volume, so restarts are instant.
 set -euo pipefail
 
 DATA_DIR="${OSRM_DATA_DIR:-/data}"
-PBF_URL="${OSM_REGION_URL:-https://download.geofabrik.de/asia/bahrain-latest.osm.pbf}"
 PBF="$DATA_DIR/bahrain.osm.pbf"
+SEED="${OSRM_SEED_PBF:-/opt/seed/bahrain.osm.pbf}"
 PORT="${OSRM_PORT:-5000}"
 
 mkdir -p "$DATA_DIR"
@@ -19,16 +19,13 @@ if [ -n "$OSRM" ] && [ -f "$OSRM.hsgr" ]; then
     echo "[osrm] existing data found: $OSRM (no download needed)"
 else
     if [ -z "$OSRM" ]; then
-        # nothing prepared in the volume: download the extract once
-        if ! command -v curl >/dev/null 2>&1; then
-            echo "[osrm] ERROR: no prepared graph in $DATA_DIR and curl is not installed in this image" >&2
-            exit 1
-        fi
-        echo "[osrm] no prepared graph in $DATA_DIR; downloading the extract from $PBF_URL ..."
-        if ! curl -fsSL --retry 3 --retry-delay 5 -o "$PBF" "$PBF_URL"; then
-            echo "[osrm] ERROR: download failed ($PBF_URL). Put a prepared graph (*.osrm*) into the osrmdata volume or fix the network." >&2
-            rm -f "$PBF"
-            exit 1
+        # nothing prepared in the volume: use the extract bundled into the image at build time (no network needed)
+        if [ ! -f "$PBF" ]; then
+            if [ ! -s "$SEED" ]; then
+                echo "[osrm] ERROR: no prepared graph in $DATA_DIR and no bundled extract at $SEED. Rebuild the image or put a prepared graph into the osrmdata volume." >&2
+                exit 1
+            fi
+            cp "$SEED" "$PBF"
         fi
         echo "[osrm] extracting road network (car profile)..."
         osrm-extract -p /opt/car.lua "$PBF"

@@ -46,13 +46,14 @@ services:
       - ./secrets:/srv/secrets:ro
 
   # Self-hosted OSRM (OpenStreetMap Bahrain). Free, open-source, no per-request charge.
-  # First start downloads the Geofabrik extract and builds the graph into the osrmdata volume.
+  # The Geofabrik extract is downloaded at image build time (separate curl stage); first start builds the graph into the osrmdata volume.
   osrm:
-    build: ./docker/osrm
+    build:
+      context: ./docker/osrm
+      args:
+        OSM_REGION_URL: https://download.geofabrik.de/asia/bahrain-latest.osm.pbf
     image: wasaly-osrm:stable  # named tag so 'docker image prune' never removes it
     restart: unless-stopped
-    environment:
-      OSM_REGION_URL: https://download.geofabrik.de/asia/bahrain-latest.osm.pbf
     volumes:
       - osrmdata:/data
     ports:
