@@ -34,7 +34,8 @@ LOGOUT_REDIRECTS = {"mobile": "online.phoenixsystems.wasaly:/logout", "admin_web
 @router.get("/api/auth/phoenix-id/config")
 async def public_config():
     c = await pid.cfg()
-    return {"enabled": c["enabled"], "issuer": c["issuer"], "client_id": c["client_id"], "scopes": SCOPES, "pkce": "S256",
+    allowed, _why = await pid.local_login_state()
+    return {"enabled": c["enabled"], "local_login_allowed": allowed, "issuer": c["issuer"], "client_id": c["client_id"], "scopes": SCOPES, "pkce": "S256",
             "redirect_uris": REDIRECTS, "post_logout_redirect_uris": LOGOUT_REDIRECTS}
 
 
@@ -146,6 +147,7 @@ class SettingsIn(BaseModel):
     client_id: str | None = Field(default=None, max_length=60)
     issuer: str | None = Field(default=None, max_length=200)
     client_secret: str | None = Field(default=None, max_length=300)  # write-only; empty = keep current
+    maintenance_login: bool | None = None
 
 
 async def _put(db, key: str, value: str, secret: bool = False):
@@ -159,7 +161,10 @@ async def _put(db, key: str, value: str, secret: bool = False):
 
 async def _view() -> dict:
     c = await pid.cfg()
-    return {"enabled": c["enabled"], "client_id": c["client_id"], "issuer": c["issuer"], "client_secret_set": bool(c["client_secret"])}
+    allowed, why = await pid.local_login_state()
+    return {"enabled": c["enabled"], "client_id": c["client_id"], "issuer": c["issuer"], "client_secret_set": bool(c["client_secret"]),
+            "maintenance_login": (await command.owner_all()).get("phoenix_id_maintenance_login", "false") == "true",
+            "local_login_allowed": allowed, "local_login_reason": why}
 
 
 @router.get("/api/admin/phoenix-id")
@@ -182,6 +187,9 @@ async def put_settings(body: SettingsIn, admin: User = Depends(super_admin_user)
     if body.client_secret:
         await _put(db, "phoenix_id_client_secret", body.client_secret.strip(), secret=True)
         changed.append("client_secret")
+    if body.maintenance_login is not None:
+        await _put(db, "phoenix_id_maintenance_login", "true" if body.maintenance_login else "false")
+        changed.append(f"maintenance_login={'on' if body.maintenance_login else 'off'}")
     audit(db, admin.id, "PHOENIX_ID_SETTINGS", "settings", "phoenix_id", details={"changed": changed})  # never the secret
     await db.commit()
     command.invalidate()

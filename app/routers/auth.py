@@ -14,7 +14,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..config import settings
-from ..constants import AccountStatus
+from ..constants import AccountStatus, Role
 from ..database import get_db
 from ..deps import current_user, request_lang
 from ..i18n import localize
@@ -341,6 +341,11 @@ async def login(body: LoginIn, request: Request, db: AsyncSession = Depends(get_
         raise HTTPException(403, {"code": "ACCOUNT_BANNED", "message": "تم حظر هذا الحساب نهائيًا", "reason": user.status_reason})
     if not user.phone_verified:
         raise HTTPException(403, {"code": "PHONE_NOT_VERIFIED", "message": "Verify your phone through WhatsApp first"})
+    if user.role in Role.ADMINS:  # admin panel is Phoenix ID only while SSO is on (customers/drivers keep phone+password for now)
+        from ..services import phoenix_id as _pid
+        allowed, _why = await _pid.local_login_state()
+        if not allowed:
+            raise HTTPException(403, {"code": "LOCAL_LOGIN_DISABLED", "message": "Sign in with Phoenix ID"})
     user.failed_logins, user.locked_until = 0, None
     known = bool(body.device_id) and (await db.execute(select(UserDevice.id).where(
         UserDevice.user_id == user.id, UserDevice.device_id == body.device_id))).first() is not None
