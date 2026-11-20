@@ -66,7 +66,9 @@ async def _claims_and_info(token: str) -> tuple[dict, dict]:
 
 def _check_role(user: User, claims: dict) -> None:
     roles = claims.get("roles") or []
-    if ROLE_OF.get(user.role) not in roles:
+    if user.role not in Role.ADMINS:  # only platform admin access depends on the Phoenix ID role; everyone else is accepted
+        return
+    if "owner" not in roles and "admin" not in roles:
         raise HTTPException(403, {"code": "ROLE_NOT_ALLOWED", "message": "This Phoenix ID account has no access to this role"})
 
 
@@ -131,6 +133,32 @@ async def refresh(body: RefreshIn, request: Request, db: AsyncSession = Depends(
     return await _web_login(tok, body.device_id, request, db)
 
 
+async def _create_from_claims(db: AsyncSession, claims: dict, info: dict) -> User:
+    import secrets as _s
+
+    from ..constants import AccountStatus
+    from ..security import hash_password
+    src = {**info, **claims}
+    roles = src.get("roles") or []
+    role = Role.ADMIN if ("owner" in roles or "admin" in roles) else Role.CUSTOMER  # driver onboarding (vehicle, documents) happens inside the app
+    phone = None
+    if src.get("phone_number") or src.get("phone"):
+        try:
+            phone = normalize_phone(src.get("phone_number") or src.get("phone"))
+        except ValueError:
+            phone = None
+        if phone and (await db.execute(select(User.id).where(User.phone == phone))).first():
+            phone = None  # the phone belongs to another local account: do not steal it
+    name = (src.get("name") or src.get("preferred_username") or "Phoenix user")[:120]
+    lang = "ar" if str(src.get("locale") or "ar").lower().startswith("ar") else "en"
+    u = User(full_name=name, phone=phone, password_hash=hash_password(_s.token_urlsafe(32)), role=role, account_status=AccountStatus.APPROVED,
+             phone_verified=bool(phone and src.get("phone_number_verified")) or bool(phone), language=lang, phoenix_sub=src["sub"])
+    db.add(u)
+    await db.flush()
+    audit(db, u.id, "PHOENIX_ID_AUTO_CREATED", "user", u.id, details={"role": role})
+    return u
+
+
 async def _login(access_token: str, device_id, request: Request, db: AsyncSession, expose_token: bool = False) -> dict:
     claims, info = await _claims_and_info(access_token)
     sub = claims["sub"]
@@ -148,11 +176,8 @@ async def _login(access_token: str, device_id, request: Request, db: AsyncSessio
         cand = (await db.execute(select(User).where(User.phone == phone))).scalar_one_or_none() if phone else None
         if cand and cand.phoenix_sub is None:
             user, how = cand, "verified_phone"
-    if not user:
-        raise HTTPException(409, {"code": "REGISTRATION_REQUIRED",
-                                  "message": "No Wasaly account is linked to this Phoenix ID. Register in the app first (CPR), then link it.",
-                                  "profile": {"name": info.get("name"), "phone": info.get("phone_number"), "email": info.get("email")},
-                                  **({"phoenix_access_token": access_token} if expose_token else {})})
+    if not user:  # valid Phoenix ID token: create the local user from the claims (profile details are collected inside the app later)
+        user, how = await _create_from_claims(db, claims, info), "auto_created"
     if user.account_status in ("DELETED", "BANNED"):
         raise HTTPException(403, {"code": "ACCOUNT_" + user.account_status, "reason": user.status_reason})
     _check_role(user, claims)

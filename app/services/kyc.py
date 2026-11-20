@@ -25,6 +25,12 @@ def apply_claims(user, claims: dict, info: dict) -> None:
     user.kyc_level = norm(src.get("kyc_level"))
     org = src.get("org_kyc_level")
     user.org_kyc_level = norm(org) if org else None
+    user.kyc_status = str(src.get("kyc_status"))[:30] if src.get("kyc_status") else None
+    dl = src.get("kyc_deadline")
+    try:
+        user.kyc_deadline = datetime.fromtimestamp(int(dl), UTC) if str(dl or "").isdigit() else (datetime.fromisoformat(str(dl).replace("Z", "+00:00")) if dl else None)
+    except ValueError:
+        user.kyc_deadline = None
     pic = src.get("picture")
     user.kyc_picture = str(pic)[:1000] if pic and RANK[user.kyc_level] >= RANK["verified"] else None
     ts = src.get("kyc_verified_at")
