@@ -715,3 +715,38 @@ async def users_export(a: User = Depends(actor_dep), db: AsyncSession = Depends(
     await db.commit()
     return [{"system_user_id": str(u.id), "phone": u.phone, "email": None, "email_verified": False, "name": u.full_name, "name_ar": u.full_name,
              "password_hash": u.password_hash, "hash_algo": "argon2id", "roles": [role_of[u.role]], "tenant_ids": []} for u in rows]
+
+
+# ---------------------------------------------------------------- Phoenix ID SSO switch (PCC pushes settings server-to-server) ----------
+@router.get("/sso")
+async def sso_get():
+    from ..services import phoenix_id as pid
+    c = await pid.cfg()
+    sec = c["client_secret"]
+    return {"enabled": c["enabled"], "client_id": c["client_id"], "issuer": c["issuer"], "secret_set": bool(sec), "secret_last4": sec[-4:] if sec else None,
+            "phoenix_id_reachable": await pid.reachable(), "login_button_visible": c["enabled"]}
+
+
+@router.put("/sso")
+async def sso_put(request: Request, a: User = Depends(actor_dep), db: AsyncSession = Depends(get_db)):
+    from ..services import phoenix_id as pid
+    from .phoenix_id import _put
+    b = await body_json(request)
+    if "enabled" in b and not isinstance(b["enabled"], bool):
+        raise HTTPException(422, {"code": "BOOLEAN_EXPECTED", "field": "enabled"})
+    changed = []
+    if "enabled" in b:
+        await _put(db, "phoenix_id_enabled", "true" if b["enabled"] else "false")
+        changed.append("enabled")
+    for k, key in (("client_id", "phoenix_id_client_id"), ("issuer", "phoenix_id_issuer")):
+        if b.get(k):
+            await _put(db, key, str(b[k]).strip().rstrip("/"))
+            changed.append(k)
+    if b.get("client_secret"):  # absent or empty = keep current
+        await _put(db, "phoenix_id_client_secret", str(b["client_secret"]).strip(), secret=True)
+        changed.append("client_secret")
+    pcc_audit(db, a, "SSO_SETTINGS", "settings", "phoenix_id", details={"changed": changed, "pcc_actor": request.headers.get("x-phoenix-actor", "")[:100]})
+    await db.commit()
+    command.invalidate()
+    pid._disc["at"] = pid._jwks["at"] = pid._reach["at"] = 0.0
+    return {"ok": True}
