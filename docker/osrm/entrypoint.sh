@@ -10,28 +10,25 @@ PORT="${OSRM_PORT:-5000}"
 
 mkdir -p "$DATA_DIR"
 
-find_prefix() {
-    find "$DATA_DIR" -maxdepth 1 -type f -name '*.osrm' | head -n 1 || true
-}
+# osrm-extract names its output after the pbf (bahrain.osm.pbf -> bahrain.osrm[.*]); newer versions write only bahrain.osrm.* files
+OSRM="$DATA_DIR/bahrain.osrm"
 
-OSRM="$(find_prefix)"
-if [ -n "$OSRM" ] && [ -f "$OSRM.hsgr" ]; then
+if [ -f "$OSRM.hsgr" ]; then
     echo "[osrm] existing data found: $OSRM (no download needed)"
 else
-    if [ -z "$OSRM" ]; then
-        # nothing prepared in the volume: use the extract bundled into the image at build time (no network needed)
+    if [ ! -f "$OSRM" ] && [ ! -f "$OSRM.ebg" ]; then
         if [ ! -f "$PBF" ]; then
             if [ ! -s "$SEED" ]; then
-                echo "[osrm] ERROR: no prepared graph in $DATA_DIR and no bundled extract at $SEED. Rebuild the image or put a prepared graph into the osrmdata volume." >&2
+                echo "[osrm] ERROR: no bundled extract at $SEED. Rebuild the image." >&2
                 exit 1
             fi
             cp "$SEED" "$PBF"
         fi
         echo "[osrm] extracting road network (car profile)..."
         osrm-extract -p /opt/car.lua "$PBF"
-        OSRM="$(find_prefix)"
-        if [ -z "$OSRM" ]; then
-            echo "[osrm] ERROR: osrm-extract did not produce a .osrm file" >&2
+        if [ ! -f "$OSRM" ] && [ ! -f "$OSRM.ebg" ]; then
+            echo "[osrm] ERROR: osrm-extract produced no output for $OSRM" >&2
+            ls -la "$DATA_DIR" >&2
             exit 1
         fi
     fi
