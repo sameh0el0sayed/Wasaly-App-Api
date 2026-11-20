@@ -2,6 +2,7 @@
 Flow: the app does Authorization Code + PKCE with Phoenix ID, then POSTs the Phoenix access token to /api/auth/phoenix-id/exchange,
 which verifies it locally (JWKS) and returns the normal Wasaly session (access + rotating refresh token)."""
 import logging
+from urllib.parse import urlencode
 
 import jwt
 from fastapi import APIRouter, Depends, Form, HTTPException, Request
@@ -15,7 +16,7 @@ from ..deps import current_user, super_admin_user
 from ..models import OwnerConfig, User, utcnow
 from ..security import encrypt, normalize_phone
 from ..serializers import user_public
-from ..services import command, sessions
+from ..services import command, kyc, sessions
 from ..services import phoenix_id as pid
 from ..services.audit import audit
 from ..services.ratelimit import limit
@@ -165,6 +166,7 @@ async def _login(access_token: str, device_id, request: Request, db: AsyncSessio
     now = utcnow()
     user.failed_logins, user.locked_until, user.last_login_at, user.last_login_ip, user.last_seen_at = 0, None, now, ip, now
     user.login_count = (user.login_count or 0) + 1
+    kyc.apply_claims(user, claims, info)
     tokens = await sessions.issue(db, user, device_id)
     await db.commit()
     return {"user": user_public(user), **tokens, "impersonated_by": act, "sso": True}
@@ -182,6 +184,37 @@ async def link(body: ExchangeIn, user: User = Depends(current_user), db: AsyncSe
     audit(db, user.id, "PHOENIX_ID_LINKED", "user", user.id, details={"how": "signed_in_user"})
     await db.commit()
     return {"linked": True}
+
+
+# ------------------------------------------------------------------ single logout ----------
+class LogoutIn(BaseModel):
+    id_token: str | None = Field(default=None, max_length=6000)
+    redirect: str = Field(default="mobile", pattern="^(mobile|admin_web)$")
+    state: str | None = Field(default=None, max_length=200)
+
+
+@router.post("/api/auth/phoenix-id/logout")
+async def sso_logout(body: LogoutIn, user: User = Depends(current_user), db: AsyncSession = Depends(get_db)):
+    """Revokes the local session server-side and returns the Phoenix ID end_session URL the client must open (system browser on mobile),
+    so the shared Phoenix ID session is cleared and back-channel logout reaches the other systems."""
+    user.token_version += 1
+    await sessions.revoke_all(db, user.id)
+    audit(db, user.id, "PHOENIX_ID_LOGOUT", "user", user.id)
+    await db.commit()
+    c = await pid.cfg()
+    url = None
+    if c["enabled"]:
+        try:
+            ep = (await pid.discovery()).get("end_session_endpoint") or f"{c['issuer']}/logout"
+        except Exception:  # noqa: BLE001
+            ep = f"{c['issuer']}/logout"
+        q = {"client_id": c["client_id"], "post_logout_redirect_uri": LOGOUT_REDIRECTS[body.redirect]}
+        if body.id_token:
+            q["id_token_hint"] = body.id_token
+        if body.state:
+            q["state"] = body.state
+        url = f"{ep}?{urlencode(q)}"
+    return {"ok": True, "end_session_url": url}
 
 
 # ------------------------------------------------------------------ back-channel logout ----------
@@ -209,6 +242,7 @@ class SettingsIn(BaseModel):
     issuer: str | None = Field(default=None, max_length=200)
     client_secret: str | None = Field(default=None, max_length=300)  # write-only; empty = keep current
     maintenance_login: bool | None = None
+    kyc_rules: dict[str, bool] | None = None
 
 
 async def _put(db, key: str, value: str, secret: bool = False):
@@ -225,7 +259,7 @@ async def _view() -> dict:
     allowed, why = await pid.local_login_state()
     return {"enabled": c["enabled"], "client_id": c["client_id"], "issuer": c["issuer"], "client_secret_set": bool(c["client_secret"]),
             "maintenance_login": (await command.owner_all()).get("phoenix_id_maintenance_login", "false") == "true",
-            "local_login_allowed": allowed, "local_login_reason": why}
+            "local_login_allowed": allowed, "local_login_reason": why, "kyc_rules": await kyc.rules()}
 
 
 @router.get("/api/admin/phoenix-id")
@@ -251,6 +285,10 @@ async def put_settings(body: SettingsIn, admin: User = Depends(super_admin_user)
     if body.maintenance_login is not None:
         await _put(db, "phoenix_id_maintenance_login", "true" if body.maintenance_login else "false")
         changed.append(f"maintenance_login={'on' if body.maintenance_login else 'off'}")
+    for k, v in (body.kyc_rules or {}).items():
+        if k in kyc.RULES:
+            await _put(db, k, "true" if v else "false")
+            changed.append(f"{k}={'on' if v else 'off'}")
     audit(db, admin.id, "PHOENIX_ID_SETTINGS", "settings", "phoenix_id", details={"changed": changed})  # never the secret
     await db.commit()
     command.invalidate()

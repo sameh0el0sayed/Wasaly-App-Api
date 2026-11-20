@@ -111,7 +111,7 @@ STATUS_BACK = {"active": ["APPROVED"], "suspended": ["SUSPENDED", "PENDING_APPRO
 def tenant_out(u: User) -> dict:
     return {"id": str(u.id), "name": u.full_name, "email": None, "phone": u.phone, "plan": "driver" if u.role == Role.DRIVER else "customer",
             "type": "driver" if u.role == Role.DRIVER else "customer", "status": pcc_status(u), "account_status": u.account_status,
-            "created_at": iso(u.created_at)}
+            "created_at": iso(u.created_at), "kyc_level": u.kyc_level or "none", "org_kyc_level": u.org_kyc_level}
 
 
 async def body_json(request: Request) -> dict:
@@ -724,7 +724,8 @@ async def sso_get():
     c = await pid.cfg()
     sec = c["client_secret"]
     allowed, why = await pid.local_login_state()
-    return {"maintenance_login": (await command.owner_all()).get("phoenix_id_maintenance_login", "false") == "true",
+    from ..services import kyc
+    return {"kyc_rules": await kyc.rules(), "maintenance_login": (await command.owner_all()).get("phoenix_id_maintenance_login", "false") == "true",
             "local_login_allowed": allowed, "local_login_reason": why, "enabled": c["enabled"], "client_id": c["client_id"], "issuer": c["issuer"], "secret_set": bool(sec), "secret_last4": sec[-4:] if sec else None,
             "phoenix_id_reachable": await pid.reachable(), "login_button_visible": c["enabled"]}
 
@@ -749,6 +750,12 @@ async def sso_put(request: Request, a: User = Depends(actor_dep), db: AsyncSessi
             raise HTTPException(422, {"code": "BOOLEAN_EXPECTED", "field": "maintenance_login"})
         await _put(db, "phoenix_id_maintenance_login", "true" if b["maintenance_login"] else "false")
         changed.append(f"maintenance_login={'on' if b['maintenance_login'] else 'off'}")
+    if isinstance(b.get("kyc_rules"), dict):
+        from ..services import kyc
+        for k, v in b["kyc_rules"].items():
+            if k in kyc.RULES and isinstance(v, bool):
+                await _put(db, k, "true" if v else "false")
+                changed.append(f"{k}={'on' if v else 'off'}")
     if b.get("client_secret"):  # absent or empty = keep current
         await _put(db, "phoenix_id_client_secret", str(b["client_secret"]).strip(), secret=True)
         changed.append("client_secret")

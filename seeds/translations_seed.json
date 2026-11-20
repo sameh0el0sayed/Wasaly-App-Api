@@ -10563,5 +10563,30 @@
   "key": "v43.login.local_disabled",
   "ar": "تسجيل الدخول بكلمة المرور معطّل، استخدم Phoenix ID",
   "en": "Password sign-in is disabled, use Phoenix ID"
+ },
+ {
+  "key": "v45.kyc.verified",
+  "ar": "موثّق",
+  "en": "Verified"
+ },
+ {
+  "key": "v45.kyc.not_verified",
+  "ar": "غير موثّق",
+  "en": "Not verified"
+ },
+ {
+  "key": "v45.kyc.verify_button",
+  "ar": "التوثيق عبر Phoenix ID",
+  "en": "Verify with Phoenix ID"
+ },
+ {
+  "key": "v45.kyc.selfie_required",
+  "ar": "مطلوب تأكيد بصورة سيلفي",
+  "en": "Selfie confirmation required"
+ },
+ {
+  "key": "v45.kyc.expired",
+  "ar": "انتهت صلاحية توثيق هويتك",
+  "en": "Your identity verification has expired"
  }
 ]

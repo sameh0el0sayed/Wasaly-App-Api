@@ -75,6 +75,9 @@ class User(Base):
     must_change_password: Mapped[bool] = mapped_column(Boolean, default=False)
     token_version: Mapped[int] = mapped_column(Integer, default=0)
     phoenix_sub: Mapped[str | None] = mapped_column(String(64), unique=True, index=True, nullable=True)  # Phoenix ID subject (SSO link)
+    kyc_level: Mapped[str] = mapped_column(String(20), default="none", server_default="none")  # Phoenix ID: none|basic|verified|verified_plus
+    kyc_verified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    org_kyc_level: Mapped[str | None] = mapped_column(String(20), nullable=True)
     failed_logins: Mapped[int] = mapped_column(Integer, default=0)
     locked_until: Mapped[datetime | None] = mapped_column(UTCDateTime, nullable=True)
     created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)

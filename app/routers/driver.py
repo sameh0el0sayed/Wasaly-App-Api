@@ -122,6 +122,8 @@ async def availability(body: AvailabilityIn, user: User = Depends(driver_user), 
                 raise HTTPException(409, {"code": "LIVE_DISABLED"})
             if not user.location_consent:
                 raise HTTPException(403, {"code": "LOCATION_CONSENT_REQUIRED"})
+        from ..services import kyc
+        await kyc.require(user, "kyc_rule_driver_online")
         if not profile.is_online:
             profile.is_online = True
             db.add(DriverWorkSession(driver_id=user.id, online_at=utcnow()))

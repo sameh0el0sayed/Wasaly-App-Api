@@ -216,6 +216,8 @@ async def estimate(body: EstimateIn, user: User = Depends(customer_user), db: As
 
 @router.post("/orders", status_code=201)
 async def create_order(body: OrderCreateIn, user: User = Depends(customer_user), db: AsyncSession = Depends(get_db)):
+    from ..services import kyc
+    await kyc.require(user, "kyc_rule_customer_order")
     if body.client_request_id:  # idempotent create (double taps / retries)
         ex = (await db.execute(select(Order.id).where(Order.customer_id == user.id,
                                                       Order.client_request_id == body.client_request_id))).scalar_one_or_none()
