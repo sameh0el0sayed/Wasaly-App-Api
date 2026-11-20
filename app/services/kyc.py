@@ -8,6 +8,7 @@ from . import command
 RANK = {"none": 0, "basic": 1, "verified": 2, "verified_plus": 3}
 # rule key -> (required level, description)
 RULES = {
+    "kyc_rule_stop_cpr_upload": ("none", "Stop collecting new CPR documents/changes in Wasaly (use Phoenix ID verification)"),
     "kyc_rule_driver_online": ("verified_plus", "Drivers must be verified_plus to go online"),
     "kyc_rule_customer_order": ("basic", "Customers must be at least basic to create an order"),
 }
@@ -24,6 +25,8 @@ def apply_claims(user, claims: dict, info: dict) -> None:
     user.kyc_level = norm(src.get("kyc_level"))
     org = src.get("org_kyc_level")
     user.org_kyc_level = norm(org) if org else None
+    pic = src.get("picture")
+    user.kyc_picture = str(pic)[:1000] if pic and RANK[user.kyc_level] >= RANK["verified"] else None
     ts = src.get("kyc_verified_at")
     user.kyc_verified_at = datetime.fromtimestamp(int(ts), UTC) if str(ts or "").isdigit() else None
 
@@ -33,6 +36,10 @@ async def rules() -> dict[str, bool]:
     return {k: o.get(k, "false") == "true" for k in RULES}
 
 
+def avatar_locked(user) -> bool:
+    return bool(user.kyc_picture) and RANK[norm(user.kyc_level)] >= RANK["verified"]
+
+
 async def require(user, rule: str) -> None:
     """Enforce one owner-switchable rule in the API (not only the UI)."""
     if not (await rules()).get(rule):
@@ -40,3 +47,9 @@ async def require(user, rule: str) -> None:
     need = RULES[rule][0]
     if RANK[norm(user.kyc_level)] < RANK[need]:
         raise HTTPException(403, {"code": "KYC_REQUIRED", "required": need, "current": norm(user.kyc_level), "rule": rule})
+
+
+async def verify_url() -> str:
+    from . import phoenix_id as pid
+    c = await pid.cfg()
+    return f"{c['issuer']}/account/verify?client_id={c['client_id']}"

@@ -36,7 +36,7 @@ LOGOUT_REDIRECTS = {"mobile": "online.phoenixsystems.wasaly:/logout", "admin_web
 async def public_config():
     c = await pid.cfg()
     allowed, _why = await pid.local_login_state()
-    return {"enabled": c["enabled"], "local_login_allowed": allowed, "issuer": c["issuer"], "client_id": c["client_id"], "scopes": SCOPES, "pkce": "S256",
+    return {"enabled": c["enabled"], "local_login_allowed": allowed, "verify_url": await kyc.verify_url(), "issuer": c["issuer"], "client_id": c["client_id"], "scopes": SCOPES, "pkce": "S256",
             "redirect_uris": REDIRECTS, "post_logout_redirect_uris": LOGOUT_REDIRECTS}
 
 

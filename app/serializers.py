@@ -225,7 +225,7 @@ def user_public(u: User) -> dict:
             "account_status": u.account_status, "phone_verified": u.phone_verified, "status_reason": u.status_reason,
             "profile_photo": u.profile_photo, "must_change_password": u.must_change_password,
             "cpr_masked": mask_cpr(u), "language": u.language or "ar",
-            "verification": verification(u), "kyc_level": u.kyc_level or "none", "org_kyc_level": u.org_kyc_level,
+            "verification": verification(u), "kyc_level": u.kyc_level or "none", "verified_photo_url": u.kyc_picture, "avatar_locked": bool(u.kyc_picture), "org_kyc_level": u.org_kyc_level,
             "roles": roles_of(u), "active_role": u.role,
             "driver_application": ({"id": da.id, "status": da.status, "reason": da.reason, "created_at": dt(da.created_at)}
                                     if (da := rel(u, "driver_application")) else None)}

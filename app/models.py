@@ -78,6 +78,7 @@ class User(Base):
     kyc_level: Mapped[str] = mapped_column(String(20), default="none", server_default="none")  # Phoenix ID: none|basic|verified|verified_plus
     kyc_verified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     org_kyc_level: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    kyc_picture: Mapped[str | None] = mapped_column(String(1000), nullable=True)  # verified photo, short-lived signed URL: refreshed on each login
     failed_logins: Mapped[int] = mapped_column(Integer, default=0)
     locked_until: Mapped[datetime | None] = mapped_column(UTCDateTime, nullable=True)
     created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)

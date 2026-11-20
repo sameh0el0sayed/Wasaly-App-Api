@@ -55,6 +55,11 @@ async def patch_profile(body: ProfilePatch, user: User = Depends(current_user), 
     """Only non-sensitive fields. CPR / phone changes require admin review (see /profile/sensitive-change-request)."""
     data = body.model_dump(exclude_unset=True)
     cpr_photo = data.pop("cpr_photo", None)
+    from ..services import kyc
+    if data.get("profile_photo") and kyc.avatar_locked(user):
+        raise HTTPException(403, {"code": "AVATAR_LOCKED", "message": "Your verified Phoenix ID photo is used as your avatar"})
+    if cpr_photo and (await kyc.rules()).get("kyc_rule_stop_cpr_upload"):
+        raise HTTPException(410, {"code": "CPR_MOVED_TO_PHOENIX_ID", "verify_url": await kyc.verify_url()})
     if data.get("profile_photo"):
         await assert_owned(db, user.id, data["profile_photo"])
     if data.get("language") is None:
@@ -88,6 +93,9 @@ async def _queue_change(db: AsyncSession, user: User, field: str, value: str) ->
 async def request_cpr_change(body: CprChangeIn, user: User = Depends(current_user), db: AsyncSession = Depends(get_db),
                              lang: str = Depends(request_lang)):
     """CPR number / CPR card changes need admin approval. The current values keep working until an admin accepts."""
+    from ..services import kyc
+    if (await kyc.rules()).get("kyc_rule_stop_cpr_upload"):
+        raise HTTPException(410, {"code": "CPR_MOVED_TO_PHOENIX_ID", "verify_url": await kyc.verify_url()})
     if (body.cpr_number or body.cpr_photo) and not (body.cpr_issue_date and body.cpr_expiry_date):
         raise HTTPException(422, {"code": "CPR_DATES_REQUIRED"})
     if not body.cpr_number and not body.cpr_photo and not body.cpr_expiry_date:
