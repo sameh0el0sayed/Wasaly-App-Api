@@ -49,6 +49,7 @@ services:
   # First start downloads the Geofabrik extract and builds the graph into the osrmdata volume.
   osrm:
     build: ./docker/osrm
+    image: wasaly-osrm:stable  # named tag so 'docker image prune' never removes it
     restart: unless-stopped
     environment:
       OSM_REGION_URL: https://download.geofabrik.de/asia/bahrain-latest.osm.pbf
