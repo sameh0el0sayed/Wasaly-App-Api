@@ -10506,8 +10506,8 @@
  },
  {
   "key": "v42.phoenix_id.sign_in",
-  "ar": "الدخول عبر Phoenix ID",
-  "en": "Sign in with Phoenix ID"
+  "ar": "الدخول والتسجيل عبر Phoenix ID",
+  "en": "Sign in or sign up with Phoenix ID"
  },
  {
   "key": "v42.phoenix_id.or",
@@ -10556,8 +10556,8 @@
  },
  {
   "key": "v43.login.phoenix_id_button",
-  "ar": "الدخول عبر Phoenix ID",
-  "en": "Sign in with Phoenix ID"
+  "ar": "الدخول والتسجيل عبر Phoenix ID",
+  "en": "Sign in or sign up with Phoenix ID"
  },
  {
   "key": "v43.login.local_disabled",
@@ -10588,5 +10588,10 @@
   "key": "v45.kyc.expired",
   "ar": "انتهت صلاحية توثيق هويتك",
   "en": "Your identity verification has expired"
+ },
+ {
+  "key": "auth.phoenix_id_button",
+  "ar": "الدخول والتسجيل عبر Phoenix ID",
+  "en": "Sign in or sign up with Phoenix ID"
  }
 ]
