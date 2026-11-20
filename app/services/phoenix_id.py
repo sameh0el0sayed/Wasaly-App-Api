@@ -37,6 +37,21 @@ async def discovery(force: bool = False) -> dict:
     return _disc["v"]
 
 
+async def token_request(data: dict) -> dict:
+    """Server-to-server call to the Phoenix ID token endpoint (authorization_code / refresh_token). Raises ValueError on a rejected grant."""
+    c = await cfg()
+    form = {**data, "client_id": c["client_id"]}
+    if c["client_secret"]:
+        form["client_secret"] = c["client_secret"]
+    ep = (await discovery()).get("token_endpoint") or f"{c['issuer']}/token"
+    async with httpx.AsyncClient(timeout=8) as h:
+        r = await h.post(ep, data=form, headers={"Accept": "application/json"})
+    if r.status_code in (400, 401):
+        raise ValueError("grant_rejected")
+    r.raise_for_status()
+    return r.json()
+
+
 async def _load_jwks(force: bool = False) -> dict:
     if not force and _jwks["keys"] and time.time() - _jwks["at"] < 3600:
         return _jwks["keys"]

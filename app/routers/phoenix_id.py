@@ -71,7 +71,67 @@ def _check_role(user: User, claims: dict) -> None:
 
 @router.post("/api/auth/phoenix-id/exchange", dependencies=[Depends(limit("pid_exchange", 30, 300))])
 async def exchange(body: ExchangeIn, request: Request, db: AsyncSession = Depends(get_db)):
-    claims, info = await _claims_and_info(body.access_token)
+    return await _login(body.access_token, body.device_id, request, db)
+
+
+class CallbackIn(BaseModel):
+    code: str = Field(min_length=4, max_length=2000)
+    code_verifier: str = Field(min_length=20, max_length=300)
+    nonce: str = Field(min_length=4, max_length=300)
+    redirect_uri: str = Field(max_length=300)
+    device_id: str | None = Field(default=None, max_length=100)
+
+
+class RefreshIn(BaseModel):
+    phoenix_refresh_token: str = Field(min_length=10, max_length=4000)
+    device_id: str | None = Field(default=None, max_length=100)
+
+
+async def _grant(data: dict) -> dict:
+    try:
+        return await pid.token_request(data)
+    except ValueError:
+        raise HTTPException(401, {"code": "INVALID_TOKEN"})
+    except Exception:  # noqa: BLE001
+        raise HTTPException(503, {"code": "PHOENIX_ID_UNREACHABLE"})
+
+
+async def _web_login(tok: dict, device_id, request, db, nonce: str | None = None) -> dict:
+    access = tok.get("access_token")
+    if not access:
+        raise HTTPException(401, {"code": "INVALID_TOKEN"})
+    if nonce is not None:
+        try:
+            idc = await pid.verify(tok.get("id_token") or "")
+        except Exception:  # noqa: BLE001
+            raise HTTPException(401, {"code": "INVALID_TOKEN"})
+        if idc.get("nonce") != nonce:
+            raise HTTPException(401, {"code": "INVALID_TOKEN"})
+    out = await _login(access, device_id, request, db, expose_token=True)
+    return {**out, "phoenix_refresh_token": tok.get("refresh_token"), "id_token": tok.get("id_token")}
+
+
+@router.post("/api/auth/phoenix-id/callback", dependencies=[Depends(limit("pid_exchange", 30, 300))])
+async def callback(body: CallbackIn, request: Request, db: AsyncSession = Depends(get_db)):
+    """Web apps cannot call the Phoenix ID token endpoint (no CORS): the code is exchanged here, server to server."""
+    if not (await pid.cfg())["enabled"]:
+        raise HTTPException(403, {"code": "SSO_DISABLED", "message": "Phoenix ID sign-in is not enabled"})
+    if body.redirect_uri not in REDIRECTS.values():
+        raise HTTPException(422, {"code": "BAD_REDIRECT_URI"})
+    tok = await _grant({"grant_type": "authorization_code", "code": body.code, "redirect_uri": body.redirect_uri, "code_verifier": body.code_verifier})
+    return await _web_login(tok, body.device_id, request, db, nonce=body.nonce)
+
+
+@router.post("/api/auth/phoenix-id/refresh", dependencies=[Depends(limit("pid_refresh", 60, 300))])
+async def refresh(body: RefreshIn, request: Request, db: AsyncSession = Depends(get_db)):
+    if not (await pid.cfg())["enabled"]:
+        raise HTTPException(403, {"code": "SSO_DISABLED", "message": "Phoenix ID sign-in is not enabled"})
+    tok = await _grant({"grant_type": "refresh_token", "refresh_token": body.phoenix_refresh_token})
+    return await _web_login(tok, body.device_id, request, db)
+
+
+async def _login(access_token: str, device_id, request: Request, db: AsyncSession, expose_token: bool = False) -> dict:
+    claims, info = await _claims_and_info(access_token)
     sub = claims["sub"]
     user = (await db.execute(select(User).where(User.phoenix_sub == sub))).scalar_one_or_none()
     how = "sub"
@@ -90,7 +150,8 @@ async def exchange(body: ExchangeIn, request: Request, db: AsyncSession = Depend
     if not user:
         raise HTTPException(409, {"code": "REGISTRATION_REQUIRED",
                                   "message": "No Wasaly account is linked to this Phoenix ID. Register in the app first (CPR), then link it.",
-                                  "profile": {"name": info.get("name"), "phone": info.get("phone_number"), "email": info.get("email")}})
+                                  "profile": {"name": info.get("name"), "phone": info.get("phone_number"), "email": info.get("email")},
+                                  **({"phoenix_access_token": access_token} if expose_token else {})})
     if user.account_status in ("DELETED", "BANNED"):
         raise HTTPException(403, {"code": "ACCOUNT_" + user.account_status, "reason": user.status_reason})
     _check_role(user, claims)
@@ -104,7 +165,7 @@ async def exchange(body: ExchangeIn, request: Request, db: AsyncSession = Depend
     now = utcnow()
     user.failed_logins, user.locked_until, user.last_login_at, user.last_login_ip, user.last_seen_at = 0, None, now, ip, now
     user.login_count = (user.login_count or 0) + 1
-    tokens = await sessions.issue(db, user, body.device_id)
+    tokens = await sessions.issue(db, user, device_id)
     await db.commit()
     return {"user": user_public(user), **tokens, "impersonated_by": act, "sso": True}
 
