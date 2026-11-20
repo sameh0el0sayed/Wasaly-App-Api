@@ -103,7 +103,8 @@ async def build_report(db, hours: int = 24) -> dict:
     rev = (await db.execute(select(func.coalesce(func.sum(Order.customer_total), 0), func.coalesce(func.sum(Order.commission), 0)).where(
         Order.order_status == S.COMPLETED, Order.completed_at >= start))).one()
     accept = [(a - c).total_seconds() / 60 for c, a in (await db.execute(select(Order.created_at, Order.accepted_at).where(base, Order.accepted_at.is_not(None)).limit(5000))).all()]
-    by_service = dict((await db.execute(select(func.coalesce(Order.service_code, "RIDES"), func.count()).where(base).group_by(func.coalesce(Order.service_code, "RIDES")))).all())
+    svc_col = func.coalesce(Order.service_code, "RIDES")  # one expression object: same bind param in SELECT and GROUP BY
+    by_service = dict((await db.execute(select(svc_col, func.count()).where(base).group_by(svc_col))).all())
     online = (await db.execute(select(func.count()).select_from(DriverProfile).where(DriverProfile.is_online.is_(True)))).scalar_one()
     open_f = dict((await db.execute(select(OpsFinding.kind, func.count()).where(OpsFinding.status == "OPEN").group_by(OpsFinding.kind))).all())
     m = {"hours": hours, "orders": total, "completed": done, "cancelled": cnt.get(S.CANCELLED, 0), "expired": cnt.get(S.EXPIRED, 0),

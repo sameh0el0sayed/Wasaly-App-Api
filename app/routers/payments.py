@@ -238,7 +238,8 @@ async def admin_payment_view(db: AsyncSession, p: Payment, s: dict | None = None
     out["proof_url"] = _file_url(p.proof_file)
     out["customer"] = _person(p.customer)
     out["driver"] = _person(p.driver) if p.driver else None
-    out["verified_by_name"] = p.verified_by.full_name if p.verified_by else None
+    vb = await db.get(User, p.verified_by) if p.verified_by else None
+    out["verified_by_name"] = vb.full_name if vb else None
     review_log = (await db.execute(select(AdminAuditLog).where(
         AdminAuditLog.entity_type == "payment", AdminAuditLog.entity_id == str(p.id),
         AdminAuditLog.action == "PAYMENT_CONFIRMED",
