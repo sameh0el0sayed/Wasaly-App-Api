@@ -5,6 +5,7 @@ Cached in Redis per (origin 300 m grid, destination 300 m grid, 5-minute bucket)
 Hard daily cap per TomTom API (2,200 of the 2,500 free requests); over the cap or on any failure -> level none + OSRM ETA.
 Nothing is stored with user data: only cache entries and counters.
 """
+import asyncio
 import logging
 import math
 import time
@@ -19,6 +20,17 @@ log = logging.getLogger("traffic")
 DAILY_CAP = 2200
 ICON = {1: "accident", 6: "jam", 7: "lane_closed", 8: "closure", 9: "roadworks"}
 _http: httpx.AsyncClient | None = None
+_brk = {"fails": 0, "until": 0.0}  # circuit breaker: 3 consecutive TomTom failures -> no calls for 5 minutes
+
+
+def _ok() -> None:
+    _brk["fails"] = 0
+
+
+def _fail() -> None:
+    _brk["fails"] += 1
+    if _brk["fails"] >= 3:
+        _brk.update(fails=0, until=time.time() + 300)
 
 
 async def api_key() -> str:
@@ -28,7 +40,7 @@ async def api_key() -> str:
 def _client() -> httpx.AsyncClient:
     global _http
     if _http is None:
-        _http = httpx.AsyncClient(timeout=4)
+        _http = httpx.AsyncClient(timeout=2.5)
     return _http
 
 
@@ -38,6 +50,8 @@ def _day() -> str:
 
 async def _allow(api: str) -> bool:
     """Count one TomTom request against today's cap. False when the cap is reached (or Redis is unavailable)."""
+    if time.time() < _brk["until"]:
+        return False
     r = await cache.client()
     if r is None:
         return False
@@ -108,7 +122,9 @@ async def _incidents(key: str, pts: list) -> list:
                                             "timeValidityFilter": "present", "key": key})
             r.raise_for_status()
             raw = r.json().get("incidents", [])
+            _ok()
         except Exception as e:  # noqa: BLE001
+            _fail()
             log.warning("tomtom incidents failed: %s", type(e).__name__)
             return []
         await cache.set_json(ck, raw, 600)
@@ -155,6 +171,7 @@ async def route_traffic(origin: tuple[float, float], destination: tuple[float, f
                                 params={"traffic": "true", "departAt": "now", "routeRepresentation": "polyline", "computeTravelTimeFor": "all", "key": key})
         r.raise_for_status()
         route = r.json()["routes"][0]
+        _ok()
         sm = route["summary"]
         pts = [(p["latitude"], p["longitude"]) for leg in route.get("legs", []) for p in leg.get("points", [])]
         delay = round((sm.get("trafficDelayInSeconds") or 0) / 60)
@@ -168,6 +185,7 @@ async def route_traffic(origin: tuple[float, float], destination: tuple[float, f
         await cache.set_json(ck, res, 600)
         return res
     except Exception as e:  # noqa: BLE001
+        _fail()
         log.warning("route_traffic failed: %s", type(e).__name__)
         return await _fallback(origin, destination)
 
@@ -182,8 +200,14 @@ async def offer_traffic(order, driver_pos) -> dict | None:
 
     def slim(t):
         return {k: t[k] for k in ("level", "delay_min", "eta_min", "incidents")}
-    return {"to_pickup": slim(await route_traffic(driver_pos, pick)) if driver_pos else None,
-            "to_dropoff": slim(await route_traffic(pick, drop)) if None not in drop else None}
+
+    async def leg(a, b):
+        return slim(await route_traffic(a, b)) if a and None not in a and None not in b else None
+    try:  # both legs in parallel, cut at 3 s: never delay the offer / acceptance
+        p, d = await asyncio.wait_for(asyncio.gather(leg(driver_pos, pick), leg(pick, drop)), timeout=3)
+    except Exception:  # noqa: BLE001
+        return None
+    return {"to_pickup": p, "to_dropoff": d}
 
 
 _trip_at: dict[int, float] = {}

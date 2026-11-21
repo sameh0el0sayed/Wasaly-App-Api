@@ -202,8 +202,8 @@ async def offers(list: str = "new", page=Depends(paging), user: User = Depends(d
     out = [offer_out(o, user.driver_profile, enabled) for o in rows]
     if list == "new" and out:
         pos = await driver_pos(user.id)
-        for r, o in zip(out, rows, strict=True):
-            r["traffic"] = await offer_traffic(o.order, pos)
+        for r, t in zip(out, await asyncio.gather(*[offer_traffic(o.order, pos) for o in rows]), strict=True):
+            r["traffic"] = t
     return out
 
 
