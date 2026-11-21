@@ -56,6 +56,7 @@ from .routers import (
     v28,
 )
 from .routers import live_order as live_order_router
+from .routers import traffic as traffic_router
 from .security import hash_password, normalize_phone
 from .services.activity import sweep as activity_sweep
 from .services.dispatch import enforce_driver_documents, expire_offers_and_orders
@@ -283,5 +284,5 @@ _live_order.register_handlers()
 
 for r in (auth.router, auth.whatsapp_webhook_router, app_errors.router, app_errors.admin_router, profile.router, corrections.router, chat.router, orders.router, driver.router, payments.webhook_router, payments.router,
           payments.admin_router, subscriptions.router, subscriptions.admin_router, subscriptions.driver_router,
-          airports.router, promo.router, stream.router, banners.router, places.router, account_deletion.router, account_deletion.admin_router, activity.router, activity.admin_router, ratings.router, v11.router, v11.admin_router, v11.public_router, v14.router, v14.admin_router, v15.router, v15.admin_router, v16.router, v20.admin_router, v21.admin_router, v24.admin_router, v27.admin_router, v28.router, merchant_api.router, merchant_api.admin_router, services_v30.router, services_v30.admin_router, corporate.router, corporate.admin_router, ops.admin_router, finance.admin_router, portal.router, portal.admin_router, command_link.router, control.router, phoenix_id.router, live_order_router.router, admin.router):
+          airports.router, promo.router, stream.router, banners.router, places.router, account_deletion.router, account_deletion.admin_router, activity.router, activity.admin_router, ratings.router, v11.router, v11.admin_router, v11.public_router, v14.router, v14.admin_router, v15.router, v15.admin_router, v16.router, v20.admin_router, v21.admin_router, v24.admin_router, v27.admin_router, v28.router, merchant_api.router, merchant_api.admin_router, services_v30.router, services_v30.admin_router, corporate.router, corporate.admin_router, ops.admin_router, finance.admin_router, portal.router, portal.admin_router, command_link.router, control.router, phoenix_id.router, live_order_router.router, traffic_router.router, admin.router):
     app.include_router(r)

@@ -10693,5 +10693,80 @@
   "key": "v45.live.d_completed",
   "ar": "اكتملت الرحلة",
   "en": "Trip completed"
+ },
+ {
+  "key": "traffic.title",
+  "ar": "حالة الطريق",
+  "en": "Road status"
+ },
+ {
+  "key": "traffic.clear",
+  "ar": "الطريق سالك",
+  "en": "Road is clear"
+ },
+ {
+  "key": "traffic.light",
+  "ar": "زحام خفيف على الطريق",
+  "en": "Light traffic on the route"
+ },
+ {
+  "key": "traffic.heavy",
+  "ar": "زحام شديد على الطريق",
+  "en": "Heavy traffic on the route"
+ },
+ {
+  "key": "traffic.delay_min",
+  "ar": "تأخير متوقع {min} دقيقة",
+  "en": "Expected delay {min} min"
+ },
+ {
+  "key": "traffic.eta_with_traffic",
+  "ar": "الوصول المتوقع خلال {min} دقيقة مع الزحام",
+  "en": "Arrival in {min} min with traffic"
+ },
+ {
+  "key": "traffic.to_pickup",
+  "ar": "إلى نقطة الاستلام",
+  "en": "To pickup"
+ },
+ {
+  "key": "traffic.to_dropoff",
+  "ar": "إلى الوجهة",
+  "en": "To destination"
+ },
+ {
+  "key": "traffic.incident.accident",
+  "ar": "حادث",
+  "en": "Accident"
+ },
+ {
+  "key": "traffic.incident.closure",
+  "ar": "طريق مغلق",
+  "en": "Road closed"
+ },
+ {
+  "key": "traffic.incident.lane_closed",
+  "ar": "إغلاق مسار",
+  "en": "Lane closed"
+ },
+ {
+  "key": "traffic.incident.jam",
+  "ar": "ازدحام",
+  "en": "Traffic jam"
+ },
+ {
+  "key": "traffic.incident.roadworks",
+  "ar": "أعمال طرق",
+  "en": "Road works"
+ },
+ {
+  "key": "traffic.notify_heavy_title",
+  "ar": "زحام على طريقك",
+  "en": "Traffic on your route"
+ },
+ {
+  "key": "traffic.notify_heavy_body",
+  "ar": "قد تتأخر الرحلة {min} دقيقة بسبب {reason}",
+  "en": "Your trip may be {min} min late due to {reason}"
  }
 ]

@@ -293,6 +293,27 @@ async def _live_card_eta(order_row, lat: float, lng: float) -> None:
         pass
 
 
+_traffic_seen: dict[int, float] = {}
+
+
+async def _traffic_check(driver_id: int, order_row, lat: float, lng: float) -> None:
+    """Heavy-traffic notification for the customer during IN_PROGRESS (TomTom key set only; every 2 min per order)."""
+    try:
+        from . import traffic
+        now = time.time()
+        if now - _traffic_seen.get(driver_id, 0) < 30:
+            return
+        _traffic_seen[driver_id] = now
+        if order_row is None:
+            if not await traffic.api_key():
+                return
+            order_row = await _active_order(driver_id)
+        if order_row is not None and order_row.order_status == S.IN_PROGRESS:
+            await traffic.check_trip(order_row.id, order_row.customer_id, lat, lng, (order_row.destination_latitude, order_row.destination_longitude))
+    except Exception:  # noqa: BLE001
+        pass
+
+
 async def _broadcast(driver_id: int, lat: float, lng: float, heading, latest: GpsObservation,
                      conf: float, road_name, cell, status: str) -> None:
     customer_id = await cache.get_active_customer(driver_id)
@@ -314,4 +335,5 @@ async def _broadcast(driver_id: int, lat: float, lng: float, heading, latest: Gp
             payload["eta"] = e
     if settings.eta_enabled and order_row is not None:
         await _live_card_eta(order_row, lat, lng)
+    await _traffic_check(driver_id, order_row, lat, lng)
     hub.publish(payload, {customer_id} if customer_id else set())

@@ -64,6 +64,8 @@ from ..services.pricing import (
     promo_discount,
     split_order,
 )
+from ..services.traffic import offer_traffic
+from .traffic import driver_pos
 
 router = APIRouter(prefix="/api/driver", tags=["driver"])
 
@@ -197,7 +199,12 @@ async def offers(list: str = "new", page=Depends(paging), user: User = Depends(d
                              .options(*offer_load_options())
                              .order_by(OrderOffer.id.desc()).limit(limit).offset(offset))).scalars().all()
     enabled = pi.config(await settings_service.get_all(db))["enabled"]
-    return [offer_out(o, user.driver_profile, enabled) for o in rows]
+    out = [offer_out(o, user.driver_profile, enabled) for o in rows]
+    if list == "new" and out:
+        pos = await driver_pos(user.id)
+        for r, o in zip(out, rows, strict=True):
+            r["traffic"] = await offer_traffic(o.order, pos)
+    return out
 
 
 @router.post("/offers/{offer_id}/counter")
@@ -254,7 +261,9 @@ async def accept_offer(offer_id: int, user: User = Depends(driver_user), db: Asy
     await notify(db, order.customer_id, "ORDER_ACCEPTED", "تم قبول طلبك",
                  f"السائق {user.full_name} - {v.make} {v.model} {v.color} ({v.plate_number})", order.id)
     await db.commit()
-    return order_for_driver((await db.execute(select(Order).where(Order.id == order.id).options(*order_driver_load_options()))).scalar_one())
+    res_out = order_for_driver((await db.execute(select(Order).where(Order.id == order.id).options(*order_driver_load_options()))).scalar_one())
+    res_out["traffic"] = await offer_traffic(order, await driver_pos(user.id))
+    return res_out
 
 
 @router.post("/offers/{offer_id}/decline")
