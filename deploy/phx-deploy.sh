@@ -1,7 +1,10 @@
 #!/usr/bin/env bash
 # phx-code: wasaly
-# phx-name: وصلي
-# Manual deploy for Wasaly API on the VPS - does exactly what .github/workflows/deploy.yml does. Safe to re-run.
+# phx-name: Wasaly
+# phx-dir: /opt/wasaly-api
+# phx-health: https://phoenixsystems.online/wasaly-api/health
+# Deploy plugin for Wasaly API, run by phx-deploy (owned by PCC): detaching, locking, retry and rollback are done by PCC, not here.
+# Exits non-zero when the deploy is not healthy.
 set -euo pipefail
 START=$(date +%s)
 DIR=/opt/wasaly-api
@@ -26,10 +29,11 @@ ls -t /opt/wasaly-backups/*.sql.gz | tail -n +15 | xargs -r rm -f
 
 # 3) build, migrate with the new image BEFORE the new API starts, then start
 docker compose build api
-docker compose run --rm --no-deps api alembic upgrade head
-docker compose up -d --build
+docker compose run --rm --no-deps api alembic upgrade head   # prints "Running upgrade X -> Y" lines for PCC
+# wait for db, redis and api healthchecks (fails on unhealthy); osrm is started without waiting (its first graph build can take minutes)
+docker compose up -d --build --wait --wait-timeout 180 db redis api
+docker compose up -d osrm
 docker compose exec -T api python -m scripts.import_translations
-sleep 8
 docker compose ps
 docker compose exec -T api alembic current
 
