@@ -28,13 +28,13 @@ test -s "$(ls -t /opt/wasaly-backups/*.sql.gz | head -1)"
 ls -t /opt/wasaly-backups/*.sql.gz | tail -n +15 | xargs -r rm -f
 
 # 3) build, migrate with the new image BEFORE the new API starts, then start
-docker compose build api
+docker compose build api osrm   # osrm layers are cached unless docker/osrm changed (entrypoint fixes need this)
 docker compose run --rm --no-deps api alembic upgrade head   # prints "Running upgrade X -> Y" lines for PCC
 # wait for db, redis and api healthchecks (fails on unhealthy)
 docker compose up -d --build --wait --wait-timeout 180 db redis api
 # osrm: wait for healthy (fails the deploy) when the graph is already built; on a fresh volume the first build takes minutes, so do not wait then
 if docker compose run --rm --no-deps --entrypoint test osrm -f /data/bahrain.osrm.hsgr; then
-  docker compose up -d --wait --wait-timeout 180 osrm
+  docker compose up -d --wait --wait-timeout 180 osrm || echo "WARNING: osrm unhealthy (api falls back to raw GPS); deploy kept"
 else
   echo "osrm: graph not built yet, first start builds it in the background"
   docker compose up -d osrm
