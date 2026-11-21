@@ -23,3 +23,4 @@ reportlab==5.1.0
 arabic-reshaper==3.1.0
 python-bidi==0.6.12
 h3==4.1.0                          # local H3 indexing of matched coordinates (no network)
+h2==4.1.0

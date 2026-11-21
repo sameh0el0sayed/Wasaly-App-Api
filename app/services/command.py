@@ -188,7 +188,7 @@ def install_ring() -> None:
 
 
 # ---------------------------------------------------------------- owner unified config ----------
-SECRET_KEYS = {"tap_secret_key", "tap_webhook_secret", "gemini_api_key"}
+SECRET_KEYS = {"tap_secret_key", "tap_webhook_secret", "gemini_api_key", "apns_private_key"}
 _owner_cache: dict = {"at": 0.0, "v": {}}
 maint: dict = {"at": 0.0, "on": False, "msg": ""}  # maintenance flag cache (5 s), used by the middleware
 

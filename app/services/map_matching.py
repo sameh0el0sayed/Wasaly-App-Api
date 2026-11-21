@@ -267,9 +267,30 @@ async def live_eta(order_id: int, src: tuple[float, float], dst: tuple[float, fl
 async def _active_order(driver_id: int):
     async with SessionLocal() as db:
         return (await db.execute(
-            select(Order.id, Order.customer_id, Order.destination_latitude, Order.destination_longitude)
+            select(Order.id, Order.customer_id, Order.destination_latitude, Order.destination_longitude,
+                   Order.order_status, Order.pickup_latitude, Order.pickup_longitude)
             .where(Order.driver_id == driver_id, Order.order_status.in_(S.DRIVER_BUSY))
             .order_by(Order.id.desc()).limit(1))).first()
+
+
+async def _live_card_eta(order_row, lat: float, lng: float) -> None:
+    """Feed the live order card: ETA to pickup before the trip starts, to the destination during it. Never raises."""
+    try:
+        from . import live_order
+        st = order_row.order_status
+        if st in (S.ACCEPTED, S.DRIVER_ON_THE_WAY):
+            dst = (order_row.pickup_latitude, order_row.pickup_longitude)
+        elif st == S.IN_PROGRESS:
+            dst = (order_row.destination_latitude, order_row.destination_longitude)
+        else:
+            return
+        if dst[0] is None or dst[1] is None:
+            return
+        e = await eta.eta_to_destination(_client, order_row.id, (lat, lng), dst) if st == S.IN_PROGRESS else await eta.eta_to_destination(_client, -order_row.id, (lat, lng), dst)
+        if e is not None:
+            live_order.on_eta(order_row.id, e["duration_min"])
+    except Exception:  # noqa: BLE001
+        pass
 
 
 async def _broadcast(driver_id: int, lat: float, lng: float, heading, latest: GpsObservation,
@@ -291,4 +312,6 @@ async def _broadcast(driver_id: int, lat: float, lng: float, heading, latest: Gp
                                          (order_row.destination_latitude, order_row.destination_longitude))
         if e is not None:
             payload["eta"] = e
+    if settings.eta_enabled and order_row is not None:
+        await _live_card_eta(order_row, lat, lng)
     hub.publish(payload, {customer_id} if customer_id else set())

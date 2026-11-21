@@ -16,6 +16,10 @@ DEFAULTS = {
     "role_switch_enabled": "true",
     "customer_to_driver_enabled": "true",
     "i18n_version": "0",
+    "live_order_enabled": "true",  # live order card (Android ongoing notification + iOS Live Activity)
+    "ios_bundle_id": "com.phoenixsystems.wasaly",
+    "apns_key_id": "",
+    "apns_team_id": "",
     "live_map_enabled": "false",  # admin live map: off until the apps are in real use (the endpoint then returns an empty payload without touching the DB)
     "license_expiry_warn_days": "30,7,1",
     "license_expiry_block_offers": "true",

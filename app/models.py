@@ -448,6 +448,18 @@ class DeviceToken(Base):
     created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
 
 
+class LiveActivityToken(Base):
+    """iOS Live Activity push token for one user on one order (live order card)."""
+    __tablename__ = "live_activity_tokens"
+    __table_args__ = (UniqueConstraint("order_id", "user_id", name="uq_live_activity_order_user"),)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    order_id: Mapped[int] = mapped_column(ForeignKey("orders.id", ondelete="CASCADE"), index=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    token: Mapped[str] = mapped_column(String(300))
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
+    updated_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow, onupdate=utcnow)
+
+
 class Payment(Base):
     """Money owed by a customer for an order or a subscription period. All money goes to the COMPANY account first."""
     __tablename__ = "payments"

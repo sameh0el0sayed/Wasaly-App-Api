@@ -10593,5 +10593,105 @@
   "key": "auth.phoenix_id_button",
   "ar": "الدخول والتسجيل عبر Phoenix ID",
   "en": "Sign in or sign up with Phoenix ID"
+ },
+ {
+  "key": "v45.live.channel",
+  "ar": "تتبع الطلب",
+  "en": "Order tracking"
+ },
+ {
+  "key": "v45.live.headline",
+  "ar": "طلبك جارٍ",
+  "en": "Order in progress"
+ },
+ {
+  "key": "v45.live.minutes",
+  "ar": "{0} دقيقة",
+  "en": "{0} min"
+ },
+ {
+  "key": "v45.live.done_headline",
+  "ar": "وصلت 🎉",
+  "en": "Arrived 🎉"
+ },
+ {
+  "key": "v45.live.searching",
+  "ar": "🔎 نبحث لك عن سائق",
+  "en": "🔎 Finding you a driver"
+ },
+ {
+  "key": "v45.live.accepted",
+  "ar": "✅ تم قبول طلبك",
+  "en": "✅ Your order was accepted"
+ },
+ {
+  "key": "v45.live.on_the_way",
+  "ar": "🚗 السائق في الطريق إليك",
+  "en": "🚗 Driver is on the way"
+ },
+ {
+  "key": "v45.live.arrived",
+  "ar": "📍 السائق وصل إلى نقطة الاستلام",
+  "en": "📍 Driver is at the pickup point"
+ },
+ {
+  "key": "v45.live.in_progress",
+  "ar": "🔥 في الطريق إلى وجهتك",
+  "en": "🔥 On the way to your destination"
+ },
+ {
+  "key": "v45.live.delivering",
+  "ar": "🔥 طلبك قريب",
+  "en": "🔥 Your order is close"
+ },
+ {
+  "key": "v45.live.arrived_dest",
+  "ar": "🏁 وصلنا إلى الوجهة",
+  "en": "🏁 Arrived at the destination"
+ },
+ {
+  "key": "v45.live.completed",
+  "ar": "شكرًا لاستخدامك وصلي",
+  "en": "Thanks for riding with Wasaly"
+ },
+ {
+  "key": "v45.live.d_searching",
+  "ar": "🔎 بانتظار التأكيد",
+  "en": "🔎 Waiting for confirmation"
+ },
+ {
+  "key": "v45.live.d_accepted",
+  "ar": "✅ قبلت الطلب، توجّه إلى العميل",
+  "en": "✅ Accepted, head to the customer"
+ },
+ {
+  "key": "v45.live.d_on_the_way",
+  "ar": "🚗 في الطريق إلى العميل",
+  "en": "🚗 On the way to the customer"
+ },
+ {
+  "key": "v45.live.d_arrived",
+  "ar": "📍 أنت عند نقطة الاستلام",
+  "en": "📍 You are at the pickup point"
+ },
+ {
+  "key": "v45.live.d_in_progress",
+  "ar": "🔥 في الطريق إلى الوجهة",
+  "en": "🔥 On the way to the destination"
+ },
+ {
+  "key": "v45.live.d_delivering",
+  "ar": "🔥 في الطريق لتسليم الطلب",
+  "en": "🔥 On the way to deliver"
+ },
+ {
+  "key": "v45.live.d_arrived_dest",
+  "ar": "🏁 وصلت إلى الوجهة",
+  "en": "🏁 You arrived at the destination"
+ },
+ {
+  "key": "v45.live.d_completed",
+  "ar": "اكتملت الرحلة",
+  "en": "Trip completed"
  }
 ]

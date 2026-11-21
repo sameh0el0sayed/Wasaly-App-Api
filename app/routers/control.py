@@ -530,6 +530,8 @@ OWNER_MAP = {
                 "bank_name": ("owner", None), "bank_account_name": ("owner", None), "iban": ("owner", None), "currency": ("owner", None)},
     "ai": {"provider": ("owner", "ai_provider"), "gemini_api_key": ("secret", None), "model": ("owner", "gemini_model"),
            "fallback_models": ("owner", "gemini_fallback_models"), "timeout_seconds": ("owner", "gemini_timeout_seconds"), "enabled": ("owner", "ai_enabled")},
+    "push": {"live_order_enabled": ("setting", "live_order_enabled"), "ios_bundle_id": ("setting", "ios_bundle_id"), "apns_key_id": ("setting", "apns_key_id"),
+             "apns_team_id": ("setting", "apns_team_id"), "apns_private_key": ("secret", None)},
     "tax": {"vat_rate": ("setting", "tap_vat_percent"), "vat_mode": ("owner", None), "vat_number": ("owner", None)},
     "company": {"name": ("owner", "company_name"), "cr_number": ("owner", None), "support_phone": ("setting", "support_phone"),
                 "support_email": ("setting", "support_email"), "support_whatsapp": ("setting", "support_whatsapp")},
