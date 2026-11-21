@@ -71,7 +71,7 @@ services:
       interval: 10s
       timeout: 3s
       retries: 12
-      start_period: 900s
+      start_period: 120s  # data already built: loading takes seconds; the very first graph build runs before routed starts, see deploy/phx-deploy.sh
 
 volumes:
   pgdata:

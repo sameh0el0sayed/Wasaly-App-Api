@@ -38,4 +38,4 @@ else
 fi
 
 echo "[osrm] serving on port $PORT (OpenStreetMap data © OpenStreetMap contributors)"
-exec osrm-routed --algorithm ch --port "$PORT" --max-matching-table-size 10000 "$OSRM"
+exec osrm-routed --algorithm ch --port "$PORT" --max-table-size 10000 "$OSRM"
