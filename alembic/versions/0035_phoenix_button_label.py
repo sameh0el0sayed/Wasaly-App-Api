@@ -3,6 +3,8 @@
 Revision ID: 0035
 Revises: 0034
 """
+import sqlalchemy as sa
+
 from alembic import op
 
 revision = "0035"
@@ -15,11 +17,9 @@ EN = "Sign in or sign up with Phoenix ID"
 
 
 def upgrade() -> None:
-    conn = op.get_bind()
     for key in ("v43.login.phoenix_id_button", "v42.phoenix_id.sign_in", "auth.phoenix_id_button"):
-        conn.exec_driver_sql("UPDATE translations SET ar = %(ar)s, en = %(en)s WHERE key = %(k)s", {"ar": AR, "en": EN, "k": key})
-    conn.exec_driver_sql(
-        "UPDATE app_settings SET value = (CAST(NULLIF(value, '') AS INTEGER) + 1)::text WHERE key = 'i18n_version'")
+        op.execute(sa.text("UPDATE translations SET ar = :ar, en = :en WHERE key = :k").bindparams(ar=AR, en=EN, k=key))
+    op.execute(sa.text("UPDATE app_settings SET value = CAST(CAST(NULLIF(value, '') AS INTEGER) + 1 AS TEXT) WHERE key = 'i18n_version'"))
 
 
 def downgrade() -> None:
