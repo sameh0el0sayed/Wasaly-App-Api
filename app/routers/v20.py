@@ -309,9 +309,9 @@ async def pay_statement_tap_retry(statement_id: int, admin: User = Depends(super
 
 
 async def monthly_job(db: AsyncSession) -> None:
-    """After the 1st of a month 09:00 (Asia/Bahrain): creates last month's statements once."""
+    """Night window 02:00-05:00 (Asia/Bahrain, gated by the caller): creates last month's statements once, from the 1st."""
     now = utcnow().astimezone(ZoneInfo(settings.timezone))
-    if now.hour < 9:
+    if now.hour < 2:
         return
     y, m = (now.year - 1, 12) if now.month == 1 else (now.year, now.month - 1)
     period = f"{y:04d}-{m:02d}"

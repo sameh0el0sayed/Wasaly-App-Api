@@ -1,7 +1,26 @@
+# Shared server: 1 CPU / 3.8 GB. Every service is capped (PCC guard stops overloads); healthchecks every 30 s; logs rotated.
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+x-health: &health
+  interval: 30s
+  timeout: 5s
+  retries: 3
+  start_period: 30s
+
 services:
   db:
     image: postgres:16
     restart: unless-stopped
+    logging: *logging
+    # small-server tuning: API pool is 5 + 3 overflow (1 worker); 30 connections leave room for migrations and pg_dump
+    command: >-
+      postgres -c max_connections=30 -c shared_buffers=96MB -c effective_cache_size=256MB
+      -c work_mem=4MB -c maintenance_work_mem=32MB -c max_worker_processes=2 -c max_parallel_workers=1
+      -c max_parallel_workers_per_gather=0
     environment:
       POSTGRES_USER: transport
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Missing POSTGRES_PASSWORD in .env}
@@ -9,27 +28,36 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
+      <<: *health
       test: ["CMD-SHELL", "pg_isready -U transport -d transport"]
-      interval: 5s
-      timeout: 3s
-      retries: 20
+    deploy:
+      resources:
+        limits:
+          cpus: "0.50"
+          memory: 384M
 
   redis:
     image: redis:7-alpine
     restart: unless-stopped
-    command: redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru --save ""
+    logging: *logging
+    command: redis-server --maxmemory 64mb --maxmemory-policy allkeys-lru --save "" --appendonly no
     healthcheck:
+      <<: *health
       test: ["CMD", "redis-cli", "ping"]
-      interval: 5s
-      timeout: 3s
-      retries: 10
+    deploy:
+      resources:
+        limits:
+          cpus: "0.25"
+          memory: 96M
 
   api:
     build: .
-    image: wasaly-api:latest  # stable name:tag so PCC rollback can retag :previous -> :latest
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8000
+    image: wasaly-api:latest  # stable name:tag so rollback can retag :previous -> :latest
+    # exactly 1 replica, 1 worker: background loops (offers expiry, webhooks, ops) run in-process, once
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 1 --timeout-graceful-shutdown 15
     restart: unless-stopped
     init: true
+    logging: *logging
     env_file:
       - .env
     ports:
@@ -44,11 +72,14 @@ services:
     volumes:
       - ./secrets:/srv/secrets:ro
     healthcheck:
+      <<: *health
       test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=3).status == 200 else 1)"]
-      interval: 10s
-      timeout: 5s
-      retries: 6
-      start_period: 40s
+    deploy:
+      replicas: 1
+      resources:
+        limits:
+          cpus: "0.50"
+          memory: 384M
 
 volumes:
   pgdata:

@@ -11,6 +11,7 @@ from ..constants import CounterStatus, OfferStatus
 from ..constants import OrderStatus as S
 from ..models import CounterOffer, Order, OrderOffer, User, utcnow
 from ..serializers import _pickup_km, driver_card, dt, money
+from . import wakeup
 from .estimate import order_estimate
 from .notifications import notify
 
@@ -81,6 +82,7 @@ async def create_counter(db: AsyncSession, offer: OrderOffer, driver: User, perc
                      status=CounterStatus.PENDING, created_at=now, expires_at=now + timedelta(seconds=cfg["counter_ttl_seconds"]))
     offer.offer_status = OfferStatus.COUNTERED
     db.add(c)
+    wakeup.dispatch.at(c.expires_at.timestamp() + 0.2)
     await db.flush()
     price = new_estimate(order, percent)
     if kind == "ACCEPT":

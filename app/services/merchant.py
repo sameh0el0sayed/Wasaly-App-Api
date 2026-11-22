@@ -6,17 +6,17 @@ import ipaddress
 import json
 import logging
 import uuid
-from datetime import timedelta
+from datetime import UTC, timedelta
 from urllib.parse import urlparse
 
 import httpx
-from sqlalchemy import select
+from sqlalchemy import func, select
 
 from ..constants import OrderStatus as S
 from ..database import SessionLocal
 from ..models import Merchant, MerchantDelivery, MerchantWebhookEvent, Order, User, Vehicle, utcnow
 from ..security import decrypt
-from . import events
+from . import events, wakeup
 
 log = logging.getLogger("merchant")
 BACKOFF = [60, 300, 1800, 7200]  # seconds: retry after 1m, 5m, 30m, 2h, then FAILED
@@ -104,6 +104,7 @@ async def _on_order_status(ev: events.OrderStatusChanged) -> None:
         md.last_status = new
         db.add(MerchantWebhookEvent(id=str(uuid.uuid4()), delivery_id=md.id, raw_status=ev.new_status))
         await db.commit()
+    wakeup.webhooks.soon()
 
 
 async def queue_quote_event(db, q) -> None:
@@ -111,6 +112,7 @@ async def queue_quote_event(db, q) -> None:
     r = q.request or {}
     if r.get("webhook_url") and r.get("merchant_id"):
         db.add(MerchantWebhookEvent(id=str(uuid.uuid4()), merchant_id=r["merchant_id"], quote_id=q.id, webhook_url=r["webhook_url"], raw_status="QUOTE_PRICED"))
+        wakeup.webhooks.soon(1, 5)  # caller commits later
 
 
 async def _send(db, ev: MerchantWebhookEvent) -> None:
@@ -161,6 +163,11 @@ async def webhook_loop() -> None:
                 for ev in rows:
                     await _send(db, ev)
                 await db.commit()
+                nxt = 0.0 if len(rows) == 20 else (await db.execute(select(func.min(MerchantWebhookEvent.next_attempt_at)).where(
+                    MerchantWebhookEvent.state == "PENDING"))).scalar()
+            if nxt:  # full batch (0.0) -> next batch right away; else sleep until the next retry is due (max 30 s, woken on new events)
+                nxt = nxt.replace(tzinfo=nxt.tzinfo or UTC).timestamp()
+            await wakeup.webhooks.sleep(nxt)
         except Exception:  # noqa: BLE001
             log.exception("merchant webhook loop error")
-        await asyncio.sleep(3)
+            await asyncio.sleep(30)

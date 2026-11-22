@@ -96,32 +96,45 @@ async def bootstrap() -> None:
         await seed_demo(db)
 
 
+def _night_window() -> bool:
+    """02:00-05:00 Asia/Bahrain: heavy batch jobs (fraud scan, analytics cleanup, monthly statements) run only then."""
+    from zoneinfo import ZoneInfo
+    return 2 <= utcnow().astimezone(ZoneInfo(settings.timezone)).hour < 5
+
+
 async def background_loop() -> None:
-    last_warn = 0.0
+    """Idles 30 s; wakes exactly at the nearest offer / counter-offer expiry (services.wakeup) so 10 s offers stay exact."""
+    from .services import wakeup
+    from .services.dispatch import next_deadline
+    last_warn = last_docs = 0.0
     while True:
+        deadline = None
         try:
             async with SessionLocal() as db:
                 await expire_offers_and_orders(db)
                 warn = time.time() - last_warn > 3600
-                await enforce_driver_documents(db, warn=warn)
-                await activity_sweep(db)
-                if warn:  # hourly checks; each runs once a day
-                    from .routers.v14 import cleanup_events
+                if warn or time.time() - last_docs > 300:  # expired documents -> offline every 5 min; expiry warnings hourly
+                    await enforce_driver_documents(db, warn=warn)
+                    last_docs = time.time()
+                if warn:  # hourly; each job below runs once a day / month by its own key
                     from .services.license import daily_job
                     await daily_job(db)
-                    await cleanup_events(db)
-                    from .routers.v20 import monthly_job
-                    await monthly_job(db)
-                    from .services.fraud import scan as fraud_scan
-                    await fraud_scan(db)
-                if warn:  # hourly
+                    if _night_window():
+                        from .routers.v14 import cleanup_events
+                        await cleanup_events(db)
+                        from .routers.v20 import monthly_job
+                        await monthly_job(db)
+                        from .services.fraud import scan as fraud_scan
+                        await fraud_scan(db)
                     await subscriptions_sweep(db)
+                await activity_sweep(db)
                 await db.commit()
                 if warn:
                     last_warn = time.time()
+                deadline = await next_deadline(db)
         except Exception:  # noqa
             log.exception("background loop error")
-        await asyncio.sleep(2)
+        await wakeup.dispatch.sleep(deadline)
 
 
 @asynccontextmanager

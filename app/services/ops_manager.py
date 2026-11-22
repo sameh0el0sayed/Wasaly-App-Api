@@ -127,7 +127,7 @@ async def ops_loop() -> None:
             async with SessionLocal() as db:
                 n = len(await scan(db))
                 last = (await db.execute(select(func.max(OpsReport.created_at)))).scalar_one()
-                if not last or (utcnow() - last) > timedelta(hours=24) and datetime.now(UTC).hour >= 3:  # daily report ~06:00 Bahrain
+                if not last or (utcnow() - last) > timedelta(hours=20) and 2 <= (datetime.now(UTC).hour + 3) % 24 < 5:  # daily report in the 02:00-05:00 Bahrain night window
                     r = await build_report(db, 24)
                     db.add(OpsReport(period_start=r["start"], period_end=r["end"], metrics=r["metrics"], text_ar=r["text"]))
                 await db.commit()

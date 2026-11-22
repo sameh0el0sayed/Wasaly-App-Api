@@ -2,14 +2,14 @@
 import logging
 from datetime import UTC, date, datetime, timedelta
 
-from sqlalchemy import and_, or_, select, update
+from sqlalchemy import and_, func, or_, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..config import settings
 from ..constants import AccountStatus, CounterStatus, OfferStatus, ReviewStatus
 from ..constants import OrderStatus as S
 from ..models import CounterOffer, DriverProfile, DriverServiceArea, DriverWorkSession, Notification, Order, OrderOffer, User, utcnow
-from . import cache, settings_service
+from . import cache, settings_service, wakeup
 from .notifications import notify
 from .orders import close_pending_counters, close_pending_offers, transition
 
@@ -162,9 +162,18 @@ async def dispatch_order(db: AsyncSession, order: Order) -> int:
     for d in drivers:
         db.add(OrderOffer(order_id=order.id, driver_id=d.id, offered_at=now, expires_at=exp))
         await notify(db, d.id, "NEW_OFFER", "طلب جديد", f"طلب جديد من {order.pickup_address}", order.id)
+    wakeup.dispatch.at(exp.timestamp() + 0.2)  # expire exactly at the TTL (background loop idles 30 s otherwise)
     if order.order_status != S.OFFERED:
         await transition(db, order, S.OFFERED, None, "SYSTEM", f"Offered to {len(drivers)} driver(s)")
     return len(drivers)
+
+
+async def next_deadline(db: AsyncSession) -> float | None:
+    """Unix time of the nearest PENDING offer / counter-offer expiry (None = nothing time-critical)."""
+    a = (await db.execute(select(func.min(OrderOffer.expires_at)).where(OrderOffer.offer_status == OfferStatus.PENDING))).scalar()
+    b = (await db.execute(select(func.min(CounterOffer.expires_at)).where(CounterOffer.status == CounterStatus.PENDING))).scalar()
+    ts = [(t if t.tzinfo else t.replace(tzinfo=UTC)).timestamp() + 0.2 for t in (a, b) if t]
+    return min(ts) if ts else None
 
 
 async def expire_offers_and_orders(db: AsyncSession) -> None:

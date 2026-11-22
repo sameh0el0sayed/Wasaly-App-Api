@@ -5,3 +5,10 @@ storage/
 __pycache__/
 .pytest_cache/
 tests/
+.git/
+.github/
+backups/
+docs/
+*.before-*
+*.sql
+*.sql.gz
