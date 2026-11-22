@@ -341,6 +341,10 @@ async def login(body: LoginIn, request: Request, db: AsyncSession = Depends(get_
         raise HTTPException(403, {"code": "ACCOUNT_BANNED", "message": "تم حظر هذا الحساب نهائيًا", "reason": user.status_reason})
     if not user.phone_verified:
         raise HTTPException(403, {"code": "PHONE_NOT_VERIFIED", "message": "Verify your phone through WhatsApp first"})
+    if user.role not in Role.ADMINS:
+        from ..services import command as _cmd
+        if _cmd.maint.get("mode") == "emergency":
+            raise HTTPException(403, {"code": "EMERGENCY_LOCKDOWN", "message": "النظام في وضع الطوارئ"})
     if user.role in Role.ADMINS:  # admin panel is Phoenix ID only while SSO is on (customers/drivers keep phone+password for now)
         from ..services import phoenix_id as _pid
         allowed, _why = await _pid.local_login_state()

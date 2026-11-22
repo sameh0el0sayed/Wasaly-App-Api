@@ -601,6 +601,36 @@ async def maintenance(request: Request, a: User = Depends(actor_dep), db: AsyncS
     return {"enabled": b["enabled"], "message": (await settings_service.get_all(db))["maintenance_message"]}
 
 
+WIRE_MODES = {"normal": "normal", "stopped": "stopped", "stop": "stopped", "disabled": "stopped", "maintenance": "maintenance",
+              "payments_frozen": "payments_frozen", "payments_off": "payments_frozen", "emergency": "emergency"}
+
+
+@router.get("/mode")
+async def get_mode(a: User = Depends(actor_dep), db: AsyncSession = Depends(get_db)):
+    s = await settings_service.get_all(db)
+    return {"mode": s.get("system_mode", "normal"), "message": s["maintenance_message"]}
+
+
+@router.put("/mode")
+async def set_mode(request: Request, a: User = Depends(actor_dep), db: AsyncSession = Depends(get_db)):
+    """PCC control deck. normal | stopped (503 for users) | maintenance | payments_frozen (no new payments) | emergency (read-only, payments frozen,
+    customer/driver sessions revoked, only admins sign in). Admin, health and control endpoints always keep working."""
+    b = await body_json(request)
+    mode = WIRE_MODES.get(str(b.get("mode") or "").strip().lower())
+    if not mode:
+        raise HTTPException(422, {"code": "UNKNOWN_MODE", "allowed": sorted(set(WIRE_MODES.values()))})
+    await settings_service.set_value(db, "system_mode", mode, a.id)
+    await settings_service.set_value(db, "maintenance_mode", "true" if mode == "maintenance" else "false", a.id)
+    await settings_service.set_value(db, "maintenance_message", str(b.get("message") or "")[:300], a.id)
+    if mode == "emergency":  # revoke every non-admin session
+        from sqlalchemy import update
+        await db.execute(update(User).where(User.role.notin_(list(Role.ADMINS))).values(token_version=User.token_version + 1))
+    pcc_audit(db, a, "SYSTEM_MODE", "settings", "system_mode", details={"mode": mode})
+    await db.commit()
+    command.maint["at"] = 0.0
+    return {"mode": mode, "message": str(b.get("message") or "")[:300]}
+
+
 # ---------------------------------------------------------------- logs / audit / tickets ----------
 @router.get("/logs")
 async def logs(level: str = "error", limit: int = 200):

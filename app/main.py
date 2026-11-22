@@ -251,7 +251,7 @@ async def _maintenance_state() -> tuple[bool, str]:
         try:
             async with SessionLocal() as s:
                 cfg = await settings_service.get_all(s)
-            command.maint.update(at=time.time(), on=cfg["maintenance_mode"] == "true", msg=cfg["maintenance_message"])
+            command.maint.update(at=time.time(), on=cfg["maintenance_mode"] == "true", msg=cfg["maintenance_message"], mode=cfg.get("system_mode", "normal"))
         except Exception:  # noqa: BLE001 - never block traffic because the flag could not be read
             command.maint["at"] = time.time()
     return command.maint["on"], command.maint["msg"]
@@ -269,6 +269,14 @@ async def request_id_middleware(request: Request, call_next):
     path = request.url.path
     if not any(x in path for x in _MAINT_OPEN) and request.method != "OPTIONS":
         on, msg = await _maintenance_state()
+        mode = command.maint["mode"]
+        if mode == "stopped":
+            return JSONResponse({"detail": msg or "الخدمة متوقفة", "stopped": True}, status_code=503)
+        if mode == "emergency" and request.method not in ("GET", "HEAD") and not any(x in path for x in ("/api/auth", "/auth/phoenix-id")):
+            return JSONResponse({"detail": msg or "النظام في وضع الطوارئ (قراءة فقط)", "code": "EMERGENCY_READ_ONLY"}, status_code=503)
+        if mode in ("payments_frozen", "emergency") and request.method == "POST" and path.startswith("/api/payments/") \
+                and path.endswith(("/tap", "/benefit", "/benefitpay")):
+            return JSONResponse({"detail": msg or "الدفع متوقف مؤقتًا", "code": "PAYMENTS_FROZEN"}, status_code=503)
         if on:
             return JSONResponse({"detail": msg or "الخدمة متوقفة مؤقتًا للصيانة", "maintenance": True}, status_code=503)
     try:

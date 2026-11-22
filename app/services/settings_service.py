@@ -79,6 +79,7 @@ DEFAULTS = {
     "support_phone": "",
     "support_whatsapp": "",
     "support_email": "",
+    "system_mode": "normal",  # PCC control deck: normal | stopped | maintenance | payments_frozen | emergency
     "maintenance_mode": "false",  # true = new orders are refused with 503 MAINTENANCE_MODE
     "maintenance_message": "",
     "min_app_version_android": "1.0.0",  # apps older than this must show the update screen
