@@ -44,7 +44,7 @@ def app_out(a: DriverApplication | None) -> dict | None:
 async def switch_role(body: SwitchIn, user: User = Depends(current_user), db: AsyncSession = Depends(get_db)):
     held_admin = ({user.role} | set(user.roles or [])) & Role.ADMINS  # admin roles this account really holds (server-written only)
     s = await settings_service.get_all(db)
-    if s["role_switch_enabled"] != "true" and body.role not in Role.ADMINS:  # going back to the admin role is always allowed
+    if s["role_switch_enabled"] != "true" and body.role not in Role.ADMINS and not held_admin:  # admins can always switch admin <-> customer (web); the global switch limits customers/drivers only
         raise HTTPException(403, {"code": "ROLE_SWITCH_DISABLED"})
     if body.role == user.role:
         raise HTTPException(422, {"code": "SAME_ROLE"})
