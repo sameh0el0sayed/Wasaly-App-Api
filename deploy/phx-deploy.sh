@@ -11,6 +11,7 @@
 set -euo pipefail
 START=$(date +%s)
 DIR=/opt/wasaly-api
+export COMPOSE_PROJECT_NAME=wasaly-api COMPOSE_FILE=docker-compose.yml   # exact project and file; never a dev/root compose file
 REPO=sameh0el0sayed/Wasaly-App-Api
 BRANCH=master
 HEALTH=https://phoenixsystems.online/wasaly-api/health

@@ -1,4 +1,5 @@
 # Shared server: 1 CPU / 3.8 GB. Every service is capped (PCC guard stops overloads); healthchecks every 30 s; logs rotated.
+name: wasaly-api  # pinned compose project: never create another project/db/volume for this system
 x-logging: &logging
   driver: json-file
   options:
