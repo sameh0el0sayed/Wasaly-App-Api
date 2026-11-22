@@ -36,8 +36,6 @@ services:
       - "127.0.0.1:8003:8000"
     environment:
       REDIS_URL: redis://redis:6379/0
-      # self-hosted OSRM container; the API falls back to raw GPS when it is unreachable
-      OSRM_BASE_URL: http://osrm:5000
     depends_on:
       db:
         condition: service_healthy
@@ -52,27 +50,5 @@ services:
       retries: 6
       start_period: 40s
 
-  # Self-hosted OSRM (OpenStreetMap Bahrain). Free, open-source, no per-request charge.
-  # The Geofabrik extract is downloaded at image build time (separate curl stage); first start builds the graph into the osrmdata volume.
-  osrm:
-    build:
-      context: ./docker/osrm
-      args:
-        OSM_REGION_URL: https://download.geofabrik.de/asia/gcc-states-latest.osm.pbf
-        BBOX: "50.3,25.5,50.9,26.4"  # Bahrain, clipped at build time
-    image: wasaly-osrm:stable  # named tag so 'docker image prune' never removes it
-    restart: unless-stopped
-    volumes:
-      - osrmdata:/data
-    ports:
-      - "127.0.0.1:5000:5000"
-    healthcheck:
-      test: ["CMD", "bash", "-c", "echo > /dev/tcp/127.0.0.1/5000"]
-      interval: 10s
-      timeout: 3s
-      retries: 12
-      start_period: 120s  # data already built: loading takes seconds; the very first graph build runs before routed starts, see deploy/phx-deploy.sh
-
 volumes:
   pgdata:
-  osrmdata:
