@@ -260,8 +260,9 @@ cell). `GET /api/orders/{id}/driver-location` returns the matched position with 
 
 ### OSRM deployment (existing VPS, Docker)
 
-`docker-compose.yml` has an `osrm` service (`docker/osrm`). On first start it downloads
-`https://download.geofabrik.de/asia/bahrain-latest.osm.pbf`, runs `osrm-extract -p /opt/car.lua` and
+`docker-compose.yml` has an `osrm` service (`docker/osrm`). At image build it downloads
+`https://download.openstreetmap.fr/extracts/asia/bahrain-latest.osm.pbf` (fallback: Geofabrik
+`asia/gcc-states/gcc-states-latest.osm.pbf`, clipped to Bahrain); on first start it runs `osrm-extract -p /opt/car.lua` and
 `osrm-contract`, stores the graph in the `osrmdata` volume and serves it on `127.0.0.1:5000`
 (in-container port 5000). Restarts reuse the volume. Set in `.env`:
 
@@ -272,7 +273,7 @@ ETA_ENABLED=true
 ```
 
 Bare-metal alternative (no Docker): `sudo apt-get install -y osrm-backend` then
-`sudo ./scripts/osrm_setup.sh` (same Geofabrik extract, same pipeline). The API falls back to raw
+`sudo ./scripts/osrm_setup.sh` (same Bahrain extract, same pipeline). The API falls back to raw
 GPS whenever OSRM is unreachable, so a missing/failed OSRM container never blocks the app.
 
 Configuration (`.env.example`): `MAP_MATCHING_ENABLED`, `OSRM_BASE_URL`, `OSRM_TIMEOUT_SECONDS`,

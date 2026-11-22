@@ -9,7 +9,7 @@
 set -euo pipefail
 
 DATA_DIR="${OSRM_DATA_DIR:-/var/lib/osrm}"
-PBF_URL="${OSM_REGION_URL:-https://download.geofabrik.de/asia/bahrain-latest.osm.pbf}"
+PBF_URL="${OSM_REGION_URL:-https://download.openstreetmap.fr/extracts/asia/bahrain-latest.osm.pbf}"
 PBF="$DATA_DIR/bahrain.osm.pbf"
 PORT="${PORT:-5000}"
 
