@@ -52,7 +52,8 @@ async def app_config(db: AsyncSession = Depends(get_db)):
     """Public (no login). The app calls this at start-up: maintenance, forced update, support contacts, feature switches."""
     s = await settings_service.get_all(db)
     p = await settings_service.get_pricing(db)
-    return {"maintenance": s["maintenance_mode"] == "true", "maintenance_message": s["maintenance_message"],
+    return {"system_mode": s.get("system_mode", "normal"), "payments_frozen": s.get("system_mode") in ("payments_frozen", "emergency"),
+            "maintenance": s["maintenance_mode"] == "true", "maintenance_message": s["maintenance_message"],
             "min_app_version": s["min_app_version"], "latest_app_version": s["latest_app_version"], "update_message": s["update_message"],
             "support": {"phone": s["support_phone"], "whatsapp": s["support_whatsapp"], "email": s["support_email"]},
             "offer_timeout_seconds": int(s["offer_ttl_seconds"]),
