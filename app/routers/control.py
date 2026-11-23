@@ -29,7 +29,7 @@ from ..models import (
 )
 from ..schemas import ReasonIn, ReinstateIn, SettingsPatch
 from ..security import encrypt
-from ..services import command, settings_service
+from ..services import command, modes, settings_service
 from ..services.audit import audit
 from ..services.notifications import notify
 from ..services.payments import finalize_paid
@@ -601,34 +601,31 @@ async def maintenance(request: Request, a: User = Depends(actor_dep), db: AsyncS
     return {"enabled": b["enabled"], "message": (await settings_service.get_all(db))["maintenance_message"]}
 
 
-WIRE_MODES = {"normal": "normal", "stopped": "stopped", "stop": "stopped", "disabled": "stopped", "maintenance": "maintenance",
-              "payments_frozen": "payments_frozen", "payments_off": "payments_frozen", "emergency": "emergency"}
-
-
 @router.get("/mode")
 async def get_mode(a: User = Depends(actor_dep), db: AsyncSession = Depends(get_db)):
     s = await settings_service.get_all(db)
-    return {"mode": s.get("system_mode", "normal"), "message": s["maintenance_message"]}
+    return {"ok": True, "mode": modes.normalize(s.get("system_mode")) or "normal", "message": s["maintenance_message"]}
 
 
-@router.put("/mode")
+@router.api_route("/mode", methods=["PUT", "POST"])
 async def set_mode(request: Request, a: User = Depends(actor_dep), db: AsyncSession = Depends(get_db)):
-    """PCC control deck. normal | stopped (503 for users) | maintenance | payments_frozen (no new payments) | emergency (read-only, payments frozen,
-    customer/driver sessions revoked, only admins sign in). Admin, health and control endpoints always keep working."""
+    """PCC control deck (stored in the database, effective within 5 s on every worker). normal | stopped | maintenance | payments_frozen |
+    emergency. See app/services/modes.py for exactly what each mode refuses."""
     b = await body_json(request)
-    mode = WIRE_MODES.get(str(b.get("mode") or "").strip().lower())
+    mode = modes.normalize(b.get("mode"))
     if not mode:
-        raise HTTPException(422, {"code": "UNKNOWN_MODE", "allowed": sorted(set(WIRE_MODES.values()))})
+        raise HTTPException(422, {"code": "UNKNOWN_MODE", "allowed": list(modes.MODES)})
     await settings_service.set_value(db, "system_mode", mode, a.id)
     await settings_service.set_value(db, "maintenance_mode", "true" if mode == "maintenance" else "false", a.id)
     await settings_service.set_value(db, "maintenance_message", str(b.get("message") or "")[:300], a.id)
-    if mode == "emergency":  # revoke every non-admin session
+    if mode == "emergency":  # revoke every non-admin session (access and refresh tokens are tied to token_version)
         from sqlalchemy import update
         await db.execute(update(User).where(User.role.notin_(list(Role.ADMINS))).values(token_version=User.token_version + 1))
     pcc_audit(db, a, "SYSTEM_MODE", "settings", "system_mode", details={"mode": mode})
     await db.commit()
+    modes.invalidate()
     command.maint["at"] = 0.0
-    return {"mode": mode, "message": str(b.get("message") or "")[:300]}
+    return {"ok": True, "applied": True, "mode": mode, "message": str(b.get("message") or "")[:300]}
 
 
 # ---------------------------------------------------------------- logs / audit / tickets ----------

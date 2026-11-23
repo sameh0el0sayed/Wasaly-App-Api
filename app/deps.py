@@ -42,6 +42,8 @@ async def current_user(creds: HTTPAuthorizationCredentials | None = Depends(bear
     user = await db.get(User, int(data["sub"]))
     if not user or user.token_version != data.get("tv"):
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, {"code": "UNAUTHORIZED", "message": "Session is no longer valid"})
+    from .services import modes
+    await modes.deny_end_user(user)  # emergency lockdown: only admins keep a session
     await touch_last_seen(user)
     return user
 

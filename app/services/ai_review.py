@@ -661,6 +661,10 @@ async def review_loop() -> None:
     last_work = loop.time()
     next_review = loop.time()
     while True:
+        from . import modes as _modes
+        if await _modes.emergency():  # emergency: background jobs are paused
+            await asyncio.sleep(10)
+            continue
         remaining = max(0, int(next_review - loop.time()))
         if remaining == 0:
             result = await run_review_cycle()

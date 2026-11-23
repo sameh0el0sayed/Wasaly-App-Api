@@ -148,6 +148,9 @@ async def login_verify(body: LoginVerifyIn, request: Request, db: AsyncSession =
     if not p:
         raise HTTPException(404, {"code": "PASSKEY_NOT_FOUND"})
     user = await db.get(User, p.user_id)
+    from ..services import modes as _modes
+    if user:
+        await _modes.deny_end_user(user)
     if not user:
         raise HTTPException(404, {"code": "PASSKEY_NOT_FOUND"})
     if user.locked_until and user.locked_until > utcnow():

@@ -62,6 +62,9 @@ async def apply_wallet(db: AsyncSession, pay: Payment) -> None:
     """Uses the customer's wallet balance first. A fully covered payment is settled at once (method WALLET)."""
     if pay.kind != "ORDER":
         return
+    from . import modes
+    if await modes.frozen():  # payments frozen: the wallet must not settle anything either
+        return
     if (await settings_service.get_all(db))["wallet_auto_apply"] != "true":
         return
     from ..models import WalletEntry

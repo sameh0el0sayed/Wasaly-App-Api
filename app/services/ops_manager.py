@@ -123,6 +123,10 @@ async def build_report(db, hours: int = 24) -> dict:
 async def ops_loop() -> None:
     await asyncio.sleep(30)
     while True:
+        from . import modes as _modes
+        if await _modes.emergency():  # emergency: background jobs are paused
+            await asyncio.sleep(10)
+            continue
         try:
             async with SessionLocal() as db:
                 n = len(await scan(db))

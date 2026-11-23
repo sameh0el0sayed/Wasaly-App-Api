@@ -155,6 +155,10 @@ async def _send(db, ev: MerchantWebhookEvent) -> None:
 
 async def webhook_loop() -> None:
     while True:
+        from . import modes as _modes
+        if await _modes.emergency():  # emergency: background jobs are paused
+            await asyncio.sleep(10)
+            continue
         try:
             async with SessionLocal() as db:
                 rows = (await db.execute(select(MerchantWebhookEvent).where(

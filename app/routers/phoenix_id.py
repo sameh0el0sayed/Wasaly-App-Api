@@ -185,6 +185,8 @@ async def _login(access_token: str, device_id, request: Request, db: AsyncSessio
             user, how = cand, "verified_phone"
     if not user:  # valid Phoenix ID token: create the local user from the claims (profile details are collected inside the app later)
         user, how = await _create_from_claims(db, claims, info), "auto_created"
+    from ..services import modes as _modes
+    await _modes.deny_end_user(user)
     if user.account_status in ("DELETED", "BANNED"):
         raise HTTPException(403, {"code": "ACCOUNT_" + user.account_status, "reason": user.status_reason})
     _check_role(user, claims)
