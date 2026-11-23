@@ -395,6 +395,8 @@ class ServiceCategory(BaseModel):
     key: str = Field(pattern=r"^[A-Z0-9_]{2,30}$")
     title_ar: str = Field(min_length=1, max_length=60)
     title_en: str = Field(min_length=1, max_length=60)
+    subtitle_ar: str | None = Field(default=None, max_length=80)  # one short line under the home tile title
+    subtitle_en: str | None = Field(default=None, max_length=80)
     icon: str = Field(min_length=1, max_length=40)
     color: str = Field(pattern=_HEX)
     prefill: dict = {}

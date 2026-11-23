@@ -10783,5 +10783,50 @@
   "key": "v47.mode.emergency_banner",
   "ar": "وضع الطوارئ: النظام للقراءة فقط",
   "en": "Emergency mode: the system is read-only"
+ },
+ {
+  "key": "v48.dash.vs_yesterday",
+  "ar": "عن أمس",
+  "en": "vs yesterday"
+ },
+ {
+  "key": "v48.dash.searching",
+  "ar": "{0} تبحث عن سائق",
+  "en": "{0} searching for a driver"
+ },
+ {
+  "key": "v48.dash.numbers",
+  "ar": "أرقام اليوم",
+  "en": "Today's numbers"
+ },
+ {
+  "key": "v48.dash.attention",
+  "ar": "يحتاج انتباهك",
+  "en": "Needs your attention"
+ },
+ {
+  "key": "v48.home.hello",
+  "ar": "أهلًا 👋",
+  "en": "Hello 👋"
+ },
+ {
+  "key": "v48.home.hello_name",
+  "ar": "أهلًا {0} 👋",
+  "en": "Hello {0} 👋"
+ },
+ {
+  "key": "v48.home.where_to",
+  "ar": "إلى أين؟",
+  "en": "Where to?"
+ },
+ {
+  "key": "v48.home.services",
+  "ar": "الخدمات",
+  "en": "Services"
+ },
+ {
+  "key": "v48.home.wallet",
+  "ar": "محفظة وصلي",
+  "en": "Wasaly wallet"
  }
 ]

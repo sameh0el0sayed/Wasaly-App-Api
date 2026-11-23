@@ -25,7 +25,29 @@ async def dashboard(admin: User = Depends(admin_user), db: AsyncSession = Depend
         return (await db.execute(q)).scalar_one()
     today_start = datetime.now(ZoneInfo(settings.timezone)).replace(hour=0, minute=0, second=0, microsecond=0).astimezone(UTC)
     U, O = User, Order
+    tz = ZoneInfo(settings.timezone)
+    day0 = today_start.astimezone(tz).date()
+    week_start = (today_start.astimezone(tz) - timedelta(days=6)).astimezone(UTC)
+    done = (await db.execute(select(O.completed_at, O.final_price, O.commission, O.currency, O.currency_decimals).where(
+        O.order_status == S.COMPLETED, O.completed_at >= week_start))).all()
+    rev, cnt, prof = [0.0] * 7, [0] * 7, [0.0] * 7  # last 7 local days, oldest first, today last
+    yest: dict = {}
+    for at, price, comm, cur, dec in done:
+        i = 6 - (day0 - at.astimezone(tz).date()).days
+        if 0 <= i <= 6:
+            rev[i] += float(price or 0)
+            cnt[i] += 1
+            prof[i] += float(comm or 0)
+        if i == 5:
+            y = yest.setdefault(cur, [0.0, 0.0, dec])
+            y[0] += float(price or 0)
+            y[1] += float(comm or 0)
     return {
+        "revenue_yesterday": {c: money(v[0], v[2]) for c, v in yest.items()},
+        "company_profit_yesterday": {c: money(v[1], v[2]) for c, v in yest.items()},
+        "orders_yesterday": cnt[5],
+        "orders_searching": await count(select(func.count()).select_from(O).where(O.order_status.in_(S.SEARCHING))),
+        "series": {"revenue": [round(x, 3) for x in rev], "orders": cnt, "profit": [round(x, 3) for x in prof]},
         "customers_total": await count(select(func.count()).select_from(U).where(U.role == Role.CUSTOMER)),
         "customers_pending": await count(select(func.count()).select_from(U).where(U.role == Role.CUSTOMER, U.account_status == AccountStatus.PENDING_APPROVAL)),
         "drivers_approved": await count(select(func.count()).select_from(U).where(U.id.in_(select(DriverProfile.user_id)), U.account_status == AccountStatus.APPROVED)),
