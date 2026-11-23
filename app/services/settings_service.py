@@ -114,6 +114,7 @@ DEFAULTS = {
     "scheduled_min_minutes_ahead": "30",
     "scheduled_max_days_ahead": "7",
     "scheduled_dispatch_minutes_before": "20",
+    "merchant_pickup_lead_min": "8",  # early dispatch: the driver is requested this many minutes before the food is ready
     "stops_enabled": "true",
     "max_extra_stops": "3",
     "stop_fee": "0.200",

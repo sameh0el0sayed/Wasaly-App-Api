@@ -1018,6 +1018,10 @@ class MerchantDelivery(Base):
     order_total: Mapped[str | None] = mapped_column(String(20), nullable=True)
     quoted_price: Mapped[str | None] = mapped_column(String(20), nullable=True)
     last_status: Mapped[str] = mapped_column(String(20), default="searching")
+    ready_at: Mapped[datetime | None] = mapped_column(UTCDateTime, nullable=True)  # when the food is/was ready (early dispatch)
+    is_ready: Mapped[bool] = mapped_column(Boolean, default=False)
+    cancel_fee: Mapped[str | None] = mapped_column(String(20), nullable=True)  # fee charged for a cancellation after a driver was assigned
+    cancel_fee_payer: Mapped[str | None] = mapped_column(String(10), nullable=True)  # merchant | customer
     created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
 
 

@@ -1,4 +1,5 @@
 import json
+from contextvars import ContextVar
 from decimal import Decimal
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -159,6 +160,9 @@ async def _with_my_rating(db: AsyncSession, o: Order, user: User) -> dict:
     return d
 
 
+hold_until_var: ContextVar = ContextVar("hold_until", default=None)  # merchant early dispatch: keep the order SCHEDULED (no fee) until this time
+
+
 def _check_schedule(s: dict, at) -> None:
     from datetime import UTC, timedelta
     if s["scheduled_enabled"] != "true":
@@ -275,6 +279,10 @@ async def create_order(body: OrderCreateIn, user: User = Depends(customer_user),
         pickup=(body.pickup_latitude, body.pickup_longitude) if body.pickup_latitude is not None else None,
         destination=(body.destination_latitude, body.destination_longitude))
     sched_at = None
+    sched_fee = 0
+    hold = hold_until_var.get()
+    if hold and not body.scheduled_at:
+        sched_at = hold
     if body.scheduled_at:
         _check_schedule(s_all, body.scheduled_at)
         from datetime import UTC

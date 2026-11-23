@@ -1,7 +1,7 @@
 """Merchant delivery API: businesses (Phoenix POS restaurants) request Wasaly drivers; status pushed back by signed webhook."""
 import secrets
 import uuid
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Request
@@ -17,11 +17,13 @@ from ..models import DriverProfile, Merchant, MerchantDelivery, MerchantKey, Ord
 from ..schemas import EstimateIn, OrderCreateIn
 from ..security import decrypt, encrypt, hash_password
 from ..services import merchant as M
+from ..services import settings_service
 from ..services.audit import audit
+from ..services.dispatch import dispatch_order
 from ..services.notifications import notify
 from ..services.orders import close_pending_offers, load_order, transition
 from ..services.ratelimit import _hit, limit
-from .orders import create_order, estimate
+from .orders import create_order, customer_cancel_fee, estimate, hold_until_var
 from .services_v30 import QuoteIn, accept_quote, create_quote, get_quote
 
 admin_router = APIRouter(prefix="/api/v1/admin", tags=["merchant-admin"])
@@ -190,7 +192,14 @@ async def merchant_invoice(mid: str, month: str, admin: User = Depends(admin_use
         x = sub.setdefault(k, {"sub_merchant_ref": d.sub_merchant_ref, "name": d.sub_merchant_name, "count": 0, "total": Decimal(0)})
         x["count"] += 1
         x["total"] += o.customer_total or Decimal(0)
+    cf = (await db.execute(select(Order, MerchantDelivery).join(MerchantDelivery, MerchantDelivery.order_id == Order.id)
+                           .where(MerchantDelivery.merchant_id == mid, MerchantDelivery.cancel_fee.is_not(None),
+                                  Order.cancelled_at >= start, Order.cancelled_at < end).order_by(Order.cancelled_at))).all()
+    cf_total = sum((Decimal(d.cancel_fee) for _, d in cf), Decimal(0))
     return {"merchant": _m(m), "month": month, "count": len(rows), "currency": "BHD", "total": f"{total:.3f}",
+            "cancellation_fees_total": f"{cf_total:.3f}", "grand_total": f"{total + cf_total:.3f}",
+            "cancellation_fees": [{"delivery_id": d.id, "external_number": d.external_number, "sub_merchant_ref": d.sub_merchant_ref,
+                                   "fee": d.cancel_fee, "fee_payer": d.cancel_fee_payer, "cancelled_at": o.cancelled_at.isoformat()} for o, d in cf],
             "by_sub_merchant": [{**x, "total": f"{x['total']:.3f}"} for x in sub.values()],
             "items": [{"delivery_id": d.id, "external_number": d.external_number, "sub_merchant_ref": d.sub_merchant_ref, "completed_at": o.completed_at.isoformat(),
                        "fee": f"{(o.customer_total or 0):.3f}"} for o, d in rows]}
@@ -234,6 +243,7 @@ class DeliveryRequest(BaseModel):
     currency: str | None = Field(default="BHD", max_length=3)
     notes: str | None = Field(default=None, max_length=500)
     webhook_url: str | None = Field(default=None, max_length=500)
+    ready_at: datetime | None = None  # when the food will be ready (UTC): the driver is requested to arrive around then
 
 
 def _coords(r: DeliveryRequest) -> tuple[float, float, float, float]:
@@ -327,7 +337,18 @@ async def create_delivery(body: DeliveryRequest, request: Request, m: Merchant =
             choose_driver=False, client_request_id=f"m:{body.external_ref}"[:64] if not prev else None)
     except ValidationError as e:
         raise HTTPException(422, {"code": "INVALID_REQUEST", "message": str(e)[:300]}) from e
-    out = await create_order(oc, user, db)
+    hold = None
+    if body.ready_at:  # early dispatch: keep the order SCHEDULED (no schedule fee) until the driver should be requested
+        s_all = await settings_service.get_all(db)
+        ra = body.ready_at if body.ready_at.tzinfo else body.ready_at.replace(tzinfo=UTC)
+        dispatch_at = ra - timedelta(minutes=int(s_all["merchant_pickup_lead_min"]))
+        if dispatch_at > utcnow() + timedelta(minutes=1):
+            hold = dispatch_at + timedelta(minutes=int(s_all["scheduled_dispatch_minutes_before"]))  # the dispatch loop fires `lead` minutes before scheduled_at
+    token = hold_until_var.set(hold)
+    try:
+        out = await create_order(oc, user, db)
+    finally:
+        hold_until_var.reset(token)
     cp = custom_price(m, q["distance_km"])
     if cp is not None:  # negotiated price: fixed for the driver's completion (same mechanism as agreed service prices)
         (await load_order(db, out["id"])).agreed_price = cp
@@ -335,7 +356,8 @@ async def create_delivery(body: DeliveryRequest, request: Request, m: Merchant =
     md = MerchantDelivery(id=str(uuid.uuid4()), merchant_id=mid, order_id=out["id"], external_ref=body.external_ref,
                           sub_merchant_ref=body.sub_merchant_ref, sub_merchant_name=body.merchant_name,
                           external_number=body.external_number, webhook_url=body.webhook_url, items_summary=body.items_summary,
-                          order_total=str(body.order_total) if body.order_total is not None else None, quoted_price=q["estimated_total"])
+                          order_total=str(body.order_total) if body.order_total is not None else None, quoted_price=q["estimated_total"],
+                          ready_at=body.ready_at)
     db.add(md)
     await db.commit()
     return ok({"id": md.id, "status": "searching", "price": md.quoted_price, "currency": q["currency"], "tracking_url": None,
@@ -363,8 +385,58 @@ async def get_delivery(delivery_id: str, request: Request, m: Merchant = Depends
     return ok(await M.build_delivery(db, md))
 
 
+class ReadyIn(BaseModel):
+    ready_at: datetime | None = None
+
+
+@router.post("/deliveries/{delivery_id}/ready")
+async def delivery_ready(delivery_id: str, request: Request, body: ReadyIn | None = None, m: Merchant = Depends(merchant_auth), db: AsyncSession = Depends(get_db)):
+    """The food is ready now: tells the assigned driver, or releases a held (early-dispatch) order so it is offered to drivers right away."""
+    if _sbx(request):
+        return ok({"id": delivery_id, "status": _sbx_state(delivery_id)["status"]})
+    md = await _mine(db, m, delivery_id)
+    o = await load_order(db, md.order_id, for_update=True)
+    if o.order_status in S.FINAL:
+        return ok({"id": md.id, "status": M.final_status(o)})
+    md.is_ready, md.ready_at = True, ((body.ready_at if body else None) or utcnow())
+    if o.order_status == S.SCHEDULED:  # held until the driver should be requested: release now
+        o.scheduled_at = utcnow()
+        await dispatch_order(db, o)
+    elif o.driver_id and o.order_status in (S.ACCEPTED, S.DRIVER_ON_THE_WAY, S.ARRIVED_AT_PICKUP):
+        await notify(db, o.driver_id, "ORDER_READY", "الطلب جاهز", "الطلب جاهز للاستلام الآن.", o.id)
+    await db.commit()
+    return ok({"id": md.id, "status": M.final_status(o)})
+
+
+def _fee_view(o: Order, s: dict) -> tuple[Decimal, str | None]:
+    """Fee the merchant would pay if the delivery were cancelled now (only once a driver is assigned) and why."""
+    if not o.driver_id:
+        return Decimal(0), None
+    info = customer_cancel_fee(o, s)
+    if info["fee"] <= 0:
+        return Decimal(0), None
+    return info["fee"], "driver_at_pickup" if o.order_status == S.ARRIVED_AT_PICKUP else "driver_assigned"
+
+
+@router.get("/deliveries/{delivery_id}/cancel-quote")
+async def cancel_quote(delivery_id: str, request: Request, m: Merchant = Depends(merchant_auth), db: AsyncSession = Depends(get_db)):
+    """Fee that cancelling now would cost. No state change."""
+    if _sbx(request):
+        return ok({"fee": "0.000", "currency": "BHD", "reason": None})
+    md = await _mine(db, m, delivery_id)
+    o = await load_order(db, md.order_id)
+    if o.order_status in S.FINAL:
+        return ok({"fee": "0.000", "currency": o.currency, "reason": None})
+    if o.order_status in (S.IN_PROGRESS, S.ARRIVED_AT_DESTINATION):
+        raise HTTPException(409, {"code": "CANNOT_CANCEL"})
+    fee, reason = _fee_view(o, await settings_service.get_all(db))
+    return ok({"fee": f"{fee:.{o.currency_decimals}f}", "currency": o.currency, "reason": reason})
+
+
 class CancelIn(BaseModel):
     reason: str | None = Field(default=None, max_length=500)
+    fee_payer: str | None = Field(default=None, pattern="^(merchant|customer)$")  # required when the cancel fee is above 0
+    cancellation_fee: Decimal | None = None  # echoed from cancel-quote; the server re-checks it
 
 
 @router.post("/deliveries/{delivery_id}/cancel")
@@ -379,15 +451,27 @@ async def cancel_delivery(delivery_id: str, request: Request, body: CancelIn | N
         return ok({"id": md.id, "status": M.final_status(o)})
     if o.order_status in (S.IN_PROGRESS, S.ARRIVED_AT_DESTINATION):
         raise HTTPException(409, {"code": "CANNOT_CANCEL"})
+    fee, fee_reason = _fee_view(o, await settings_service.get_all(db))
+    if fee > 0:
+        if not (body and body.fee_payer):
+            raise HTTPException(409, {"code": "FEE_PAYER_REQUIRED", "fee": f"{fee:.{o.currency_decimals}f}", "currency": o.currency, "reason": fee_reason})
+        if body.cancellation_fee is not None and body.cancellation_fee.quantize(fee) != fee:  # the fee changed since the quote
+            raise HTTPException(409, {"code": "FEE_CHANGED", "fee": f"{fee:.{o.currency_decimals}f}", "currency": o.currency, "reason": fee_reason})
     reason = (body.reason if body else None) or "Cancelled by the merchant"
     had_driver = o.driver_id
     await close_pending_offers(db, o.id)
     o.cancelled_at, o.cancelled_by, o.cancelled_by_role, o.cancellation_reason = utcnow(), muser_id, Role.CUSTOMER, reason
+    if fee > 0:
+        md.cancel_fee, md.cancel_fee_payer = f"{fee:.{o.currency_decimals}f}", body.fee_payer
+        o.cancel_fee, o.cancel_fee_payer = fee, "CUSTOMER"  # billed on the merchant's monthly invoice (no per-order payment: it would block new deliveries)
     await transition(db, o, S.CANCELLED, muser_id, Role.CUSTOMER, reason)
     if had_driver:
         await notify(db, had_driver, "ORDER_CANCELLED", "تم إلغاء الطلب", "ألغت الجهة الطالبة الطلب.", o.id)
     await db.commit()
-    return ok({"id": md.id, "status": "cancelled"})
+    out = {"id": md.id, "status": "cancelled"}
+    if fee > 0:
+        out.update(cancellation_fee=md.cancel_fee, currency=o.currency, fee_payer=md.cancel_fee_payer)
+    return ok(out)
 
 
 class BatchIn(BaseModel):
