@@ -10768,5 +10768,20 @@
   "key": "traffic.notify_heavy_body",
   "ar": "قد تتأخر الرحلة {min} دقيقة بسبب {reason}",
   "en": "Your trip may be {min} min late due to {reason}"
+ },
+ {
+  "key": "v47.mode.payments_frozen",
+  "ar": "المدفوعات متوقفة مؤقتًا",
+  "en": "Payments are temporarily paused"
+ },
+ {
+  "key": "v47.mode.payments_frozen_body",
+  "ar": "لا يمكن إتمام أي عملية دفع الآن. حاول مرة أخرى بعد قليل.",
+  "en": "No payment can be completed right now. Please try again shortly."
+ },
+ {
+  "key": "v47.mode.emergency_banner",
+  "ar": "وضع الطوارئ: النظام للقراءة فقط",
+  "en": "Emergency mode: the system is read-only"
  }
 ]

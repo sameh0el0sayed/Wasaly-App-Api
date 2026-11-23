@@ -70,16 +70,21 @@ def is_money(method: str, path: str) -> bool:
     return method in ("POST", "PUT", "PATCH", "DELETE") and any(p.match(path) for p in MONEY_PATHS)
 
 
-def verdict(mode: str, method: str, path: str, msg: str):
+def _refuse(status: int, code: str, ar: str, en: str, custom: str, lang: str, **extra) -> JSONResponse:
+    """Same body shape as every other API error: {detail: {code, message}} (message in the request language, or PCC's own text)."""
+    return JSONResponse({"detail": {"code": code, "message": custom or (en if lang == "en" else ar), **extra}}, status_code=status)
+
+
+def verdict(mode: str, method: str, path: str, msg: str, lang: str = "ar"):
     """A JSONResponse that refuses the request in this mode, or None to let it through."""
     if mode == "normal" or method == "OPTIONS" or path.startswith(_OPEN):
         return None
     if mode in ("payments_frozen", "emergency") and is_money(method, path):
-        return JSONResponse({"detail": msg or "الدفع متوقف مؤقتًا", "code": "PAYMENTS_FROZEN"}, status_code=423)
+        return _refuse(423, "PAYMENTS_FROZEN", "المدفوعات متوقفة مؤقتًا", "Payments are temporarily paused", msg, lang)
     if mode == "stopped" and not path.startswith(_STOP_OPEN):
-        return JSONResponse({"detail": msg or "الخدمة متوقفة", "code": "SERVICE_STOPPED", "stopped": True}, status_code=503)
+        return _refuse(503, "SERVICE_STOPPED", "الخدمة متوقفة", "The service is stopped", msg, lang, stopped=True)
     if mode == "emergency" and method not in ("GET", "HEAD") and not path.startswith(_EM_OPEN):
-        return JSONResponse({"detail": msg or "النظام في وضع الطوارئ (قراءة فقط)", "code": "EMERGENCY_READ_ONLY"}, status_code=503)
+        return _refuse(503, "EMERGENCY_READ_ONLY", "وضع الطوارئ: النظام للقراءة فقط", "Emergency mode: the system is read-only", msg, lang)
     return None
 
 

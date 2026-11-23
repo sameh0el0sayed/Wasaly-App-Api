@@ -273,7 +273,7 @@ async def request_id_middleware(request: Request, call_next):
     path = request.url.path
     from .services import modes
     mode, mmsg = await modes.current()
-    refused = modes.verdict(mode, request.method, path, mmsg)
+    refused = modes.verdict(mode, request.method, path, mmsg, parse_accept_language(request.headers.get("accept-language")) or "ar")
     if refused is not None:
         return refused
     if not any(x in path for x in _MAINT_OPEN) and request.method != "OPTIONS":

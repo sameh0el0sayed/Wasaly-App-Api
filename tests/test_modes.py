@@ -56,7 +56,7 @@ async def test_payments_frozen_blocks_every_money_path_and_normal_restores(clien
                          ("POST", "/api/admin/partners/statements/1/pay"), ("POST", "/api/admin/partners/statements/1/pay-tap"),
                          ("POST", f"/api/admin/users/{uid}/wallet"), ("POST", "/api/admin/drivers/1/debt/settle")]:
         r = await client.request(method, path, json={}, headers=auth(admin if "/admin/" in path else tok))
-        assert r.status_code == 423 and r.json()["code"] == "PAYMENTS_FROZEN", (path, r.status_code, r.text)
+        assert r.status_code == 423 and r.json()["detail"]["code"] == "PAYMENTS_FROZEN", (path, r.status_code, r.text)
     # webhooks of payments already started and reads keep working
     assert (await client.post("/api/payments/tap/webhook", json={})).status_code != 423
     assert (await client.get("/api/app-config")).status_code == 200
@@ -71,12 +71,12 @@ async def test_emergency_is_read_only_revokes_sessions_and_refuses_users(client)
     await set_mode(client, "emergency")
     # payments frozen
     r = await client.post("/api/payments/1/tap", headers=auth(tok))
-    assert r.status_code == 423 and r.json()["code"] == "PAYMENTS_FROZEN"
+    assert r.status_code == 423 and r.json()["detail"]["code"] == "PAYMENTS_FROZEN"
     # every other write is refused (end user and admin), reads of end users fail because the session was revoked
     r = await client.post("/api/orders", json={}, headers=auth(tok))
-    assert r.status_code == 503 and r.json()["code"] == "EMERGENCY_READ_ONLY"
+    assert r.status_code == 503 and r.json()["detail"]["code"] == "EMERGENCY_READ_ONLY"
     r = await client.post("/api/auth/register", json={})
-    assert r.status_code == 503 and r.json()["code"] == "EMERGENCY_READ_ONLY"
+    assert r.status_code == 503 and r.json()["detail"]["code"] == "EMERGENCY_READ_ONLY"
     assert (await client.post("/api/admin/promo-codes", json={}, headers=auth(admin))).status_code == 503
     assert (await client.get("/api/profile", headers=auth(tok))).status_code in (401, 403)
     # end-user sign-in refused, admin sign-in allowed
@@ -93,6 +93,6 @@ async def test_stopped_refuses_user_traffic_but_not_admin_or_control(client):
     uid, tok, phone = await register_customer(client)
     await set_mode(client, "stopped")
     r = await client.get("/api/profile", headers=auth(tok))
-    assert r.status_code == 503 and r.json()["code"] == "SERVICE_STOPPED"
+    assert r.status_code == 503 and r.json()["detail"]["code"] == "SERVICE_STOPPED"
     assert (await client.get("/control/v1/mode")).status_code == 200
     assert await login(client, ADMIN["phone"], ADMIN["password"])
