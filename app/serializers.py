@@ -43,7 +43,7 @@ def driver_card(u: User, extra: dict | None = None) -> dict:
     main = photos.get("main") or photos.get("front") or next(iter(photos.values()), None)
     veh = None
     if v:
-        veh = {**vehicle_public(v), "vehicle_type": v.vehicle_type, "passenger_capacity": v.passenger_capacity,
+        veh = {**vehicle_public(v), "vehicle_type": v.vehicle_type, "vehicle_class": v.vehicle_class, "seats": v.seats, "passenger_capacity": v.passenger_capacity,
                "luggage_capacity": v.luggage_capacity, "is_comfortable": v.is_comfortable, "photo_url": _file_url(main)}
     card = {"id": u.id, "name": u.full_name, "photo_url": _file_url(u.profile_photo),
             "gender": p.gender if p else None, "smoking_allowed": bool(p.smoking_allowed) if p else False, "vehicle": veh}
@@ -83,6 +83,7 @@ def order_base(o: Order) -> dict:
         "cargo_description": o.cargo_description, "cargo_quantity": o.cargo_quantity,
         "cargo_size_note": o.cargo_size_note,
         "cargo_weight_kg": money(o.cargo_weight_kg), "cargo_photo": o.cargo_photo,
+        "vehicle_class": o.vehicle_class or "STANDARD",
         "customer_notes": o.customer_notes, "driver_instructions": o.driver_instructions,
         "created_at": dt(o.created_at), "accepted_at": dt(o.accepted_at),
         "driver_on_the_way_at": dt(o.driver_on_the_way_at), "driver_arrived_at": dt(o.driver_arrived_at),

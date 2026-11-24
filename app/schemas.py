@@ -168,6 +168,7 @@ class PromoPatch(BaseModel):
 
 
 class OrderCreateIn(PreferencesIn):
+    vehicle_class: str | None = Field(default=None, max_length=20)
     promo_code: str | None = Field(default=None, max_length=40)
     service_type: Literal["PERSON", "DELIVERY"]
     pickup_address: str = Field(min_length=2, max_length=300)
@@ -326,6 +327,8 @@ class AdminVehicleEditIn(BaseModel):
     cargo_capacity_kg: Decimal | None = Field(default=None, ge=0)
     has_ac: bool | None = None
     is_comfortable: bool | None = None
+    vehicle_class: str | None = Field(default=None, pattern=r"^[A-Z0-9_]{2,20}$")
+    seats: int | None = Field(default=None, ge=1, le=14)
     photos: dict[str, str] | None = None
     reason: str = Field(min_length=2, max_length=500)
 
@@ -389,6 +392,16 @@ class AreaPatch(BaseModel):
 _HEX = r"^#[0-9A-Fa-f]{6}$"
 SCREENS = {"new_order", "pricing", "support"}
 PREFILL_KEYS = {"cargo_description", "pref_ac", "pref_smoking", "pref_driver_gender", "pref_large_car", "service_type"}
+
+
+class VehicleClassCfg(BaseModel):
+    code: str = Field(pattern=r"^[A-Z0-9_]{2,20}$")
+    name_ar: str = Field(min_length=1, max_length=40)
+    name_en: str = Field(min_length=1, max_length=40)
+    seats: int = Field(default=4, ge=1, le=14)
+    price_factor: Decimal = Field(default=Decimal(1), ge=Decimal("0.1"), le=10)
+    enabled: bool = True
+    icon: str = Field(default="car", max_length=40)
 
 
 class ServiceCategory(BaseModel):
@@ -518,6 +531,8 @@ class SettingsPatch(BaseModel):
     price_increase_steps: str | None = Field(default=None, pattern=r"^\d{1,3}(,\d{1,3}){0,7}$")
     counter_offer_ttl_seconds: int | None = Field(default=None, ge=10, le=600)
     service_categories: list[ServiceCategory] | None = Field(default=None, max_length=12)
+    vehicle_classes: list[VehicleClassCfg] | None = Field(default=None, max_length=8)
+    vip_serves_standard: bool | None = None
     require_pickup_photo: bool | None = None
     require_delivery_photo: bool | None = None
     proof_photos_apply_to: Literal["DELIVERY", "ALL"] | None = None
@@ -655,6 +670,7 @@ class BroadcastIn(BaseModel):
 
 
 class EstimateIn(PreferencesIn):
+    service_type: Literal["PERSON", "DELIVERY"] | None = None  # classes are returned for rides only
     scheduled_at: datetime | None = None
     promo_code: str | None = Field(default=None, max_length=40)
     pickup_latitude: float = Field(ge=-90, le=90)

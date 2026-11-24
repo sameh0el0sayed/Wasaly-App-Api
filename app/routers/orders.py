@@ -26,7 +26,7 @@ from ..serializers import (
     order_for_driver,
 )
 from ..services import favorites as fav
-from ..services import live_test, settings_service
+from ..services import live_test, settings_service, vehicle_classes
 from ..services import price_increase as pi
 from ..services.dispatch import dispatch_order, has_active_order, work_blockers
 from ..services.estimate import money_estimate, route_estimate
@@ -53,7 +53,7 @@ async def app_config(db: AsyncSession = Depends(get_db)):
     """Public (no login). The app calls this at start-up: maintenance, forced update, support contacts, feature switches."""
     s = await settings_service.get_all(db)
     p = await settings_service.get_pricing(db)
-    return {"system_mode": s.get("system_mode", "normal"), "payments_frozen": s.get("system_mode") in ("payments_frozen", "emergency"),
+    return {"vehicle_classes": vehicle_classes.enabled(s), "system_mode": s.get("system_mode", "normal"), "payments_frozen": s.get("system_mode") in ("payments_frozen", "emergency"),
             "maintenance": s["maintenance_mode"] == "true", "maintenance_message": s["maintenance_message"],
             "min_app_version": s["min_app_version"], "latest_app_version": s["latest_app_version"], "update_message": s["update_message"],
             "support": {"phone": s["support_phone"], "whatsapp": s["support_whatsapp"], "email": s["support_email"]},
@@ -190,24 +190,33 @@ async def estimate(body: EstimateIn, user: User = Depends(customer_user), db: As
     extras, breakdown = await compute_extras(
         db, s, p.decimals, ac=pf["pref_ac"], smoking=pf["pref_smoking"], gender=pf["pref_driver_gender"], large_car=pf["pref_large_car"],
         pickup=(body.pickup_latitude, body.pickup_longitude), destination=(body.destination_latitude, body.destination_longitude))
-    e = money_estimate(minutes=minutes, now=utcnow(), unit_seconds=p.unit_seconds, unit_price=p.unit_price, min_price=p.min_price,
-                       decimals=p.decimals, night_enabled=p.night_enabled, night_percent=p.night_percent, night_start=p.night_start,
-                       night_end=p.night_end, ctype=p.commission_type, cvalue=p.commission_value, mode=p.commission_mode,
-                       outside=outside, outside_percent=p.outside_driver_percent, extras=extras)
+    def _est(pp, **kw):
+        return money_estimate(minutes=minutes, now=utcnow(), unit_seconds=pp.unit_seconds, unit_price=pp.unit_price, min_price=pp.min_price,
+                              decimals=pp.decimals, night_enabled=pp.night_enabled, night_percent=pp.night_percent, night_start=pp.night_start,
+                              night_end=pp.night_end, ctype=pp.commission_type, cvalue=pp.commission_value, mode=pp.commission_mode,
+                              outside=outside, outside_percent=pp.outside_driver_percent, extras=extras, **kw)
+    e = _est(p)
     promo, ref = await resolve_code(db, s, body.promo_code, e["trip_price"], user.id)
+    disc = {"promo_percent": promo.percent if promo else 0, "promo_fixed": ref.amount if ref else 0}
     if promo or ref:  # recompute with the discount (validation needed the undiscounted trip price)
-        e = money_estimate(minutes=minutes, now=utcnow(), unit_seconds=p.unit_seconds, unit_price=p.unit_price, min_price=p.min_price,
-                           decimals=p.decimals, night_enabled=p.night_enabled, night_percent=p.night_percent, night_start=p.night_start,
-                           night_end=p.night_end, ctype=p.commission_type, cvalue=p.commission_value, mode=p.commission_mode,
-                           outside=outside, outside_percent=p.outside_driver_percent, extras=extras,
-                           promo_percent=promo.percent if promo else 0, promo_fixed=ref.amount if ref else 0)
+        e = _est(p, **disc)
     d = p.decimals
     area = await find_area(db, body.pickup_latitude, body.pickup_longitude)
     sched_fee = Decimal(0)
     if body.scheduled_at:
         _check_schedule(s, body.scheduled_at)
         sched_fee = (e["price"] * Decimal(s["scheduled_fee_percent"]) / 100).quantize(Decimal(1).scaleb(-d))
-    return {"scheduled_fee": f"{sched_fee:.{d}f}", "is_estimate": True, "currency": p.currency, "currency_decimals": d, "distance_km": km, "duration_min": minutes,
+    classes = None
+    if body.service_type != "DELIVERY":  # rides only: each enabled class = the normal estimate x its price factor (same VAT / promo rules)
+        etas = await vehicle_classes.class_etas(db, s, body.pickup_latitude, body.pickup_longitude)
+        classes = []
+        for c in vehicle_classes.enabled(s):
+            f = vehicle_classes.factor(c)
+            ec = e if f == 1 else _est(p._replace(unit_price=(p.unit_price * f).quantize(Decimal("0.001")), min_price=(p.min_price * f).quantize(Decimal("0.001"))), **disc)
+            fee_c = (ec["price"] * Decimal(s["scheduled_fee_percent"]) / 100).quantize(Decimal(1).scaleb(-d)) if body.scheduled_at else Decimal(0)
+            classes.append({"code": c["code"], "name_ar": c.get("name_ar"), "name_en": c.get("name_en"), "seats": c.get("seats"), "icon": c.get("icon"),
+                            "estimated_total": f"{ec['customer_total'] + fee_c:.{d}f}", "currency": p.currency, "eta_min": etas.get(c["code"])})
+    return {"vehicle_classes": classes, "scheduled_fee": f"{sched_fee:.{d}f}", "is_estimate": True, "currency": p.currency, "currency_decimals": d, "distance_km": km, "duration_min": minutes,
             "estimated_trip_price": f"{e['price']:.{d}f}", "night_applied": e["night_applied"],
             "night_surcharge": f"{e['night_surcharge']:.{d}f}", "extras_fee": f"{extras:.{d}f}", "extras": breakdown,
             "airport_applied": any(x["key"] == "AIRPORT" for x in breakdown),
@@ -238,6 +247,7 @@ async def create_order(body: OrderCreateIn, user: User = Depends(customer_user),
     if open_order:
         raise HTTPException(409, {"code": "OPEN_ORDER_EXISTS", "order_id": open_order[0]})
     s_cfg = await settings_service.get_all(db)
+    vclass = vehicle_classes.resolve(s_cfg, body.vehicle_class if body.service_type == "PERSON" else None)  # 422 VEHICLE_CLASS_UNAVAILABLE
     if s_cfg["maintenance_mode"] == "true":
         raise HTTPException(503, {"code": "MAINTENANCE_MODE", "message": s_cfg["maintenance_message"] or "الخدمة متوقفة مؤقتًا"})
     if s_cfg["block_new_order_if_unpaid"] == "true" and not is_merchant:
@@ -261,6 +271,10 @@ async def create_order(body: OrderCreateIn, user: User = Depends(customer_user),
     p = await settings_service.get_pricing(db)  # currency + price snapshot (new orders only)
     data = body.model_dump(exclude={"accept_capacity_terms", "service_area_id", "promo_code", "scheduled_at"})
     data["choose_driver"] = bool(body.choose_driver and s_cfg["driver_choice_enabled"] == "true")
+    data["vehicle_class"] = vclass["code"]
+    if vehicle_classes.factor(vclass) != 1:  # the order snapshots the class price, so the final fare uses the same factor
+        f = vehicle_classes.factor(vclass)
+        p = p._replace(unit_price=(p.unit_price * f).quantize(Decimal("0.001")), min_price=(p.min_price * f).quantize(Decimal("0.001")))
     if body.preferred_driver_id:
         if not await fav.is_favorite(db, user.id, body.preferred_driver_id):
             raise HTTPException(422, {"code": "NOT_FAVORITE_DRIVER"})

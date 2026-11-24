@@ -533,6 +533,7 @@ OWNER_MAP = {
     "push": {"live_order_enabled": ("setting", "live_order_enabled"), "ios_bundle_id": ("setting", "ios_bundle_id"), "apns_key_id": ("setting", "apns_key_id"),
              "apns_team_id": ("setting", "apns_team_id"), "apns_private_key": ("secret", None)},
     "integrations": {"tomtom_api_key": ("secret", None)},
+    "vehicles": {"vehicle_classes": ("setting", "vehicle_classes"), "vip_serves_standard": ("setting", "vip_serves_standard")},
     "tax": {"vat_rate": ("setting", "tap_vat_percent"), "vat_mode": ("owner", None), "vat_number": ("owner", None)},
     "company": {"name": ("owner", "company_name"), "cr_number": ("owner", None), "support_phone": ("setting", "support_phone"),
                 "support_email": ("setting", "support_email"), "support_whatsapp": ("setting", "support_whatsapp")},

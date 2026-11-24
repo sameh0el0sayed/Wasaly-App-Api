@@ -1,14 +1,13 @@
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import delete, func, select
-from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from ...constants import OrderStatus
 from ...database import get_db
 from ...deps import admin_user, paging
 from ...models import DriverProfile, DriverServiceArea, Order, ProfileChange, ServiceArea, User, Vehicle, VehicleDocument, utcnow
-from ...serializers import driver_list_load_options
 from ...schemas import DocReviewIn, DriverAreasIn
 from ...security import decrypt
 from ...serializers import money, user_public

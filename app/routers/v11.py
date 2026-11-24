@@ -26,12 +26,11 @@ from ..models import (
     SosAlert,
     TripShare,
     User,
-    Vehicle,
     WalletEntry,
     utcnow,
 )
+from ..serializers import order_admin_load_options, order_customer_load_options, order_driver_load_options
 from ..services import cache, settings_service
-from ..serializers import order_admin_load_options, order_driver_load_options, order_customer_load_options
 from ..services.audit import audit
 from ..services.geo import _haversine_m, find_area
 from ..services.notifications import notify
@@ -737,7 +736,6 @@ async def referral_landing(code: str, db: AsyncSession = Depends(get_db)):
 @router.get("/nearby-drivers")
 async def nearby_drivers(lat: float, lng: float, radius_km: float = 5, user: User = Depends(customer_user), db: AsyncSession = Depends(get_db)):
     """Free, online LIVE drivers with a fresh position around a point. No phone / plate / full name; positions rounded to ~10 m."""
-    from ..routers.ratings import stats_for
     from ..security import create_file_token
     s = await settings_service.get_all(db)
     if s["nearby_drivers_enabled"] != "true":

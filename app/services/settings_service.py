@@ -114,6 +114,8 @@ DEFAULTS = {
     "scheduled_min_minutes_ahead": "30",
     "scheduled_max_days_ahead": "7",
     "scheduled_dispatch_minutes_before": "20",
+    "vehicle_classes": '[{"code": "STANDARD", "name_ar": "عادية", "name_en": "Standard", "seats": 4, "price_factor": 1.0, "enabled": true, "icon": "car"}, {"code": "FAMILY", "name_ar": "عائلية", "name_en": "Family", "seats": 6, "price_factor": 1.5, "enabled": false, "icon": "family"}, {"code": "VIP", "name_ar": "VIP", "name_en": "VIP", "seats": 4, "price_factor": 2.5, "enabled": false, "icon": "vip"}]',  # admin/PCC editable
+    "vip_serves_standard": "false",  # a VIP car may also take STANDARD orders
     "merchant_pickup_lead_min": "8",  # early dispatch: the driver is requested this many minutes before the food is ready
     "stops_enabled": "true",
     "max_extra_stops": "3",

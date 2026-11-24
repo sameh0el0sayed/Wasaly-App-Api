@@ -20,32 +20,49 @@ router = APIRouter(prefix="/api/admin", tags=["admin"])
 
 # ---------------- dashboard ----------------
 @router.get("/dashboard")
-async def dashboard(admin: User = Depends(admin_user), db: AsyncSession = Depends(get_db)):
+async def dashboard(period: str = "today", admin: User = Depends(admin_user), db: AsyncSession = Depends(get_db)):
+    """period=today|7d|30d. Money/count fields are totals of the period, *_yesterday the previous period of the same length, series = daily points."""
     async def count(q):
         return (await db.execute(q)).scalar_one()
-    today_start = datetime.now(ZoneInfo(settings.timezone)).replace(hour=0, minute=0, second=0, microsecond=0).astimezone(UTC)
+    if period not in ("today", "7d", "30d"):
+        period = "today"
+    n = {"today": 1, "7d": 7, "30d": 30}[period]
+    npts = 7 if period == "today" else n  # series length
     U, O = User, Order
     tz = ZoneInfo(settings.timezone)
-    day0 = today_start.astimezone(tz).date()
-    week_start = (today_start.astimezone(tz) - timedelta(days=6)).astimezone(UTC)
+    today_local = datetime.now(tz).replace(hour=0, minute=0, second=0, microsecond=0)
+    day0 = today_local.date()
+    period_start = (today_local - timedelta(days=n - 1)).astimezone(UTC)
+    span = max(npts, 2 * n)
     done = (await db.execute(select(O.completed_at, O.final_price, O.commission, O.currency, O.currency_decimals).where(
-        O.order_status == S.COMPLETED, O.completed_at >= week_start))).all()
-    rev, cnt, prof = [0.0] * 7, [0] * 7, [0.0] * 7  # last 7 local days, oldest first, today last
-    yest: dict = {}
+        O.order_status == S.COMPLETED, O.completed_at >= (today_local - timedelta(days=span - 1)).astimezone(UTC)))).all()
+    rev, cnt, prof = [0.0] * npts, [0] * npts, [0.0] * npts  # daily values, oldest first
+    prev: dict = {}
+    cur_t: dict = {}
+    cur_n = prev_n = 0
     for at, price, comm, cur, dec in done:
-        i = 6 - (day0 - at.astimezone(tz).date()).days
-        if 0 <= i <= 6:
+        age = (day0 - at.astimezone(tz).date()).days  # 0 = today
+        i = npts - 1 - age
+        if 0 <= i < npts:
             rev[i] += float(price or 0)
             cnt[i] += 1
             prof[i] += float(comm or 0)
-        if i == 5:
-            y = yest.setdefault(cur, [0.0, 0.0, dec])
+        if age < n:
+            c = cur_t.setdefault(cur, [0.0, 0.0, dec])
+            c[0] += float(price or 0)
+            c[1] += float(comm or 0)
+            cur_n += 1
+        elif age < 2 * n:
+            y = prev.setdefault(cur, [0.0, 0.0, dec])
             y[0] += float(price or 0)
             y[1] += float(comm or 0)
+            prev_n += 1
+    new_orders = await count(select(func.count()).select_from(O).where(O.created_at >= period_start)) if period != "today" else None
     return {
-        "revenue_yesterday": {c: money(v[0], v[2]) for c, v in yest.items()},
-        "company_profit_yesterday": {c: money(v[1], v[2]) for c, v in yest.items()},
-        "orders_yesterday": cnt[5],
+        "period": period,
+        "revenue_yesterday": {c: money(v[0], v[2]) for c, v in prev.items()},
+        "company_profit_yesterday": {c: money(v[1], v[2]) for c, v in prev.items()},
+        "orders_yesterday": prev_n,
         "orders_searching": await count(select(func.count()).select_from(O).where(O.order_status.in_(S.SEARCHING))),
         "series": {"revenue": [round(x, 3) for x in rev], "orders": cnt, "profit": [round(x, 3) for x in prof]},
         "customers_total": await count(select(func.count()).select_from(U).where(U.role == Role.CUSTOMER)),
@@ -54,18 +71,12 @@ async def dashboard(admin: User = Depends(admin_user), db: AsyncSession = Depend
         "drivers_pending": await count(select(func.count()).select_from(U).where(U.id.in_(select(DriverProfile.user_id)), U.account_status == AccountStatus.PENDING_APPROVAL)),
         "users_online_now": await count(select(func.count()).select_from(U).where(U.role.in_([Role.CUSTOMER, Role.DRIVER]), U.last_seen_at >= utcnow() - timedelta(minutes=int((await settings_service.get_all(db))["online_window_minutes"])))),
         "drivers_online": await count(select(func.count()).select_from(DriverProfile).where(DriverProfile.is_online.is_(True))),
-        "orders_new": await count(select(func.count()).select_from(O).where(O.order_status.in_(S.SEARCHING))),
+        "orders_new": new_orders if new_orders is not None else await count(select(func.count()).select_from(O).where(O.order_status.in_(S.SEARCHING))),
         "trips_active": await count(select(func.count()).select_from(O).where(O.order_status.in_(S.DRIVER_BUSY))),
-        "trips_completed_today": await count(select(func.count()).select_from(O).where(O.order_status == S.COMPLETED, O.completed_at >= today_start)),
+        "trips_completed_today": cur_n,
         "orders_cancelled": await count(select(func.count()).select_from(O).where(O.order_status == S.CANCELLED)),
-        "gross_trip_value_today": {c: money(t, d) for c, d, t in (await db.execute(
-            select(O.currency, O.currency_decimals, func.coalesce(func.sum(O.final_price), 0))
-            .where(O.order_status == S.COMPLETED, O.completed_at >= today_start)
-            .group_by(O.currency, O.currency_decimals))).all()},
-        "company_profit_today": {c: money(t, d) for c, d, t in (await db.execute(
-            select(O.currency, O.currency_decimals, func.coalesce(func.sum(O.commission), 0))
-            .where(O.order_status == S.COMPLETED, O.completed_at >= today_start)
-            .group_by(O.currency, O.currency_decimals))).all()},
+        "gross_trip_value_today": {c: money(v[0], v[2]) for c, v in cur_t.items()},
+        "company_profit_today": {c: money(v[1], v[2]) for c, v in cur_t.items()},
         "licenses_expired": await count(select(func.count()).select_from(DriverProfile).where(DriverProfile.license_expiry_date < date.today())),
         "licenses_expiring": await count(select(func.count()).select_from(DriverProfile).where(
             DriverProfile.license_expiry_date >= date.today(),

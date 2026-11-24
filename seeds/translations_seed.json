@@ -10828,5 +10828,60 @@
   "key": "v48.home.wallet",
   "ar": "محفظة وصلي",
   "en": "Wasaly wallet"
+ },
+ {
+  "key": "v49.vehicle.title",
+  "ar": "اختر نوع السيارة",
+  "en": "Choose a car"
+ },
+ {
+  "key": "v49.vehicle.seats",
+  "ar": "{0} ركاب",
+  "en": "{0} seats"
+ },
+ {
+  "key": "v49.vehicle.eta",
+  "ar": "يصل خلال {0} د",
+  "en": "Arrives in {0} min"
+ },
+ {
+  "key": "v49.vehicle.no_driver",
+  "ar": "لا يوجد سائق متاح الآن",
+  "en": "No driver available now"
+ },
+ {
+  "key": "v49.vehicle.order",
+  "ar": "اطلب {0}",
+  "en": "Order {0}"
+ },
+ {
+  "key": "v49.vehicle.vat_note",
+  "ar": "الأسعار شاملة ضريبة القيمة المضافة 10%",
+  "en": "Prices include 10% VAT"
+ },
+ {
+  "key": "v49.dash.today",
+  "ar": "اليوم",
+  "en": "Today"
+ },
+ {
+  "key": "v49.dash.7d",
+  "ar": "7 أيام",
+  "en": "7 days"
+ },
+ {
+  "key": "v49.dash.30d",
+  "ar": "30 يومًا",
+  "en": "30 days"
+ },
+ {
+  "key": "v49.dash.vs_prev",
+  "ar": "عن الفترة السابقة",
+  "en": "vs previous period"
+ },
+ {
+  "key": "VEHICLE_CLASS_UNAVAILABLE",
+  "ar": "نوع السيارة المختار غير متاح الآن",
+  "en": "The chosen car type is not available now"
  }
 ]

@@ -14,8 +14,10 @@ from ...models import AdminAuditLog, DriverProfile, DriverServiceArea, Order, Ra
 from ...schemas import AdminCreateIn, ApproveIn, DebtSettleIn, ReasonIn, ReinstateIn, ResetPasswordIn
 from ...security import cpr_hash, decrypt, hash_password
 from ...serializers import (
-    driver_block, dt, money, user_public,
-    driver_full_load_options, driver_list_load_options,
+    driver_block,
+    dt,
+    money,
+    user_public,
 )
 from ...services import settings_service
 from ...services.activity import is_online

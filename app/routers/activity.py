@@ -4,6 +4,7 @@ from datetime import timedelta
 from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from ..constants import OrderStatus as S
 from ..constants import Role
@@ -12,7 +13,6 @@ from ..deps import admin_user, current_user
 from ..models import AppOpenEvent, DeviceToken, DriverWorkSession, LocationSnapshot, LoginEvent, Order, OrderOffer, User, UserDevice, utcnow
 from ..schemas import AppOpenIn, LocationConsentIn, LocationSnapshotIn
 from ..serializers import dt
-from sqlalchemy.orm import selectinload
 from ..services import settings_service
 from ..services.activity import is_online
 from ..services.audit import audit

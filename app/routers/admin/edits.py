@@ -79,6 +79,10 @@ async def edit_vehicle(user_id: int, body: AdminVehicleEditIn, admin: User = Dep
     if not v:
         raise HTTPException(404, "Vehicle not found")
     data = body.model_dump(exclude_unset=True, exclude={"reason"})
+    if data.get("vehicle_class"):
+        from ...services import settings_service, vehicle_classes
+        if data["vehicle_class"] not in {c["code"] for c in vehicle_classes.all_classes(await settings_service.get_all(db))}:
+            raise HTTPException(422, {"code": "VEHICLE_CLASS_UNAVAILABLE"})
     await _check_keys(db, (data.get("photos") or {}).values())
     if data.get("plate_number") and data["plate_number"] != v.plate_number:
         if (await db.execute(select(Vehicle.id).where(Vehicle.plate_number == data["plate_number"], Vehicle.id != v.id))).first():

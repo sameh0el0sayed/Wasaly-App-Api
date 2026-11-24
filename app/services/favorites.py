@@ -3,11 +3,11 @@ from datetime import date
 
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload, joinedload
+from sqlalchemy.orm import selectinload
 
 from ..constants import AccountStatus, Role
 from ..constants import OrderStatus as S
-from ..models import DriverProfile, Order, Rating, User, Vehicle
+from ..models import DriverProfile, Order, Rating, User
 
 
 async def favorite_rows(db: AsyncSession, customer_id: int) -> list[tuple[User, int, int]]:

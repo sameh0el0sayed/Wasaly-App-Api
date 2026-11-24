@@ -9,7 +9,7 @@ from ..config import settings
 from ..constants import AccountStatus, CounterStatus, OfferStatus, ReviewStatus
 from ..constants import OrderStatus as S
 from ..models import CounterOffer, DriverProfile, DriverServiceArea, DriverWorkSession, Notification, Order, OrderOffer, User, utcnow
-from . import cache, settings_service, wakeup
+from . import cache, settings_service, vehicle_classes, wakeup
 from .notifications import notify
 from .orders import close_pending_counters, close_pending_offers, transition
 
@@ -84,9 +84,11 @@ async def eligible_drivers(db: AsyncSession, order: Order) -> list[User]:
             continue
         if order.pref_driver_gender in ("MALE", "FEMALE") and (prof.gender or default_gender) != order.pref_driver_gender:
             continue
+        if order.service_type == "PERSON" and not vehicle_classes.serves(cfg, v.vehicle_class, order.vehicle_class):
+            continue
         if order.pref_large_car and (v.vehicle_type or "").upper() not in large_types:
             continue
-        if order.service_type == "PERSON" and order.passenger_count and order.passenger_count > v.passenger_capacity:
+        if order.service_type == "PERSON" and order.passenger_count and order.passenger_count > (v.seats or v.passenger_capacity):
             continue
         if order.service_type == "DELIVERY" and order.cargo_weight_kg and v.cargo_capacity_kg is not None \
                 and order.cargo_weight_kg > v.cargo_capacity_kg:

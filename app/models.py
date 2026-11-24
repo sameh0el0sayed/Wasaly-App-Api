@@ -151,6 +151,8 @@ class Vehicle(Base):
     color: Mapped[str] = mapped_column(String(30))
     plate_number: Mapped[str] = mapped_column(String(20), unique=True)
     vehicle_type: Mapped[str] = mapped_column(String(30), default="SEDAN")
+    vehicle_class: Mapped[str] = mapped_column(String(20), default="STANDARD", server_default="STANDARD")  # STANDARD | FAMILY | VIP
+    seats: Mapped[int | None] = mapped_column(Integer, nullable=True)
     passenger_capacity: Mapped[int] = mapped_column(Integer)
     luggage_capacity: Mapped[int] = mapped_column(Integer, default=0)
     cargo_capacity_kg: Mapped[Decimal | None] = mapped_column(Numeric(8, 2), nullable=True)
@@ -286,6 +288,7 @@ class Order(Base):
     destination_longitude: Mapped[float | None] = mapped_column(Float, nullable=True)
     contact_phone: Mapped[str | None] = mapped_column(String(20), nullable=True)
     passenger_count: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    vehicle_class: Mapped[str] = mapped_column(String(20), default="STANDARD", server_default="STANDARD")
     luggage_count: Mapped[int | None] = mapped_column(Integer, nullable=True)
     cargo_description: Mapped[str | None] = mapped_column(Text, nullable=True)
     cargo_quantity: Mapped[int | None] = mapped_column(Integer, nullable=True)
