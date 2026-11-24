@@ -11438,5 +11438,185 @@
   "key": "v36.ps_PENDING_APPROVAL",
   "ar": "قيد المراجعة",
   "en": "Pending"
+ },
+ {
+  "key": "v22.week_title",
+  "ar": "هذا الأسبوع",
+  "en": "This week"
+ },
+ {
+  "key": "v22.trips_n",
+  "ar": "{0} رحلة",
+  "en": "{0} trips"
+ },
+ {
+  "key": "v22.week_earning",
+  "ar": "أرباح الأسبوع",
+  "en": "Week earnings"
+ },
+ {
+  "key": "v22.week_trips",
+  "ar": "الرحلات",
+  "en": "Trips"
+ },
+ {
+  "key": "v22.week_online",
+  "ar": "ساعات الاتصال",
+  "en": "Online hours"
+ },
+ {
+  "key": "v22.week_rating",
+  "ar": "التقييم",
+  "en": "Rating"
+ },
+ {
+  "key": "web.logout_in",
+  "ar": "سيتم تسجيل الخروج خلال",
+  "en": "Signing out in"
+ },
+ {
+  "key": "web.logout_cancel",
+  "ar": "إلغاء",
+  "en": "Cancel"
+ },
+ {
+  "key": "web.pull_refresh",
+  "ar": "اسحب للتحديث",
+  "en": "Pull to refresh"
+ },
+ {
+  "key": "web.release_refresh",
+  "ar": "أفلت للتحديث",
+  "en": "Release to refresh"
+ },
+ {
+  "key": "v51.track.title",
+  "ar": "السائق في الطريق",
+  "en": "Driver on the way"
+ },
+ {
+  "key": "v51.track.driver_soon",
+  "ar": "سيصلك السائق قريبًا",
+  "en": "Your driver will arrive soon"
+ },
+ {
+  "key": "v51.track.delivering",
+  "ar": "جاري توصيل الطلب",
+  "en": "Delivering your order"
+ },
+ {
+  "key": "v51.track.arriving_dest",
+  "ar": "في الطريق إلى الوجهة",
+  "en": "On the way to the destination"
+ },
+ {
+  "key": "v51.track.eta",
+  "ar": "الوقت المتوقع للوصول",
+  "en": "Estimated arrival"
+ },
+ {
+  "key": "v51.track.distance",
+  "ar": "المسافة المتبقية",
+  "en": "Remaining distance"
+ },
+ {
+  "key": "v51.track.min",
+  "ar": "{0} د",
+  "en": "{0} min"
+ },
+ {
+  "key": "v51.track.km",
+  "ar": "{0} كم",
+  "en": "{0} km"
+ },
+ {
+  "key": "v51.track.stages",
+  "ar": "مراحل الطلب",
+  "en": "Order stages"
+ },
+ {
+  "key": "v51.done.title",
+  "ar": "تم التوصيل بنجاح!",
+  "en": "Delivered successfully!"
+ },
+ {
+  "key": "v51.done.thanks",
+  "ar": "شكرًا لاستخدامك وصلي",
+  "en": "Thank you for using Wasaly"
+ },
+ {
+  "key": "v51.done.amount",
+  "ar": "مبلغ الطلب",
+  "en": "Order amount"
+ },
+ {
+  "key": "v51.done.ok",
+  "ar": "تم",
+  "en": "Done"
+ },
+ {
+  "key": "v51.done.pay",
+  "ar": "ادفع الآن",
+  "en": "Pay now"
+ },
+ {
+  "key": "v51.done.new_order",
+  "ar": "طلب جديد",
+  "en": "New order"
+ },
+ {
+  "key": "v50.company.title",
+  "ar": "حساب الشركة",
+  "en": "Company account"
+ },
+ {
+  "key": "v50.company.verified_note",
+  "ar": "بيانات الشركة موثقة من هوية فينيكس ولا تُعدَّل هنا",
+  "en": "Company details are verified by Phoenix ID and cannot be edited here"
+ },
+ {
+  "key": "v50.company.pickup_address",
+  "ar": "عنوان الاستلام",
+  "en": "Pickup address"
+ },
+ {
+  "key": "v50.company.contact_person",
+  "ar": "المسؤول عن التواصل",
+  "en": "Contact person"
+ },
+ {
+  "key": "v50.company.billing_email",
+  "ar": "بريد الفواتير",
+  "en": "Billing e-mail"
+ },
+ {
+  "key": "v50.company.members",
+  "ar": "الموظفون",
+  "en": "Employees"
+ },
+ {
+  "key": "v50.company.statement",
+  "ar": "كشف الحساب الشهري",
+  "en": "Monthly statement"
+ },
+ {
+  "key": "v50.company.used",
+  "ar": "المستخدم هذا الشهر",
+  "en": "Used this month"
+ },
+ {
+  "key": "v50.company.limit",
+  "ar": "الحد الشهري",
+  "en": "Monthly limit"
+ },
+ {
+  "key": "v50.company.bulk",
+  "ar": "حجز عدة طلبات",
+  "en": "Book several orders"
+ },
+ {
+  "key": "COMPANY_NOT_VERIFIED",
+  "ar": "لم يتم توثيق الشركة في هوية فينيكس بعد",
+  "en": "The company is not verified in Phoenix ID yet"
  }
 ]

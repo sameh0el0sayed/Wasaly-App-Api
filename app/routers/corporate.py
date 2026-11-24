@@ -34,7 +34,9 @@ def _month(month: str | None) -> tuple[datetime, datetime]:
 def _c(c: Corporate) -> dict:
     return {"id": c.id, "name": c.name, "cr_number": c.cr_number, "business_type": c.business_type, "contact_phone": c.contact_phone,
             "contact_email": c.contact_email, "discount_percent": f"{c.discount_percent:.2f}",
-            "monthly_limit": None if c.monthly_limit is None else f"{c.monthly_limit:.3f}", "account_manager": c.account_manager, "is_active": c.is_active}
+            "monthly_limit": None if c.monthly_limit is None else f"{c.monthly_limit:.3f}", "account_manager": c.account_manager, "is_active": c.is_active,
+            "name_ar": c.name_ar, "pickup_address": c.pickup_address, "contact_person": c.contact_person, "billing_email": c.billing_email,
+            "from_phoenix_id": bool(c.phoenix_org_id), "locked_fields": ["name", "name_ar", "cr_number", "contact_phone", "contact_email"] if c.phoenix_org_id else []}
 
 
 async def _member(db, corporate_id: int, user_id: int) -> CorporateMember | None:
@@ -190,6 +192,56 @@ async def my_corporates(user: User = Depends(customer_user), db: AsyncSession = 
         CorporateMember.user_id == user.id, CorporateMember.is_active.is_(True), Corporate.is_active.is_(True)))).all()
     start, end = _month(None)
     return [{**_c(c), "my_role": r, "used_this_month": f"{await month_used(db, c.id, start, end):.3f}"} for c, r in rows]
+
+
+class CompanyProfileIn(BaseModel):
+    pickup_address: str | None = Field(default=None, max_length=300)
+    contact_person: str | None = Field(default=None, max_length=120)
+    billing_email: str | None = Field(default=None, max_length=160)
+    business_type: str | None = Field(default=None, max_length=40)
+
+
+@router.patch("/{cid}/profile")
+async def company_profile(cid: int, body: CompanyProfileIn, user: User = Depends(customer_user), db: AsyncSession = Depends(get_db)):
+    """Only what Phoenix ID does not hold. Name, CR number, phone and e-mail come from Phoenix ID and cannot be changed here."""
+    c = await _manager(db, cid, user)
+    for k, v in body.model_dump(exclude_unset=True).items():
+        setattr(c, k, v)
+    await db.commit()
+    return _c(c)
+
+
+async def provision_from_claims(db, user: User, claims: dict) -> Corporate | None:
+    """Phoenix ID login with the role 'company': one Corporate per org_id. The first person becomes OWNER, later ones MANAGER.
+    Name, CR number, phone and e-mail always follow Phoenix ID. Returns None when the claims are not a verified company."""
+    roles = claims.get("roles") or []
+    org = str(claims.get("org_id") or "")
+    if "company" not in roles or not org:
+        return None
+    if str(claims.get("org_kyc_level") or "").lower() != "verified":
+        raise HTTPException(403, {"code": "COMPANY_NOT_VERIFIED", "message": "Company is not verified in Phoenix ID"})
+    from ..services import settings_service
+    c = (await db.execute(select(Corporate).where(Corporate.phoenix_org_id == org))).scalar_one_or_none()
+    name = (claims.get("org_name") or claims.get("org_name_ar") or "Company")[:160]
+    phone, email = claims.get("phone_number"), claims.get("email")
+    if not c:
+        lim = (await settings_service.get_all(db)).get("company_default_monthly_limit", "").strip()
+        c = Corporate(name=name, name_ar=claims.get("org_name_ar"), cr_number=claims.get("org_cr_number"), contact_phone=phone, contact_email=email,
+                      monthly_limit=Decimal(lim) if lim else None, phoenix_org_id=org, created_by=user.id)
+        db.add(c)
+        await db.flush()
+        audit(db, user.id, "COMPANY_AUTO_CREATED", "corporate", c.id, details={"org_id": org})
+    else:
+        c.name, c.name_ar, c.cr_number = name, claims.get("org_name_ar") or c.name_ar, claims.get("org_cr_number") or c.cr_number
+        c.contact_phone, c.contact_email = phone or c.contact_phone, email or c.contact_email
+    m = (await db.execute(select(CorporateMember).where(CorporateMember.corporate_id == c.id, CorporateMember.user_id == user.id))).scalar_one_or_none()
+    first = (await db.execute(select(CorporateMember.id).where(CorporateMember.corporate_id == c.id, CorporateMember.role == "OWNER").limit(1))).first() is None
+    if not m:
+        db.add(CorporateMember(corporate_id=c.id, user_id=user.id, role="OWNER" if first else "MANAGER"))
+    elif not m.is_active:
+        m.is_active = True
+    await db.flush()
+    return c
 
 
 @router.get("/{cid}/members")

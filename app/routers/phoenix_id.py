@@ -201,9 +201,12 @@ async def _login(access_token: str, device_id, request: Request, db: AsyncSessio
     user.failed_logins, user.locked_until, user.last_login_at, user.last_login_ip, user.last_seen_at = 0, None, now, ip, now
     user.login_count = (user.login_count or 0) + 1
     kyc.apply_claims(user, claims, info)
+    from .corporate import _c, provision_from_claims
+    company = await provision_from_claims(db, user, {**info, **claims})
     tokens = await sessions.issue(db, user, device_id)
     await db.commit()
-    return {"user": user_public(user), **tokens, "impersonated_by": act, "sso": True}
+    return {"user": user_public(user), **tokens, "impersonated_by": act, "sso": True,
+            "account_type": "company" if company else "personal", "company": _c(company) if company else None}
 
 
 @router.post("/api/auth/phoenix-id/link")

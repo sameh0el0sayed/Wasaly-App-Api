@@ -1128,6 +1128,11 @@ class Corporate(Base):
     discount_percent: Mapped[Decimal] = mapped_column(Numeric(5, 2), default=0)  # corporate pricing, applied on the monthly statement
     monthly_limit: Mapped[Decimal | None] = mapped_column(Numeric(12, 3), nullable=True)  # credit ceiling per calendar month (UTC); null = unlimited
     account_manager: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    phoenix_org_id: Mapped[str | None] = mapped_column(String(64), unique=True, nullable=True)  # company account created from Phoenix ID (one company per org)
+    name_ar: Mapped[str | None] = mapped_column(String(160), nullable=True)
+    pickup_address: Mapped[str | None] = mapped_column(String(300), nullable=True)  # filled by the company inside Wasaly
+    contact_person: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    billing_email: Mapped[str | None] = mapped_column(String(160), nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     created_by: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True)
     created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
