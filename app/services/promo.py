@@ -17,15 +17,15 @@ async def validate_promo(db: AsyncSession, settings: dict, raw_code: str | None,
     if not raw_code or not raw_code.strip():
         return None
     if settings.get("promo_enabled") != "true":
-        raise _err("PROMO_DISABLED", "أكواد الخصم غير متاحة حاليًا")
+        raise _err("PROMO_DISABLED", "Promo codes are currently unavailable")
     promo = (await db.execute(select(PromoCode).where(PromoCode.code == raw_code.strip().upper()))).scalar_one_or_none()
     if not promo or not promo.is_active:
-        raise _err("PROMO_INVALID", "كود الخصم غير صحيح")
+        raise _err("PROMO_INVALID", "The promo code is invalid")
     now = utcnow()
     if promo.starts_at and now < promo.starts_at:
-        raise _err("PROMO_NOT_STARTED", "كود الخصم لم يبدأ بعد")
+        raise _err("PROMO_NOT_STARTED", "The promo code is not active yet")
     if promo.ends_at and now >= promo.ends_at:
-        raise _err("PROMO_EXPIRED", "انتهت صلاحية كود الخصم")
+        raise _err("PROMO_EXPIRED", "The promo code has expired")
     if promo.min_order_amount is not None and trip_price < promo.min_order_amount:
         raise _err("PROMO_MIN_ORDER", f"الحد الأدنى للطلب لاستخدام الكود {promo.min_order_amount:.3f}")
     return promo
@@ -50,17 +50,17 @@ async def resolve_code(db: AsyncSession, settings: dict, raw_code: str | None, t
     if not inviter:
         return await validate_promo(db, settings, code, trip_price), None  # raises the usual PROMO_* error
     if settings.get("referral_enabled") != "true":
-        raise _err("PROMO_INVALID", "كود الخصم غير صحيح")
+        raise _err("PROMO_INVALID", "The promo code is invalid")
     if inviter.id == customer_id:
-        raise _err("REFERRAL_SELF", "لا يمكنك استخدام كود الدعوة الخاص بك")
+        raise _err("REFERRAL_SELF", "You cannot use your own invite code")
     row = (await db.execute(select(Referral).where(Referral.invitee_id == customer_id))).scalars().first()
     if row and (row.inviter_id != inviter.id or row.status != "REGISTERED"):
-        raise _err("REFERRAL_ALREADY_USED", "استخدمتَ كود دعوة من قبل")
+        raise _err("REFERRAL_ALREADY_USED", "You have already used an invite code")
     if not row:
         n = (await db.execute(select(func.count()).select_from(Referral).where(Referral.inviter_id == inviter.id, Referral.status != "REVOKED"))).scalar_one()
         if n >= int(settings["referral_max_per_user"]):
-            raise _err("REFERRAL_LIMIT", "بلغ هذا الكود الحد الأقصى للاستخدام")
+            raise _err("REFERRAL_LIMIT", "This code has reached its usage limit")
     amount = Decimal(settings["referral_reward_invitee"])
     if amount <= 0:
-        raise _err("PROMO_INVALID", "كود الخصم غير صحيح")
+        raise _err("PROMO_INVALID", "The promo code is invalid")
     return None, ReferralUse(code, inviter.id, amount, row)

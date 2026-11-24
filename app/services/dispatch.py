@@ -206,14 +206,14 @@ async def expire_offers_and_orders(db: AsyncSession) -> None:
     lead = timedelta(minutes=int(s_all["scheduled_dispatch_minutes_before"]))
     due = (await db.execute(select(Order).where(Order.order_status == S.SCHEDULED, Order.scheduled_at <= now + lead).with_for_update())).scalars().all()
     for order in due:
-        await notify(db, order.customer_id, "SCHEDULED_DISPATCHING", "نبحث لك عن سائق", "حان موعد رحلتك المجدولة، نبحث عن سائق الآن.", order.id)
+        await notify(db, order.customer_id, "SCHEDULED_DISPATCHING", "We are finding you a driver", "It is time for your scheduled trip; we are finding a driver now.", order.id)
         await dispatch_order(db, order)
     remind = (await db.execute(select(Order).where(Order.order_status == S.SCHEDULED, Order.scheduled_at <= now + timedelta(minutes=60),
                                                    Order.scheduled_at > now + lead))).scalars().all()
     for order in remind:
         if not (await db.execute(select(Notification.id).where(Notification.related_order_id == order.id,
                                                                Notification.notification_type == "SCHEDULED_REMINDER").limit(1))).first():
-            await notify(db, order.customer_id, "SCHEDULED_REMINDER", "تذكير برحلتك", "رحلتك المجدولة بعد أقل من ساعة.", order.id)
+            await notify(db, order.customer_id, "SCHEDULED_REMINDER", "Trip reminder", "Your scheduled trip starts in less than an hour.", order.id)
     # 3) orders that stayed driver-less longer than the configured timeout -> EXPIRED
     timeout = int((await settings_service.get_all(db))["order_timeout_seconds"])
     cutoff = now - timedelta(seconds=timeout)
@@ -224,9 +224,9 @@ async def expire_offers_and_orders(db: AsyncSession) -> None:
         await close_pending_offers(db, order.id)
         await close_pending_counters(db, order.id, CounterStatus.REJECTED)
         await transition(db, order, S.CANCELLED, None, "SYSTEM", "Order timeout")
-        order.cancelled_by_role, order.cancellation_reason, order.cancelled_at = "SYSTEM", "انتهت المهلة", now
-        await notify(db, order.customer_id, "ORDER_CANCELLED_TIMEOUT", "أُلغي الطلب",
-                     "أُلغي طلبك لانتهاء المهلة دون قبول سائق.", order.id)
+        order.cancelled_by_role, order.cancellation_reason, order.cancelled_at = "SYSTEM", "Timed out", now
+        await notify(db, order.customer_id, "ORDER_CANCELLED_TIMEOUT", "Order cancelled",
+                     "Your order was cancelled because no driver accepted in time.", order.id)
 
 
 async def force_offline(db: AsyncSession, driver_id: int) -> None:

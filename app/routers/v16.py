@@ -163,7 +163,7 @@ async def login_verify(body: LoginVerifyIn, request: Request, db: AsyncSession =
     except Exception:  # noqa
         raise HTTPException(400, {"code": "PASSKEY_VERIFICATION_FAILED"})
     if user.account_status == "DELETED":
-        raise HTTPException(403, {"code": "ACCOUNT_DELETED", "message": "هذا الحساب محذوف"})
+        raise HTTPException(403, {"code": "ACCOUNT_DELETED", "message": "This account has been deleted"})
     ip = request.headers.get("x-forwarded-for", "").split(",")[0].strip() or (request.client.host if request.client else None)
     known = bool(body.device_id) and (await db.execute(select(UserDevice.id).where(
         UserDevice.user_id == user.id, UserDevice.device_id == body.device_id))).first() is not None

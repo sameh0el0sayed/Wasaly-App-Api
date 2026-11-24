@@ -32,17 +32,17 @@ async def delete_account(body: AccountDeleteIn = AccountDeleteIn(), user: User =
     else:
         active = await has_active_order(db, user.id)
     if active:
-        raise HTTPException(409, {"code": "ACTIVE_ORDER_EXISTS", "message": "لا يمكن حذف الحساب أثناء وجود طلب جارٍ"})
+        raise HTTPException(409, {"code": "ACTIVE_ORDER_EXISTS", "message": "The account cannot be deleted while an order is in progress"})
     if user.role == Role.CUSTOMER:
         unpaid = (await db.execute(select(Order.id, Order.payment_id).where(
             Order.customer_id == user.id, Order.order_status == S.COMPLETED, Order.payment_status != "PAID").limit(1))).first()
         if unpaid:
-            raise HTTPException(409, {"code": "UNPAID_ORDER_EXISTS", "message": "يوجد مبلغ غير مدفوع", "order_id": unpaid[0], "payment_id": unpaid[1]})
+            raise HTTPException(409, {"code": "UNPAID_ORDER_EXISTS", "message": "There is an unpaid amount", "order_id": unpaid[0], "payment_id": unpaid[1]})
     col = Subscription.customer_id if user.role == Role.CUSTOMER else Subscription.driver_id
     if (await db.execute(select(func.count()).select_from(Subscription).where(col == user.id, Subscription.status == "ACTIVE"))).scalar_one():
-        raise HTTPException(409, {"code": "ACTIVE_SUBSCRIPTION_EXISTS", "message": "يوجد اشتراك ساري"})
+        raise HTTPException(409, {"code": "ACTIVE_SUBSCRIPTION_EXISTS", "message": "There is an active subscription"})
     if user.driver_profile and (user.driver_profile.debt_balance or 0) > 0:
-        raise HTTPException(409, {"code": "DEBT_OUTSTANDING", "message": "يوجد مبلغ مستحق للشركة"})
+        raise HTTPException(409, {"code": "DEBT_OUTSTANDING", "message": "There is an amount owed to the company"})
     user.deleted_prev_status = user.account_status
     user.account_status, user.status_reason, user.deleted_at = AccountStatus.DELETED, "BANNED_BEFORE_DELETE" if user.deleted_prev_status == AccountStatus.BANNED else "USER_REQUEST", utcnow()
     user.token_version += 1  # logs the user out of every device
@@ -52,7 +52,7 @@ async def delete_account(body: AccountDeleteIn = AccountDeleteIn(), user: User =
         await force_offline(db, user.id)  # mode = OFF, live location erased, open offers closed
     audit(db, None, "ACCOUNT_DELETED", "user", user.id, body.reason)
     await db.commit()
-    return {"message": localize("تم حذف حسابك", user.language)}
+    return {"message": localize("Your account was deleted", user.language)}
 
 
 @admin_router.post("/users/{user_id}/restore")

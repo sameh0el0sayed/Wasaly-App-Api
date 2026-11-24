@@ -200,14 +200,19 @@ app.add_middleware(CORSMiddleware, allow_origins=settings.cors_origins, allow_me
 @app.exception_handler(StarletteHTTPException)
 async def http_error_handler(request: Request, exc: StarletteHTTPException):
     """Same body as FastAPI's default, with message/note translated when the app sends Accept-Language: en."""
-    lang = parse_accept_language(request.headers.get("accept-language")) or "ar"
-    return JSONResponse({"detail": localize_detail(exc.detail, lang)}, status_code=exc.status_code, headers=getattr(exc, "headers", None))
+    det = localize_detail(exc.detail, "en")  # API errors are always English; clients translate by code
+    body: dict = {"detail": det, "status": exc.status_code}
+    if isinstance(det, dict):
+        body["code"] = det.get("code")
+        if det.get("message"):
+            body["message"] = det["message"]
+    return JSONResponse(body, status_code=exc.status_code, headers=getattr(exc, "headers", None))
 
 
 @app.exception_handler(RequestValidationError)
 async def validation_handler(request: Request, exc: RequestValidationError):
     errs = [{"field": ".".join(str(x) for x in e["loc"][1:]), "message": e["msg"]} for e in exc.errors()]
-    return JSONResponse(status_code=422, content={"detail": {"code": "VALIDATION_ERROR", "errors": errs}})
+    return JSONResponse(status_code=422, content={"detail": {"code": "VALIDATION_ERROR", "message": "Validation failed", "errors": errs}, "code": "VALIDATION_ERROR", "status": 422, "message": "Validation failed"})
 
 
 @app.get("/health", tags=["system"])
@@ -279,7 +284,7 @@ async def request_id_middleware(request: Request, call_next):
     if not any(x in path for x in _MAINT_OPEN) and request.method != "OPTIONS":
         on, msg = await _maintenance_state()
         if on:
-            return JSONResponse({"detail": msg or "الخدمة متوقفة مؤقتًا للصيانة", "maintenance": True}, status_code=503)
+            return JSONResponse({"detail": msg or "The service is temporarily down for maintenance", "maintenance": True}, status_code=503)
     try:
         response = await call_next(request)
     except Exception as e:  # noqa: BLE001

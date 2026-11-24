@@ -115,7 +115,7 @@ async def pricing(db: AsyncSession = Depends(get_db)):
             # customers only see a fee when it is added on top of the trip price
             "service_fee": ({"type": p.commission_type, "value": str(p.commission_value)} if p.commission_mode == "ADD" else None),
             "note": "Time is counted from 'start trip' to 'arrived at destination' only.",
-            "note_ar": "يُحسب الوقت من «بدء الرحلة» حتى «الوصول للوجهة» فقط.",
+            "note_ar": "Time is counted only from trip start to arrival at the destination.",
             "note_en": "Time is counted from 'start trip' to 'arrived at destination' only."}
 
 
@@ -225,7 +225,7 @@ async def estimate(body: EstimateIn, user: User = Depends(customer_user), db: As
             "discount_amount": f"{e['discount']:.{d}f}",
             "service_fee": f"{e['customer_total'] + e['discount'] - e['price']:.{d}f}" if p.commission_mode == "ADD" else None,
             "estimated_total": f"{e['customer_total'] + sched_fee:.{d}f}", "is_outside_bahrain": outside, "pickup_in_service_area": area is not None,
-            "note": localize("تقديري: السعر النهائي يُحسب من وقت الرحلة الفعلي من بدء الرحلة حتى الوصول.", lang)}
+            "note": localize("Estimate: the final price is calculated from the actual trip time, from trip start to arrival.", lang)}
 
 
 @router.post("/orders", status_code=201)
@@ -249,7 +249,7 @@ async def create_order(body: OrderCreateIn, user: User = Depends(customer_user),
     s_cfg = await settings_service.get_all(db)
     vclass = vehicle_classes.resolve(s_cfg, body.vehicle_class if body.service_type == "PERSON" else None)  # 422 VEHICLE_CLASS_UNAVAILABLE
     if s_cfg["maintenance_mode"] == "true":
-        raise HTTPException(503, {"code": "MAINTENANCE_MODE", "message": s_cfg["maintenance_message"] or "الخدمة متوقفة مؤقتًا"})
+        raise HTTPException(503, {"code": "MAINTENANCE_MODE", "message": s_cfg["maintenance_message"] or "The service is temporarily unavailable"})
     if s_cfg["block_new_order_if_unpaid"] == "true" and not is_merchant:
         unpaid = (await db.execute(select(Order.id, Order.payment_id).where(
             Order.customer_id == user.id, Order.order_status == S.COMPLETED, Order.payment_status != "PAID").limit(1))).first()
@@ -259,7 +259,7 @@ async def create_order(body: OrderCreateIn, user: User = Depends(customer_user),
                 Payment.payment_status.in_(["UNPAID", "PENDING_PAYMENT", "PENDING_VERIFICATION", "REJECTED", "FAILED"])).limit(1))).first()
         if unpaid:
             raise HTTPException(402, {"code": "UNPAID_ORDER_EXISTS", "order_id": unpaid[0], "payment_id": unpaid[1],
-                                      "message": "يرجى سداد الرحلة السابقة أولًا"})
+                                      "message": "Please pay for the previous trip first"})
     if body.cargo_photo:
         await assert_owned(db, user.id, body.cargo_photo)
     area_id = body.service_area_id
@@ -267,7 +267,7 @@ async def create_order(body: OrderCreateIn, user: User = Depends(customer_user),
         area = await find_area(db, body.pickup_latitude, body.pickup_longitude)
         area_id = area.id if area else None
         if not area:
-            raise HTTPException(422, {"code": "OUTSIDE_SERVICE_AREA", "message": "نقطة الالتقاء خارج مناطق الخدمة"})
+            raise HTTPException(422, {"code": "OUTSIDE_SERVICE_AREA", "message": "The pickup point is outside the service areas"})
     p = await settings_service.get_pricing(db)  # currency + price snapshot (new orders only)
     data = body.model_dump(exclude={"accept_capacity_terms", "service_area_id", "promo_code", "scheduled_at"})
     data["choose_driver"] = bool(body.choose_driver and s_cfg["driver_choice_enabled"] == "true")
@@ -343,7 +343,7 @@ async def create_order(body: OrderCreateIn, user: User = Depends(customer_user),
     db.add(OrderStatusHistory(order_id=order.id, old_status=None, new_status=data_status, changed_by=user.id,
                               changed_by_role=user.role, notes="Order created"))
     if sched_at:
-        await notify(db, user.id, "SCHEDULED_CONFIRMED", "تم تأكيد رحلتك المجدولة", "سنبحث لك عن سائق قبل الموعد.", order.id)
+        await notify(db, user.id, "SCHEDULED_CONFIRMED", "Your scheduled trip is confirmed", "We will find you a driver before the scheduled time.", order.id)
     else:
         await notify(db, user.id, "ORDER_RECEIVED", "تم استلام طلبك", "نبحث لك عن سائق.", order.id)
         await dispatch_order(db, order)
@@ -442,7 +442,7 @@ async def cancel_order(order_id: int, body: OptionalReasonIn, user: User = Depen
     if o.order_status in S.FINAL:
         return order_for_customer(o)  # idempotent
     if o.order_status in (S.IN_PROGRESS, S.ARRIVED_AT_DESTINATION):
-        raise HTTPException(409, {"code": "TRIP_ALREADY_STARTED", "message": "لا يمكن الإلغاء بعد بدء الرحلة، تواصل مع الإدارة"})
+        raise HTTPException(409, {"code": "TRIP_ALREADY_STARTED", "message": "Cancellation is not possible after the trip has started; contact support"})
     if o.order_status in S.DRIVER_BUSY and (await settings_service.get_all(db))["cancel_after_accept_allowed"] != "true":
         raise HTTPException(409, {"code": "CANCEL_NOT_ALLOWED"})
     had_driver = o.driver_id
@@ -468,7 +468,7 @@ async def cancel_order(order_id: int, body: OptionalReasonIn, user: User = Depen
         o.cancel_fee, o.cancel_fee_payer = fee, "CUSTOMER"
         fee_out = {"amount": f"{fee:.{dec}f}", "payment_id": pay.id}
         await notify(db, o.customer_id, "CANCEL_FEE_CHARGED", "رسوم إلغاء", f"تم احتساب رسوم إلغاء {fee:.{dec}f} {o.currency}.", o.id)
-        await notify(db, had_driver, "CANCEL_FEE_CHARGED", "تعويض إلغاء", "تم احتساب تعويض لك عن إلغاء العميل.", o.id)
+        await notify(db, had_driver, "CANCEL_FEE_CHARGED", "Cancellation compensation", "Compensation was credited to you for the customer's cancellation.", o.id)
     await db.commit()
     out = order_for_customer((await db.execute(select(Order).where(Order.id == o.id).options(*order_customer_load_options()))).scalar_one())
     out["cancel_fee_info"] = fee_out
@@ -484,7 +484,7 @@ async def retry_order(order_id: int, user: User = Depends(customer_user), db: As
     if o.order_status != S.NO_DRIVER_AVAILABLE:
         raise HTTPException(409, {"code": "RETRY_NOT_ALLOWED", "status": o.order_status})
     if o.retry_count >= int((await settings_service.get_all(db))["max_order_retries"]):
-        raise HTTPException(409, {"code": "RETRY_LIMIT_REACHED", "message": "تم الوصول للحد الأقصى لإعادة المحاولة، يرجى إنشاء طلب جديد"})
+        raise HTTPException(409, {"code": "RETRY_LIMIT_REACHED", "message": "The retry limit was reached; please create a new order"})
     o.retry_count += 1
     await dispatch_order(db, o)
     await db.commit()

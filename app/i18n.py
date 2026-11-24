@@ -8,7 +8,7 @@ To add a language, add another column here and a code to LANGUAGES.
 import re
 
 LANGUAGES = ("ar", "en")
-DEFAULT_LANGUAGE = "ar"
+DEFAULT_LANGUAGE = "en"
 
 # (arabic, english). Placeholders: {name}. Order does not matter: every entry is anchored (^...$).
 PAIRS: list[tuple[str, str]] = [
@@ -140,6 +140,81 @@ PAIRS: list[tuple[str, str]] = [
     ("اشتراكك ينتهي قريبًا", "Your subscription ends soon"), ("ينتهي في {d}", "Ends on {d}"),
 ]
 
+# v52: English source strings (English is the default language); Arabic users get the Arabic text back
+PAIRS += [
+    ("الخدمة متوقفة مؤقتًا للصيانة", "The service is temporarily down for maintenance"),
+    ("لا يمكن حذف الحساب أثناء وجود طلب جارٍ", "The account cannot be deleted while an order is in progress"),
+    ("يوجد مبلغ غير مدفوع", "There is an unpaid amount"),
+    ("يوجد اشتراك ساري", "There is an active subscription"),
+    ("يوجد مبلغ مستحق للشركة", "There is an amount owed to the company"),
+    ("تم حذف حسابك", "Your account was deleted"),
+    ("تم تحديث بياناتك.", "Your details were updated."),
+    ("تم التحقق من رقم الهاتف. حسابك الآن قيد المراجعة من الإدارة", "Phone number verified. Your account is now under admin review"),
+    ("هذا الحساب محذوف", "This account has been deleted"),
+    ("تم حظر هذا الحساب نهائيًا", "This account has been permanently banned"),
+    ("إذا كان الحساب موجودًا فسيتواصل معك المدير لإعادة تعيين كلمة المرور", "If the account exists, the admin will contact you to reset the password"),
+    ("تم بلوغ الحد الشهري للحساب المؤسسي", "The corporate account monthly limit has been reached"),
+    ("المستخدم غير مسجل في وصلي", "This user is not registered in Wasaly"),
+    ("تم إرسال الطلب للمراجعة", "The request was sent for review"),
+    ("غرامة إلغاء", "Cancellation penalty"),
+    ("السائق اعتذر", "Driver apologised"),
+    ("اعتذر السائق، نبحث لك عن سائق آخر.", "The driver apologised; we are finding you another driver."),
+    ("الطلب جاهز", "Order is ready"),
+    ("الطلب جاهز للاستلام الآن.", "The order is ready for pickup now."),
+    ("ألغت الجهة الطالبة الطلب.", "The requesting business cancelled the order."),
+    ("يُحسب الوقت من «بدء الرحلة» حتى «الوصول للوجهة» فقط.", "Time is counted only from trip start to arrival at the destination."),
+    ("تقديري: السعر النهائي يُحسب من وقت الرحلة الفعلي من بدء الرحلة حتى الوصول.", "Estimate: the final price is calculated from the actual trip time, from trip start to arrival."),
+    ("الخدمة متوقفة مؤقتًا", "The service is temporarily unavailable"),
+    ("يرجى سداد الرحلة السابقة أولًا", "Please pay for the previous trip first"),
+    ("نقطة الالتقاء خارج مناطق الخدمة", "The pickup point is outside the service areas"),
+    ("تم تأكيد رحلتك المجدولة", "Your scheduled trip is confirmed"),
+    ("سنبحث لك عن سائق قبل الموعد.", "We will find you a driver before the scheduled time."),
+    ("لا يمكن الإلغاء بعد بدء الرحلة، تواصل مع الإدارة", "Cancellation is not possible after the trip has started; contact support"),
+    ("تعويض إلغاء", "Cancellation compensation"),
+    ("تم احتساب تعويض لك عن إلغاء العميل.", "Compensation was credited to you for the customer's cancellation."),
+    ("تم الوصول للحد الأقصى لإعادة المحاولة، يرجى إنشاء طلب جديد", "The retry limit was reached; please create a new order"),
+    ("نوع بطاقة مختلف عن المختار", "Card type differs from the one selected"),
+    ("تم الدفع بنجاح ✔", "Payment successful ✔"),
+    ("فشلت عملية الدفع", "The payment failed"),
+    ("جارٍ التحقق من الدفع…", "Verifying the payment..."),
+    ("تم إرسال طلبك للإدارة", "Your request was sent to the admin"),
+    ("طلب عرض سعر جديد", "New price quote request"),
+    ("السعر المعروض هو السعر النهائي المتفق عليه عند التأكيد. أي تغيير يحتاج موافقتك.", "The price shown is the final agreed price at confirmation. Any change needs your approval."),
+    ("نبحث لك عن مزوّد مناسب.", "We are finding a suitable provider for you."),
+    ("طلب اعتماد مزوّد", "Provider approval request"),
+    ("تم اعتماد خدمتك", "Your service was approved"),
+    ("تم رفض طلب الخدمة", "Your service request was rejected"),
+    ("عرض السعر جاهز", "Your price quote is ready"),
+    ("طلب جديد لك", "New request for you"),
+    ("أرسلت لك الإدارة طلبًا مباشرًا.", "The admin sent you a direct request."),
+    ("تنبيه طوارئ", "Emergency alert"),
+    ("تصعيد طوارئ", "Emergency escalation"),
+    ("تم التعامل مع بلاغ الطوارئ", "The emergency report was handled"),
+    ("تمت إضافة محطة", "A stop was added"),
+    ("مكافأة إحالة", "Referral reward"),
+    ("تحميل تطبيق Android", "Download the Android app"),
+    ("تحميل تطبيق iPhone", "Download the iPhone app"),
+    ("مستخدم محذوف", "Deleted user"),
+    ("نبحث لك عن سائق", "We are finding you a driver"),
+    ("حان موعد رحلتك المجدولة، نبحث عن سائق الآن.", "It is time for your scheduled trip; we are finding a driver now."),
+    ("تذكير برحلتك", "Trip reminder"),
+    ("رحلتك المجدولة بعد أقل من ساعة.", "Your scheduled trip starts in less than an hour."),
+    ("انتهت المهلة", "Timed out"),
+    ("أُلغي الطلب", "Order cancelled"),
+    ("أُلغي طلبك لانتهاء المهلة دون قبول سائق.", "Your order was cancelled because no driver accepted in time."),
+    ("المدفوعات متوقفة مؤقتًا", "Payments are temporarily paused"),
+    ("الخدمة متوقفة", "The service is stopped"),
+    ("وضع الطوارئ: النظام للقراءة فقط", "Emergency mode: the system is read-only"),
+    ("النظام في وضع الطوارئ", "The system is in emergency mode"),
+    ("أكواد الخصم غير متاحة حاليًا", "Promo codes are currently unavailable"),
+    ("كود الخصم غير صحيح", "The promo code is invalid"),
+    ("كود الخصم لم يبدأ بعد", "The promo code is not active yet"),
+    ("انتهت صلاحية كود الخصم", "The promo code has expired"),
+    ("لا يمكنك استخدام كود الدعوة الخاص بك", "You cannot use your own invite code"),
+    ("استخدمتَ كود دعوة من قبل", "You have already used an invite code"),
+    ("بلغ هذا الكود الحد الأقصى للاستخدام", "This code has reached its usage limit"),
+]
+
 _EXACT: dict[str, str] = {}
 _TEMPLATES: list[tuple[re.Pattern, str]] = []
 for _ar, _en in PAIRS:
@@ -149,6 +224,7 @@ for _ar, _en in PAIRS:
         _TEMPLATES.append((re.compile(f"^{rx}$", re.S), _en))
     else:
         _EXACT[_ar] = _en
+_AR_BY_EN = {en: ar for ar, en in PAIRS if "{" not in ar}
 _TEMPLATES.sort(key=lambda t: -len(t[0].pattern))  # most specific (longest) first
 
 
@@ -164,16 +240,16 @@ def to_en(text: str, _depth: int = 0) -> str:
 
 
 def localize(text, lang: str):
-    """Arabic is the source language: `ar` returns the text unchanged."""
-    if lang != "en" or not isinstance(text, str):
+    """Sources may be Arabic (older strings) or English (new): `en` returns English, `ar` returns Arabic when a pair exists."""
+    if not isinstance(text, str):
         return text
-    return to_en(text)
+    if lang == "en":
+        return to_en(text)
+    return _AR_BY_EN.get(text, text)
 
 
-def localize_detail(detail, lang: str):
-    """Error `detail`: a string, or a dict whose `message`/`note` is translated (codes never change)."""
-    if lang != "en":
-        return detail
+def localize_detail(detail, lang: str = "en"):
+    """Error `detail` is always English (owner rule 2026-11-24): a string, or a dict whose `message`/`note` is translated (codes never change)."""
     if isinstance(detail, str):
         return to_en(detail)
     if isinstance(detail, dict):

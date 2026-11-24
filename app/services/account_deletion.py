@@ -24,7 +24,7 @@ from .files import delete_object
 
 log = logging.getLogger("account_deletion")
 KEEP_PREFIXES = ("payment/", "PICKUP_PROOF/", "DELIVERY_PROOF/")  # evidence that stays with the order/payment
-DELETED_NAME = "مستخدم محذوف"
+DELETED_NAME = "Deleted user"
 
 
 async def purge_devices(db: AsyncSession, user_id: int) -> None:

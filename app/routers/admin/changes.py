@@ -84,7 +84,7 @@ async def _review(db, admin, c: ProfileChange | None, kind: str, body: ChangeRev
     if body.status == "ACCEPTED":
         await C.apply(db, u, c)
         c.status = C.ACCEPTED
-        title, msg = ("تم قبول التصحيح", "تم قبول البيانات المرسلة.") if kind == C.CORRECTION else ("تم قبول طلب التغيير", "تم تحديث بياناتك.")
+        title, msg = ("تم قبول التصحيح", "تم قبول البيانات المرسلة.") if kind == C.CORRECTION else ("تم قبول طلب التغيير", "Your details were updated.")
     else:
         if not body.reason:
             raise HTTPException(422, {"code": "REASON_REQUIRED"})

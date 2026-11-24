@@ -112,7 +112,7 @@ async def request_cpr_change(body: CprChangeIn, user: User = Depends(current_use
     if body.cpr_photo:
         await _queue_change(db, user, "cpr_photo", body.cpr_photo)
     await db.commit()
-    return {"message": localize("تم إرسال الطلب للمراجعة", lang)}
+    return {"message": localize("The request was sent for review", lang)}
 
 
 @router.post("/profile/sensitive-change-request", status_code=202)
@@ -120,7 +120,7 @@ async def sensitive_change(body: ReasonIn, user: User = Depends(current_user), d
                            lang: str = Depends(request_lang)):
     db.add(Complaint(user_id=user.id, type="SENSITIVE_CHANGE", subject="Sensitive data change request", message=body.reason))
     await db.commit()
-    return {"message": localize("تم إرسال الطلب للمراجعة", lang)}
+    return {"message": localize("The request was sent for review", lang)}
 
 
 @router.post("/profile/deletion-request", status_code=202)
@@ -128,7 +128,7 @@ async def deletion_request(body: ReasonIn, user: User = Depends(current_user), d
                            lang: str = Depends(request_lang)):
     db.add(Complaint(user_id=user.id, type="DELETION_REQUEST", subject="Account suspension/deletion request", message=body.reason))
     await db.commit()
-    return {"message": localize("تم إرسال طلبك للإدارة", lang)}
+    return {"message": localize("Your request was sent to the admin", lang)}
 
 
 # ---------- driver-side profile updates ----------

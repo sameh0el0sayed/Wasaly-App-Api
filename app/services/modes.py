@@ -80,11 +80,11 @@ def verdict(mode: str, method: str, path: str, msg: str, lang: str = "ar"):
     if mode == "normal" or method == "OPTIONS" or path.startswith(_OPEN):
         return None
     if mode in ("payments_frozen", "emergency") and is_money(method, path):
-        return _refuse(423, "PAYMENTS_FROZEN", "المدفوعات متوقفة مؤقتًا", "Payments are temporarily paused", msg, lang)
+        return _refuse(423, "PAYMENTS_FROZEN", "Payments are temporarily paused", "Payments are temporarily paused", msg, lang)
     if mode == "stopped" and not path.startswith(_STOP_OPEN):
-        return _refuse(503, "SERVICE_STOPPED", "الخدمة متوقفة", "The service is stopped", msg, lang, stopped=True)
+        return _refuse(503, "SERVICE_STOPPED", "The service is stopped", "The service is stopped", msg, lang, stopped=True)
     if mode == "emergency" and method not in ("GET", "HEAD") and not path.startswith(_EM_OPEN):
-        return _refuse(503, "EMERGENCY_READ_ONLY", "وضع الطوارئ: النظام للقراءة فقط", "Emergency mode: the system is read-only", msg, lang)
+        return _refuse(503, "EMERGENCY_READ_ONLY", "Emergency mode: the system is read-only", "Emergency mode: the system is read-only", msg, lang)
     return None
 
 
@@ -99,4 +99,4 @@ async def emergency() -> bool:
 async def deny_end_user(user) -> None:
     """Emergency: only admins may hold a session or sign in."""
     if user.role not in Role.ADMINS and await emergency():
-        raise HTTPException(403, {"code": "EMERGENCY_LOCKDOWN", "message": "النظام في وضع الطوارئ"})
+        raise HTTPException(403, {"code": "EMERGENCY_LOCKDOWN", "message": "The system is in emergency mode"})

@@ -69,4 +69,4 @@ async def request_phone_change(body: PhoneChangeIn, user: User = Depends(current
     db.add(c)
     await notify_admins(db, "PROFILE_CHANGE_SUBMITTED", "طلب تغيير بيانات", "طلب مستخدم تغيير رقم هاتفه.")
     await db.commit()
-    return {"message": localize("تم إرسال الطلب للمراجعة", lang), "pending": C.row_out(c)}
+    return {"message": localize("The request was sent for review", lang), "pending": C.row_out(c)}

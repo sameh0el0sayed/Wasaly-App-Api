@@ -153,7 +153,7 @@ async def create_quote(code: str, body: QuoteIn, user: User = Depends(customer_u
     await db.flush()
     if manual:
         from ..services.payments import notify_admins
-        await notify_admins(db, "QUOTE_REQUEST", "طلب عرض سعر جديد", f"{svc.name_ar} - طلب #{q.id}")
+        await notify_admins(db, "QUOTE_REQUEST", "New price quote request", f"{svc.name_ar} - طلب #{q.id}")
     await db.commit()
     return _quote_out(q)
 
@@ -163,7 +163,7 @@ def _quote_out(q: ServiceQuote) -> dict:
             "price": f"{q.price:.3f}" if q.price is not None else None, "currency": q.currency, "breakdown": q.breakdown or [],
             "distance_km": (q.request or {}).get("distance_km"), "duration_min": (q.request or {}).get("duration_min"),
             "expires_at": q.expires_at.isoformat() if q.expires_at else None, "order_id": q.order_id, "admin_note": q.admin_note,
-            "note": "السعر المعروض هو السعر النهائي المتفق عليه عند التأكيد. أي تغيير يحتاج موافقتك."}
+            "note": "The price shown is the final agreed price at confirmation. Any change needs your approval."}
 
 
 async def _mine(db, user: User, quote_id: int) -> ServiceQuote:
@@ -244,7 +244,7 @@ async def accept_quote(quote_id: int, user: User = Depends(customer_user), db: A
     db.add(OrderStatusHistory(order_id=order.id, old_status=None, new_status=status, changed_by=user.id, changed_by_role=user.role,
                               notes=f"{q.service_code} booking (quote #{q.id})"))
     q.status, q.order_id = "ACCEPTED", order.id
-    await notify(db, user.id, "ORDER_RECEIVED", "تم استلام طلبك", "نبحث لك عن مزوّد مناسب.", order.id)
+    await notify(db, user.id, "ORDER_RECEIVED", "تم استلام طلبك", "We are finding a suitable provider for you.", order.id)
     if not sched:
         await dispatch_order(db, order)
     await db.commit()
@@ -275,7 +275,7 @@ async def provider_apply(body: ProviderIn, user: User = Depends(driver_user), db
         db.add(row)
     await db.flush()
     from ..services.payments import notify_admins
-    await notify_admins(db, "PROVIDER_CATEGORY", "طلب اعتماد مزوّد", f"{user.full_name}: {code}")
+    await notify_admins(db, "PROVIDER_CATEGORY", "Provider approval request", f"{user.full_name}: {code}")
     await db.commit()
     return {"id": row.id, "service_code": code, "status": row.status}
 
@@ -424,7 +424,7 @@ async def admin_review_provider(pid: int, body: ProviderReview, admin: User = De
     did, code = p.driver_id, p.service_code
     p.status, p.note, p.reviewed_by = ("APPROVED" if body.approve else "REJECTED"), body.note, admin.id
     audit(db, admin.id, "PROVIDER_CATEGORY_REVIEWED", "provider_category", pid, details={"approve": body.approve, "service": code, "driver": did})
-    await notify(db, did, "PROVIDER_CATEGORY", "تم اعتماد خدمتك" if body.approve else "تم رفض طلب الخدمة", body.note or code)
+    await notify(db, did, "PROVIDER_CATEGORY", "Your service was approved" if body.approve else "Your service request was rejected", body.note or code)
     await db.commit()
     return {"ok": True, "status": "APPROVED" if body.approve else "REJECTED"}
 
@@ -451,7 +451,7 @@ async def admin_price_quote(qid: int, body: PriceIn, admin: User = Depends(admin
     audit(db, admin.id, "QUOTE_PRICED", "quote", qid, details={"price": str(body.price)})
     from ..services.merchant import queue_quote_event
     await queue_quote_event(db, q)
-    await notify(db, cid, "QUOTE_READY", "عرض السعر جاهز", f"{body.price:.3f} {q.currency} - يرجى المراجعة والموافقة.")
+    await notify(db, cid, "QUOTE_READY", "Your price quote is ready", f"{body.price:.3f} {q.currency} - يرجى المراجعة والموافقة.")
     await db.commit()
     return _quote_out(q)
 
@@ -480,6 +480,6 @@ async def admin_manual_dispatch(order_id: int, body: AssignIn, admin: User = Dep
         from ..services.orders import transition
         await transition(db, o, S.OFFERED, admin.id, "ADMIN", f"Manual dispatch to driver {body.driver_id}")
     audit(db, admin.id, "MANUAL_DISPATCH", "order", order_id, details={"driver_id": body.driver_id})
-    await notify(db, body.driver_id, "NEW_OFFER", "طلب جديد لك", "أرسلت لك الإدارة طلبًا مباشرًا.", o.id)
+    await notify(db, body.driver_id, "NEW_OFFER", "New request for you", "The admin sent you a direct request.", o.id)
     await db.commit()
     return {"ok": True}

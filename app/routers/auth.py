@@ -313,7 +313,7 @@ async def register(body: RegisterIn, db: AsyncSession = Depends(get_db), lang: s
     await db.refresh(user, ["driver_profile", "vehicle", "driver_application"])  # new instance: load before user_public()
     return {"user": user_public(user), **await _tokens(db, user, getattr(body, "device_id", None)),
             "phone_verified": verification is not None,
-            "message": localize("تم التحقق من رقم الهاتف. حسابك الآن قيد المراجعة من الإدارة", user.language)}
+            "message": localize("Phone number verified. Your account is now under admin review", user.language)}
 
 
 @router.post("/auth/login", dependencies=[Depends(limit("login", 20, 300))])
@@ -336,9 +336,9 @@ async def login(body: LoginIn, request: Request, db: AsyncSession = Depends(get_
             await db.commit()
         raise HTTPException(401, "Invalid phone or password")
     if user.account_status == "DELETED":  # checked after the password so the state is not revealed to strangers
-        raise HTTPException(403, {"code": "ACCOUNT_DELETED", "message": "هذا الحساب محذوف"})
+        raise HTTPException(403, {"code": "ACCOUNT_DELETED", "message": "This account has been deleted"})
     if user.account_status == "BANNED":
-        raise HTTPException(403, {"code": "ACCOUNT_BANNED", "message": "تم حظر هذا الحساب نهائيًا", "reason": user.status_reason})
+        raise HTTPException(403, {"code": "ACCOUNT_BANNED", "message": "This account has been permanently banned", "reason": user.status_reason})
     if not user.phone_verified:
         raise HTTPException(403, {"code": "PHONE_NOT_VERIFIED", "message": "Verify your phone through WhatsApp first"})
     from ..services import modes as _modes
@@ -420,7 +420,7 @@ async def forgot_password(body: ForgotPasswordIn, db: AsyncSession = Depends(get
         db.add(Complaint(user_id=user.id, type="PASSWORD_RESET", subject="Password reset request",
                          message=f"Phone {body.phone}, name given: {body.full_name or '-'}"))
         await db.commit()
-    return {"message": localize("إذا كان الحساب موجودًا فسيتواصل معك المدير لإعادة تعيين كلمة المرور", lang)}
+    return {"message": localize("If the account exists, the admin will contact you to reset the password", lang)}
 
 
 @router.get("/account/status")

@@ -22,3 +22,10 @@ These rules can only be changed by the owner through PCC.
 - Replies to the owner: short, Modern Standard Arabic. JSON handoffs for other agents: English.
 - Deploys are done by the owner from PCC; after a push just say it is pushed and ready to deploy from PCC.
 - Work starts only on the word «موافق» (except when a JSON spec/handoff is received).
+
+## Language rules (mandatory, owner 2026-11-24)
+- English is the default everywhere. All API responses (detail, message, errors, validation) are English; no Arabic in responses, logs or codes.
+- Error shape: `{"detail": ..., "code": "STABLE_UPPER_SNAKE_CODE", "status": 422, "message": "English sentence"}`. Clients translate by code, never by parsing text. Codes list: docs/ERROR_CODES.md.
+- Accept-Language (en|ar) only affects end-user texts (notifications, SMS/WhatsApp/e-mail, receipts, PDFs); default en. Users have a saved `language` (default en).
+- New strings are written in English; add an Arabic pair in app/i18n.py PAIRS when Arabic users must see it.
+- Apps/frontends: English first launch, language switch, LTR/RTL automatic, no hard-coded UI text, Western digits, BHD 3 decimals, VAT 10% shown separately.

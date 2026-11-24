@@ -71,7 +71,7 @@ class User(Base):
     last_lat: Mapped[float | None] = mapped_column(Float, nullable=True)  # last location a customer app sent (estimate / order); admin radar only
     last_lng: Mapped[float | None] = mapped_column(Float, nullable=True)
     last_location_at: Mapped[datetime | None] = mapped_column(UTCDateTime, nullable=True)
-    language: Mapped[str] = mapped_column(String(2), default="ar", server_default="ar")  # notification language (ar | en)
+    language: Mapped[str] = mapped_column(String(2), default="en", server_default="ar")  # notification language (ar | en)
     must_change_password: Mapped[bool] = mapped_column(Boolean, default=False)
     token_version: Mapped[int] = mapped_column(Integer, default=0)
     phoenix_sub: Mapped[str | None] = mapped_column(String(64), unique=True, index=True, nullable=True)  # Phoenix ID subject (SSO link)

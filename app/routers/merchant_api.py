@@ -403,7 +403,7 @@ async def delivery_ready(delivery_id: str, request: Request, body: ReadyIn | Non
         o.scheduled_at = utcnow()
         await dispatch_order(db, o)
     elif o.driver_id and o.order_status in (S.ACCEPTED, S.DRIVER_ON_THE_WAY, S.ARRIVED_AT_PICKUP):
-        await notify(db, o.driver_id, "ORDER_READY", "الطلب جاهز", "الطلب جاهز للاستلام الآن.", o.id)
+        await notify(db, o.driver_id, "ORDER_READY", "Order is ready", "The order is ready for pickup now.", o.id)
     await db.commit()
     return ok({"id": md.id, "status": M.final_status(o)})
 
@@ -466,7 +466,7 @@ async def cancel_delivery(delivery_id: str, request: Request, body: CancelIn | N
         o.cancel_fee, o.cancel_fee_payer = fee, "CUSTOMER"  # billed on the merchant's monthly invoice (no per-order payment: it would block new deliveries)
     await transition(db, o, S.CANCELLED, muser_id, Role.CUSTOMER, reason)
     if had_driver:
-        await notify(db, had_driver, "ORDER_CANCELLED", "تم إلغاء الطلب", "ألغت الجهة الطالبة الطلب.", o.id)
+        await notify(db, had_driver, "ORDER_CANCELLED", "تم إلغاء الطلب", "The requesting business cancelled the order.", o.id)
     await db.commit()
     out = {"id": md.id, "status": "cancelled"}
     if fee > 0:

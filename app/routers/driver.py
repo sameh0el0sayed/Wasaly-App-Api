@@ -405,13 +405,13 @@ async def driver_cancel(order_id: int, body: ReasonIn, user: User = Depends(driv
             cust = await db.get(User, o.customer_id)
             cust.wallet_balance = Decimal(cust.wallet_balance or 0) + fee
             db.add(WalletEntry(user_id=cust.id, amount=fee, kind="DRIVER_CANCEL", ref_id=o.id))
-        await notify(db, user.id, "CANCEL_FEE_CHARGED", "غرامة إلغاء", f"تم احتساب غرامة {fee:.{dec}f} {o.currency} على إلغائك.", o.id)
+        await notify(db, user.id, "CANCEL_FEE_CHARGED", "Cancellation penalty", f"تم احتساب غرامة {fee:.{dec}f} {o.currency} على إلغائك.", o.id)
     for aid in (await db.execute(select(User.id).where(User.role.in_(list(Role.ADMINS)), User.account_status == "APPROVED"))).scalars().all():
         await notify(db, aid, "DRIVER_CANCELLED_AFTER_ACCEPT", "سائق ألغى بعد القبول", f"ألغى السائق {user.full_name} الرحلة #{o.id}.", o.id)
     # back to searching (the same driver is not offered again); the customer keeps the order
     o.driver_id, o.accepted_at, o.cancellation_reason = None, None, body.reason
     await transition(db, o, S.PENDING, user.id, "DRIVER", f"Driver cancelled: {body.reason}", exceptional=True)
-    await notify(db, o.customer_id, "DRIVER_CANCELLED", "السائق اعتذر", "اعتذر السائق، نبحث لك عن سائق آخر.", o.id)
+    await notify(db, o.customer_id, "DRIVER_CANCELLED", "Driver apologised", "The driver apologised; we are finding you another driver.", o.id)
     await dispatch_order(db, o)
     await db.commit()
     return {"status": "RE_DISPATCHED", "cancel_fee": f"{fee:.{dec}f}", "currency": o.currency}

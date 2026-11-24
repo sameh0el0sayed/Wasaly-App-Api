@@ -182,7 +182,7 @@ async def _verify_and_apply(db: AsyncSession, charge_id: str) -> Payment | None:
         brand = str(src.get("payment_method") or (charge.get("card") or {}).get("brand") or "").upper()[:30] or None
         p.card_brand = brand
         if brand and ((brand.startswith("AMERICAN") and p.fee_category not in ("GLOBAL", None)) or (brand == "BENEFIT" and p.fee_category not in ("BENEFIT", None))):
-            await notify_admins(db, "FEE_MISMATCH", "نوع بطاقة مختلف عن المختار", f"payment #{p.id}: chosen {p.fee_category}, Tap reports {brand}")
+            await notify_admins(db, "FEE_MISMATCH", "Card type differs from the one selected", f"payment #{p.id}: chosen {p.fee_category}, Tap reports {brand}")
         await finalize_paid(db, p, None, p.payment_method)
     elif status in TAP_FAILED and p.payment_status == "PENDING_PAYMENT":
         p.payment_status = "FAILED"
@@ -217,7 +217,7 @@ async def tap_return(tap_id: str | None = None, db: AsyncSession = Depends(get_d
             status = p.payment_status if p else "UNKNOWN"
         except Exception:  # noqa
             await db.rollback()
-    msg = {"PAID": "تم الدفع بنجاح ✔", "FAILED": "فشلت عملية الدفع"}.get(status, "جارٍ التحقق من الدفع…")
+    msg = {"PAID": "Payment successful ✔", "FAILED": "The payment failed"}.get(status, "Verifying the payment...")
     return f'<html dir="rtl" lang="ar"><meta name="viewport" content="width=device-width"><body style="font-family:sans-serif;text-align:center;padding:48px"><h2>{msg}</h2><p>يمكنك العودة إلى التطبيق.</p></body></html>'
 
 

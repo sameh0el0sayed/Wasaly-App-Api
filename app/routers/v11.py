@@ -233,7 +233,7 @@ async def raise_sos(order_id: int, body: SosIn, user: User = Depends(approved_us
     a = SosAlert(order_id=o.id, raised_by_user_id=user.id, role=user.role, lat=body.lat, lng=body.lng, note=body.note)
     db.add(a)
     await db.flush()
-    await _notify_admins(db, "SOS_ALERT", "تنبيه طوارئ", f"{user.full_name} ({user.role}) رحلة #{o.id}", o.id)
+    await _notify_admins(db, "SOS_ALERT", "Emergency alert", f"{user.full_name} ({user.role}) رحلة #{o.id}", o.id)
     await db.commit()
     publish_raw("admin.sos", {"sos_id": a.id, "order_id": o.id})
     from ..services import command as _cmd
@@ -255,7 +255,7 @@ async def escalate_sos(order_id: int, body: LocIn, user: User = Depends(approved
     a.status, a.escalated_at = "ESCALATED", utcnow()
     if body.lat is not None:
         a.lat, a.lng = body.lat, body.lng
-    await _notify_admins(db, "SOS_ESCALATED", "تصعيد طوارئ", f"{user.full_name} يتصل بالشرطة - رحلة #{order_id}", order_id)
+    await _notify_admins(db, "SOS_ESCALATED", "Emergency escalation", f"{user.full_name} يتصل بالشرطة - رحلة #{order_id}", order_id)
     await db.commit()
     publish_raw("admin.sos", {"sos_id": a.id, "order_id": order_id, "status": a.status})
     return {"sos_id": a.id, "status": a.status, "emergency_number": s["emergency_number"]}
@@ -287,7 +287,7 @@ async def resolve_sos(sos_id: int, body: ResolveIn, admin: User = Depends(_admin
         raise HTTPException(404, {"code": "SOS_NOT_FOUND"})
     a.status, a.resolved_by, a.resolved_at, a.resolution = "RESOLVED", admin.id, utcnow(), body.resolution
     audit(db, admin.id, "SOS_RESOLVED", "sos", a.id, body.resolution)
-    await notify(db, a.raised_by_user_id, "SOS_RESOLVED", "تم التعامل مع بلاغ الطوارئ", body.resolution, a.order_id)
+    await notify(db, a.raised_by_user_id, "SOS_RESOLVED", "The emergency report was handled", body.resolution, a.order_id)
     await db.commit()
     return {"sos_id": a.id, "status": a.status}
 
@@ -503,7 +503,7 @@ async def add_stop(order_id: int, body: StopIn, user: User = Depends(customer_us
     o.extras_fee = Decimal(o.extras_fee or 0) + fee  # time-based price keeps running, so the extra distance pays for itself
     o.stops_fee = Decimal(o.stops_fee or 0) + fee
     if o.driver_id:
-        await notify(db, o.driver_id, "STOP_ADDED", "تمت إضافة محطة", f"أضاف العميل محطة: {body.address}", o.id)
+        await notify(db, o.driver_id, "STOP_ADDED", "A stop was added", f"أضاف العميل محطة: {body.address}", o.id)
     await db.commit()
     publish_raw("order.status", {"order_id": o.id}, user_ids=[u for u in (o.customer_id, o.driver_id) if u])
     return await _order_with_stops(db, o.id, user)
@@ -635,7 +635,7 @@ async def reward_referral(db: AsyncSession, customer_id: int, order: Order | Non
         if u:
             u.wallet_balance = Decimal(u.wallet_balance or 0) + amt
             db.add(WalletEntry(user_id=uid, amount=amt, kind=kind, ref_id=r.id))
-            await notify(db, uid, "REFERRAL_REWARD", "مكافأة إحالة", f"تمت إضافة {amt} إلى رصيدك.")
+            await notify(db, uid, "REFERRAL_REWARD", "Referral reward", f"تمت إضافة {amt} إلى رصيدك.")
     r.status, r.reward_inviter, r.reward_invitee, r.rewarded_at = "REWARDED", ri, rv, utcnow()
 
 
@@ -722,7 +722,7 @@ async def referral_landing(code: str, db: AsyncSession = Depends(get_db)):
     fallback = quote(store, safe="") if store else ""
     intent = (f"intent://invite?code={safe}#Intent;scheme=wasaly;package=com.phoenixsystems.wasaly;"
               + (f"S.browser_fallback_url={fallback};" if fallback else "") + "end")
-    stores = "".join(f'<p><a href="{u}" style="color:#0a7">{t}</a></p>' for u, t in ((s.get("android_store_url"), "تحميل تطبيق Android"), (s.get("ios_store_url"), "تحميل تطبيق iPhone")) if u)
+    stores = "".join(f'<p><a href="{u}" style="color:#0a7">{t}</a></p>' for u, t in ((s.get("android_store_url"), "Download the Android app"), (s.get("ios_store_url"), "Download the iPhone app")) if u)
     html = (f'<!doctype html><html lang="ar" dir="rtl"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'
             f'<title>وصلي</title><body style="font-family:system-ui;text-align:center;padding:40px"><h2>وصلي</h2>'
             f'<p>حمّل التطبيق واستخدم كود الدعوة:</p><h1 style="letter-spacing:3px">{safe}</h1>'

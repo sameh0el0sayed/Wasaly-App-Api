@@ -57,7 +57,7 @@ async def check_booking_allowed(db, user_id: int, corporate_id: int) -> None:
     if c.monthly_limit is not None:
         start, end = _month(None)
         if await month_used(db, corporate_id, start, end) >= c.monthly_limit:
-            raise HTTPException(402, {"code": "CORPORATE_LIMIT_REACHED", "message": "تم بلوغ الحد الشهري للحساب المؤسسي"})
+            raise HTTPException(402, {"code": "CORPORATE_LIMIT_REACHED", "message": "The corporate account monthly limit has been reached"})
 
 
 async def statement(db, c: Corporate, month: str | None) -> dict:
@@ -84,7 +84,7 @@ async def _add_member(db, corporate_id: int, phone: str, role: str) -> Corporate
         raise HTTPException(422, f"role must be one of {ROLES}")
     u = (await db.execute(select(User).where(User.phone == phone.strip()))).scalar_one_or_none()
     if not u:
-        raise HTTPException(404, {"code": "USER_NOT_FOUND", "message": "المستخدم غير مسجل في وصلي"})
+        raise HTTPException(404, {"code": "USER_NOT_FOUND", "message": "This user is not registered in Wasaly"})
     m = (await db.execute(select(CorporateMember).where(CorporateMember.corporate_id == corporate_id, CorporateMember.user_id == u.id))).scalar_one_or_none()
     if m:
         m.role, m.is_active = role, True
