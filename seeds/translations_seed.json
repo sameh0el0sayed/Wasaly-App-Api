@@ -10883,5 +10883,560 @@
   "key": "VEHICLE_CLASS_UNAVAILABLE",
   "ar": "نوع السيارة المختار غير متاح الآن",
   "en": "The chosen car type is not available now"
+ },
+ {
+  "key": "v36.add_category",
+  "ar": "إضافة فئة",
+  "en": "Add category"
+ },
+ {
+  "key": "v36.add_stop",
+  "ar": "إضافة نقطة توقف",
+  "en": "Add stop"
+ },
+ {
+  "key": "v36.apply",
+  "ar": "تقديم",
+  "en": "Apply"
+ },
+ {
+  "key": "v36.approve",
+  "ar": "موافقة",
+  "en": "Approve"
+ },
+ {
+  "key": "v36.assign",
+  "ar": "إسناد",
+  "en": "Assign"
+ },
+ {
+  "key": "v36.assign_driver",
+  "ar": "إسناد لسائق",
+  "en": "Assign driver"
+ },
+ {
+  "key": "v36.assigned",
+  "ar": "تم الإسناد",
+  "en": "Assigned"
+ },
+ {
+  "key": "v36.commission",
+  "ar": "العمولة",
+  "en": "Commission"
+ },
+ {
+  "key": "v36.commission_hint",
+  "ar": "نسبة أو مبلغ ثابت تأخذه الشركة من كل طلب",
+  "en": "Percentage or fixed amount the company takes per order"
+ },
+ {
+  "key": "v36.commission_value",
+  "ar": "قيمة العمولة",
+  "en": "Commission value"
+ },
+ {
+  "key": "v36.confirm",
+  "ar": "تأكيد",
+  "en": "Confirm"
+ },
+ {
+  "key": "v36.confirm_point",
+  "ar": "تأكيد النقطة",
+  "en": "Confirm point"
+ },
+ {
+  "key": "v36.decline",
+  "ar": "رفض",
+  "en": "Decline"
+ },
+ {
+  "key": "v36.destination",
+  "ar": "الوجهة",
+  "en": "Destination"
+ },
+ {
+  "key": "v36.driver_id",
+  "ar": "رقم السائق",
+  "en": "Driver ID"
+ },
+ {
+  "key": "v36.equipment",
+  "ar": "المعدات",
+  "en": "Equipment"
+ },
+ {
+  "key": "v36.f_can_move",
+  "ar": "المركبة تتحرك",
+  "en": "The vehicle can move"
+ },
+ {
+  "key": "v36.f_emergency",
+  "ar": "طارئ",
+  "en": "Emergency"
+ },
+ {
+  "key": "v36.f_helpers",
+  "ar": "عدد العمال",
+  "en": "Helpers"
+ },
+ {
+  "key": "v36.f_loading",
+  "ar": "يحتاج تحميل",
+  "en": "Loading needed"
+ },
+ {
+  "key": "v36.f_notes",
+  "ar": "ملاحظات",
+  "en": "Notes"
+ },
+ {
+  "key": "v36.f_unloading",
+  "ar": "يحتاج تنزيل",
+  "en": "Unloading needed"
+ },
+ {
+  "key": "v36.fill_required",
+  "ar": "أكمل الحقول المطلوبة",
+  "en": "Fill in the required fields"
+ },
+ {
+  "key": "v36.get_quote",
+  "ar": "اطلب عرض سعر",
+  "en": "Get a quote"
+ },
+ {
+  "key": "v36.more_services",
+  "ar": "خدمات أخرى",
+  "en": "More services"
+ },
+ {
+  "key": "v36.no_services",
+  "ar": "لا توجد خدمات متاحة",
+  "en": "No services available"
+ },
+ {
+  "key": "v36.now",
+  "ar": "الآن",
+  "en": "Now"
+ },
+ {
+  "key": "v36.open_order",
+  "ar": "فتح الطلب",
+  "en": "Open order"
+ },
+ {
+  "key": "v36.p_always_quote",
+  "ar": "عرض سعر يدوي دائمًا",
+  "en": "Always quote manually"
+ },
+ {
+  "key": "v36.p_equipment_fees",
+  "ar": "رسوم المعدات",
+  "en": "Equipment fees"
+ },
+ {
+  "key": "v36.p_quote_valid_minutes",
+  "ar": "صلاحية العرض (دقائق)",
+  "en": "Quote valid (minutes)"
+ },
+ {
+  "key": "v36.pickup",
+  "ar": "نقطة الاستلام",
+  "en": "Pickup"
+ },
+ {
+  "key": "v36.preparing_hint",
+  "ar": "نحسب لك أفضل سعر، لحظات",
+  "en": "We are preparing the best price, one moment"
+ },
+ {
+  "key": "v36.preparing_quote",
+  "ar": "جارٍ تجهيز عرض السعر",
+  "en": "Preparing your quote"
+ },
+ {
+  "key": "v36.price",
+  "ar": "السعر",
+  "en": "Price"
+ },
+ {
+  "key": "v36.pricing",
+  "ar": "التسعير",
+  "en": "Pricing"
+ },
+ {
+  "key": "v36.provider_title",
+  "ar": "مقدمو الخدمة",
+  "en": "Service providers"
+ },
+ {
+  "key": "v36.quote_expired",
+  "ar": "انتهت صلاحية العرض",
+  "en": "The quote has expired"
+ },
+ {
+  "key": "v36.quote_title",
+  "ar": "عرض السعر",
+  "en": "Price quote"
+ },
+ {
+  "key": "v36.reject",
+  "ar": "رفض",
+  "en": "Reject"
+ },
+ {
+  "key": "v36.save",
+  "ar": "حفظ",
+  "en": "Save"
+ },
+ {
+  "key": "v36.send_price",
+  "ar": "إرسال السعر",
+  "en": "Send price"
+ },
+ {
+  "key": "v36.set_price",
+  "ar": "تحديد السعر",
+  "en": "Set price"
+ },
+ {
+  "key": "v36.stop",
+  "ar": "نقطة توقف",
+  "en": "Stop"
+ },
+ {
+  "key": "v36.tab_providers",
+  "ar": "مقدمو الخدمة",
+  "en": "Providers"
+ },
+ {
+  "key": "v36.tab_quotes",
+  "ar": "عروض الأسعار",
+  "en": "Quotes"
+ },
+ {
+  "key": "v36.tab_services",
+  "ar": "الخدمات",
+  "en": "Services"
+ },
+ {
+  "key": "v36.tap_to_pick",
+  "ar": "اضغط للاختيار من الخريطة",
+  "en": "Tap to pick on the map"
+ },
+ {
+  "key": "v36.valid_for",
+  "ar": "صالح لمدة",
+  "en": "Valid for"
+ },
+ {
+  "key": "v36.vehicle",
+  "ar": "نوع المركبة",
+  "en": "Vehicle type"
+ },
+ {
+  "key": "v36.f_receiver_name",
+  "ar": "اسم المستلم",
+  "en": "Receiver name"
+ },
+ {
+  "key": "v36.f_receiver_phone",
+  "ar": "رقم المستلم",
+  "en": "Receiver phone"
+ },
+ {
+  "key": "v36.f_cargo_description",
+  "ar": "وصف الحمولة",
+  "en": "Cargo description"
+ },
+ {
+  "key": "v36.f_items_count",
+  "ar": "عدد القطع",
+  "en": "Items count"
+ },
+ {
+  "key": "v36.f_cargo_weight_kg",
+  "ar": "الوزن (كغ)",
+  "en": "Weight (kg)"
+ },
+ {
+  "key": "v36.f_cargo_length_cm",
+  "ar": "الطول (سم)",
+  "en": "Length (cm)"
+ },
+ {
+  "key": "v36.f_cargo_width_cm",
+  "ar": "العرض (سم)",
+  "en": "Width (cm)"
+ },
+ {
+  "key": "v36.f_cargo_height_cm",
+  "ar": "الارتفاع (سم)",
+  "en": "Height (cm)"
+ },
+ {
+  "key": "v36.f_cargo_type",
+  "ar": "نوع الحمولة",
+  "en": "Cargo type"
+ },
+ {
+  "key": "v36.f_special_handling",
+  "ar": "تعامل خاص",
+  "en": "Special handling"
+ },
+ {
+  "key": "v36.f_permits_note",
+  "ar": "التصاريح",
+  "en": "Permits"
+ },
+ {
+  "key": "v36.f_vehicle_make_model",
+  "ar": "نوع المركبة وموديلها",
+  "en": "Vehicle make and model"
+ },
+ {
+  "key": "v36.f_vehicle_condition",
+  "ar": "حالة المركبة",
+  "en": "Vehicle condition"
+ },
+ {
+  "key": "v36.c_code",
+  "ar": "الرمز",
+  "en": "Code"
+ },
+ {
+  "key": "v36.c_name_ar",
+  "ar": "الاسم بالعربية",
+  "en": "Name (Arabic)"
+ },
+ {
+  "key": "v36.c_name_en",
+  "ar": "الاسم بالإنجليزية",
+  "en": "Name (English)"
+ },
+ {
+  "key": "v36.c_max_weight_kg",
+  "ar": "أقصى وزن (كغ)",
+  "en": "Max weight (kg)"
+ },
+ {
+  "key": "v36.c_max_length_cm",
+  "ar": "أقصى طول (سم)",
+  "en": "Max length (cm)"
+ },
+ {
+  "key": "v36.c_max_width_cm",
+  "ar": "أقصى عرض (سم)",
+  "en": "Max width (cm)"
+ },
+ {
+  "key": "v36.c_max_height_cm",
+  "ar": "أقصى ارتفاع (سم)",
+  "en": "Max height (cm)"
+ },
+ {
+  "key": "v36.c_price_multiplier",
+  "ar": "مضاعف السعر",
+  "en": "Price multiplier"
+ },
+ {
+  "key": "v36.c_equipment",
+  "ar": "المعدات (مفصولة بفاصلة)",
+  "en": "Equipment (comma separated)"
+ },
+ {
+  "key": "v36.p_base_fare",
+  "ar": "الأجرة الأساسية",
+  "en": "Base fare"
+ },
+ {
+  "key": "v36.p_per_km",
+  "ar": "لكل كم",
+  "en": "Per km"
+ },
+ {
+  "key": "v36.p_per_minute",
+  "ar": "لكل دقيقة",
+  "en": "Per minute"
+ },
+ {
+  "key": "v36.p_min_fare",
+  "ar": "أقل أجرة",
+  "en": "Minimum fare"
+ },
+ {
+  "key": "v36.p_loading_fee",
+  "ar": "رسوم التحميل",
+  "en": "Loading fee"
+ },
+ {
+  "key": "v36.p_unloading_fee",
+  "ar": "رسوم التنزيل",
+  "en": "Unloading fee"
+ },
+ {
+  "key": "v36.p_helper_fee",
+  "ar": "رسوم العامل",
+  "en": "Helper fee"
+ },
+ {
+  "key": "v36.p_per_extra_stop",
+  "ar": "لكل نقطة توقف إضافية",
+  "en": "Per extra stop"
+ },
+ {
+  "key": "v36.p_waiting_per_minute",
+  "ar": "الانتظار لكل دقيقة",
+  "en": "Waiting per minute"
+ },
+ {
+  "key": "v36.p_free_waiting_minutes",
+  "ar": "دقائق انتظار مجانية",
+  "en": "Free waiting minutes"
+ },
+ {
+  "key": "v36.p_emergency_fee",
+  "ar": "رسوم الطوارئ",
+  "en": "Emergency fee"
+ },
+ {
+  "key": "v36.p_demand_multiplier",
+  "ar": "مضاعف الطلب",
+  "en": "Demand multiplier"
+ },
+ {
+  "key": "v36.p_quote_over_weight_kg",
+  "ar": "عرض يدوي فوق وزن (كغ)",
+  "en": "Manual quote above weight (kg)"
+ },
+ {
+  "key": "v36.p_quote_over_km",
+  "ar": "عرض يدوي فوق مسافة (كم)",
+  "en": "Manual quote above distance (km)"
+ },
+ {
+  "key": "v36.ps_PENDING",
+  "ar": "قيد المراجعة",
+  "en": "Pending"
+ },
+ {
+  "key": "v36.ps_APPROVED",
+  "ar": "مقبول",
+  "en": "Approved"
+ },
+ {
+  "key": "v36.ps_REJECTED",
+  "ar": "مرفوض",
+  "en": "Rejected"
+ },
+ {
+  "key": "v36.eq_LIFT",
+  "ar": "رافعة هيدروليكية",
+  "en": "Lift gate"
+ },
+ {
+  "key": "v36.eq_CRANE",
+  "ar": "رافعة شوكية / ونش رافع",
+  "en": "Crane"
+ },
+ {
+  "key": "v36.eq_WINCH",
+  "ar": "ونش سحب",
+  "en": "Winch"
+ },
+ {
+  "key": "v36.eq_LOW_RAMP",
+  "ar": "منحدر منخفض",
+  "en": "Low ramp"
+ },
+ {
+  "key": "v36.b_DISTANCE_TIME",
+  "ar": "المسافة والوقت",
+  "en": "Distance and time"
+ },
+ {
+  "key": "v36.b_LOADING",
+  "ar": "التحميل",
+  "en": "Loading"
+ },
+ {
+  "key": "v36.b_UNLOADING",
+  "ar": "التنزيل",
+  "en": "Unloading"
+ },
+ {
+  "key": "v36.b_HELPERS",
+  "ar": "العمال",
+  "en": "Helpers"
+ },
+ {
+  "key": "v36.b_EXTRA_STOPS",
+  "ar": "نقاط التوقف الإضافية",
+  "en": "Extra stops"
+ },
+ {
+  "key": "v36.b_EMERGENCY",
+  "ar": "رسوم الطوارئ",
+  "en": "Emergency fee"
+ },
+ {
+  "key": "v36.b_MIN_FARE_ADJUSTMENT",
+  "ar": "تعديل الحد الأدنى للأجرة",
+  "en": "Minimum fare adjustment"
+ },
+ {
+  "key": "v36.b_DEMAND",
+  "ar": "مضاعف الطلب",
+  "en": "Demand"
+ },
+ {
+  "key": "v36.b_EQUIPMENT_LIFT",
+  "ar": "رافعة هيدروليكية",
+  "en": "Lift gate"
+ },
+ {
+  "key": "v36.b_EQUIPMENT_CRANE",
+  "ar": "رافعة شوكية / ونش رافع",
+  "en": "Crane"
+ },
+ {
+  "key": "v36.b_EQUIPMENT_WINCH",
+  "ar": "ونش سحب",
+  "en": "Winch"
+ },
+ {
+  "key": "v36.b_EQUIPMENT_LOW_RAMP",
+  "ar": "منحدر منخفض",
+  "en": "Low ramp"
+ },
+ {
+  "key": "v36.q_QUOTED",
+  "ar": "جاهز",
+  "en": "Quoted"
+ },
+ {
+  "key": "v36.q_MANUAL_PENDING",
+  "ar": "بانتظار تسعير الإدارة",
+  "en": "Awaiting manual price"
+ },
+ {
+  "key": "v36.q_ACCEPTED",
+  "ar": "مقبول",
+  "en": "Accepted"
+ },
+ {
+  "key": "v36.q_DECLINED",
+  "ar": "مرفوض",
+  "en": "Declined"
+ },
+ {
+  "key": "v36.q_EXPIRED",
+  "ar": "منتهي",
+  "en": "Expired"
+ },
+ {
+  "key": "v36.ps_PENDING_APPROVAL",
+  "ar": "قيد المراجعة",
+  "en": "Pending"
  }
 ]
