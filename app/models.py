@@ -1149,6 +1149,24 @@ class CorporateMember(Base):
     created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
 
 
+class MerchantLead(Base):
+    """Merchant sign-up request from the public landing page."""
+    __tablename__ = "merchant_leads"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(String(100))
+    business: Mapped[str] = mapped_column(String(150))
+    phone: Mapped[str] = mapped_column(String(30))
+    phone_norm: Mapped[str] = mapped_column(String(30), index=True)
+    area: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    message: Mapped[str | None] = mapped_column(Text, nullable=True)
+    status: Mapped[str] = mapped_column(String(12), default="NEW", index=True)  # NEW | CONTACTED | CONVERTED | REJECTED
+    note: Mapped[str | None] = mapped_column(Text, nullable=True)
+    ip: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    user_agent: Mapped[str | None] = mapped_column(String(300), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow, index=True)
+    updated_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
+
+
 class OpsFinding(Base):
     """What the AI operations manager noticed. It only suggests: nothing here changes money, bans or orders by itself."""
     __tablename__ = "ops_findings"

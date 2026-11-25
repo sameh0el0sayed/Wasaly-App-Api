@@ -12358,5 +12358,70 @@
   "key": "landing.footer.contact",
   "ar": "تواصل معنا",
   "en": "Contact"
+ },
+ {
+  "key": "v53.leads.title",
+  "en": "Merchant leads",
+  "ar": "طلبات انضمام التجار"
+ },
+ {
+  "key": "v53.leads.empty",
+  "en": "No merchant requests yet",
+  "ar": "لا توجد طلبات انضمام بعد"
+ },
+ {
+  "key": "v53.leads.business",
+  "en": "Business",
+  "ar": "النشاط"
+ },
+ {
+  "key": "v53.leads.area",
+  "en": "Area",
+  "ar": "المنطقة"
+ },
+ {
+  "key": "v53.leads.message",
+  "en": "Details",
+  "ar": "التفاصيل"
+ },
+ {
+  "key": "v53.leads.note",
+  "en": "Internal note",
+  "ar": "ملاحظة داخلية"
+ },
+ {
+  "key": "v53.leads.status.NEW",
+  "en": "New",
+  "ar": "جديد"
+ },
+ {
+  "key": "v53.leads.status.CONTACTED",
+  "en": "Contacted",
+  "ar": "تم التواصل"
+ },
+ {
+  "key": "v53.leads.status.CONVERTED",
+  "en": "Converted",
+  "ar": "تم التحويل"
+ },
+ {
+  "key": "v53.leads.status.REJECTED",
+  "en": "Rejected",
+  "ar": "مرفوض"
+ },
+ {
+  "key": "v53.leads.call",
+  "en": "Call",
+  "ar": "اتصال"
+ },
+ {
+  "key": "v53.leads.whatsapp",
+  "en": "WhatsApp",
+  "ar": "واتساب"
+ },
+ {
+  "key": "err.LEAD_RATE_LIMITED",
+  "en": "Too many requests. Please try again later.",
+  "ar": "طلبات كثيرة. حاول مرة أخرى لاحقاً."
  }
 ]
