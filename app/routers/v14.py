@@ -47,7 +47,7 @@ async def seed_translations() -> None:
 
 
 @router.get("/app/translations")
-async def get_translations(request: Request, response: Response, lang: str = "ar", db: AsyncSession = Depends(get_db)):
+async def get_translations(request: Request, response: Response, lang: str = "en", db: AsyncSession = Depends(get_db)):
     lang = "en" if lang == "en" else "ar"
     version = int((await settings_service.get_all(db))["i18n_version"] or 0)
     etag = f'"{version}-{lang}"'

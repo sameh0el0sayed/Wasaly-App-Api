@@ -11618,5 +11618,745 @@
   "key": "COMPANY_NOT_VERIFIED",
   "ar": "لم يتم توثيق الشركة في هوية فينيكس بعد",
   "en": "The company is not verified in Phoenix ID yet"
+ },
+ {
+  "key": "v50.company.new_order",
+  "ar": "طلب جديد",
+  "en": "New order"
+ },
+ {
+  "key": "v38.f_name_ar",
+  "ar": "اسم الشركة بالعربية",
+  "en": "Company name (Arabic)"
+ },
+ {
+  "key": "landing.meta.title",
+  "ar": "وصلي | توصيل ومشاوير للأعمال في البحرين",
+  "en": "Wasaly | Delivery and rides for businesses in Bahrain"
+ },
+ {
+  "key": "landing.meta.description",
+  "ar": "سائقون عند الطلب للمطاعم والمتاجر، تتبع مباشر، طلبات جماعية، واجهة برمجية للتجار، وحسابات للشركات بحد شهري. مشاوير وطعام وطرود ومستندات وشحن في كل البحرين.",
+  "en": "On-demand drivers for restaurants and shops, live tracking, bulk orders, merchant API and company accounts with monthly limits. Rides, food, parcels, documents and cargo across Bahrain."
+ },
+ {
+  "key": "landing.nav.services",
+  "ar": "الخدمات",
+  "en": "Services"
+ },
+ {
+  "key": "landing.nav.merchants",
+  "ar": "المطاعم والمتاجر",
+  "en": "Restaurants & shops"
+ },
+ {
+  "key": "landing.nav.business",
+  "ar": "الشركات",
+  "en": "Business"
+ },
+ {
+  "key": "landing.nav.drivers",
+  "ar": "السائقون",
+  "en": "Drivers"
+ },
+ {
+  "key": "landing.nav.faq",
+  "ar": "الأسئلة الشائعة",
+  "en": "FAQ"
+ },
+ {
+  "key": "landing.nav.cta",
+  "ar": "سجّل نشاطك",
+  "en": "Register your business"
+ },
+ {
+  "key": "landing.nav.lang",
+  "ar": "English",
+  "en": "العربية"
+ },
+ {
+  "key": "landing.hero.badge",
+  "ar": "صُنع في البحرين · من فينيكس سوفتوير",
+  "en": "Made in Bahrain · by Phoenix Software"
+ },
+ {
+  "key": "landing.hero.title1",
+  "ar": "كل ما يتحرك،",
+  "en": "Everything that moves,"
+ },
+ {
+  "key": "landing.hero.title2",
+  "ar": "على بُعد تطبيق.",
+  "en": "one app away."
+ },
+ {
+  "key": "landing.hero.lead",
+  "ar": "مشاوير، توصيل طعام وطرود، مستندات، تسوق وشحن — تحجزها في ثوانٍ، وتتابعها مباشرة على الخريطة وعلى شاشة القفل، بأسعار واضحة والضريبة مبيّنة منفصلة.",
+  "en": "Rides, food and parcel delivery, documents, shopping and cargo — booked in seconds, tracked live on the map and on the lock screen, and settled with clear prices and VAT shown separately."
+ },
+ {
+  "key": "landing.hero.primary",
+  "ar": "سجّل مطعمك أو متجرك",
+  "en": "Register your restaurant or shop"
+ },
+ {
+  "key": "landing.hero.secondary",
+  "ar": "افتح تطبيق الويب",
+  "en": "Open the web app"
+ },
+ {
+  "key": "landing.hero.stores",
+  "ar": "App Store و Google Play — قريباً",
+  "en": "App Store and Google Play — coming soon"
+ },
+ {
+  "key": "landing.hero.mockRoute",
+  "ar": "المنامة ← المحرق",
+  "en": "Manama → Muharraq"
+ },
+ {
+  "key": "landing.hero.mockEta",
+  "ar": "8 د",
+  "en": "8 min"
+ },
+ {
+  "key": "landing.hero.mockDriver",
+  "ar": "السائق في الطريق",
+  "en": "Driver on the way"
+ },
+ {
+  "key": "landing.hero.chips.0",
+  "ar": "تتبع مباشر",
+  "en": "Live tracking"
+ },
+ {
+  "key": "landing.hero.chips.1",
+  "ar": "سائقون موثقون",
+  "en": "Verified drivers"
+ },
+ {
+  "key": "landing.hero.chips.2",
+  "ar": "حسابات شركات",
+  "en": "Business accounts"
+ },
+ {
+  "key": "landing.hero.chips.3",
+  "ar": "English و العربية",
+  "en": "English & العربية"
+ },
+ {
+  "key": "landing.services.eyebrow",
+  "ar": "الخدمات",
+  "en": "Services"
+ },
+ {
+  "key": "landing.services.title",
+  "ar": "منصة واحدة لكل أنواع المشاوير",
+  "en": "One platform, every kind of trip"
+ },
+ {
+  "key": "landing.services.lead",
+  "ar": "اختر الخدمة وفئة المركبة، ويجد وصلي أقرب سائق مناسب ويبقيك على اطلاع حتى انتهاء المهمة.",
+  "en": "Pick the service and the vehicle class. Wasaly finds the nearest suitable driver and keeps you updated until the job is done."
+ },
+ {
+  "key": "landing.services.items.0.key",
+  "ar": "rides",
+  "en": "rides"
+ },
+ {
+  "key": "landing.services.items.0.title",
+  "ar": "مشاوير",
+  "en": "Rides"
+ },
+ {
+  "key": "landing.services.items.0.text",
+  "ar": "مشاوير مريحة في كل البحرين مع فئات المركبات وتفضيلات السائق وتقدير السعر قبل التأكيد.",
+  "en": "Comfortable rides around Bahrain with vehicle classes, driver preferences and fare estimates before you confirm."
+ },
+ {
+  "key": "landing.services.items.1.key",
+  "ar": "delivery",
+  "en": "delivery"
+ },
+ {
+  "key": "landing.services.items.1.title",
+  "ar": "توصيل الطعام والطلبات",
+  "en": "Food & order delivery"
+ },
+ {
+  "key": "landing.services.items.1.text",
+  "ar": "المطاعم والمتاجر تسلّم الطلبات لأقرب سائق وتتابع كل توصيلة مباشرة حتى تصل للعميل.",
+  "en": "Restaurants and shops hand orders to nearby drivers and follow every delivery live until it reaches the customer."
+ },
+ {
+  "key": "landing.services.items.2.key",
+  "ar": "parcels",
+  "en": "parcels"
+ },
+ {
+  "key": "landing.services.items.2.title",
+  "ar": "طرود",
+  "en": "Parcels"
+ },
+ {
+  "key": "landing.services.items.2.text",
+  "ar": "أرسل طرودك في نفس اليوم، ويتابع المرسل والمستلم الرحلة معاً.",
+  "en": "Send packages across the island the same day, with the sender and receiver both able to follow the trip."
+ },
+ {
+  "key": "landing.services.items.3.key",
+  "ar": "docs",
+  "en": "docs"
+ },
+ {
+  "key": "landing.services.items.3.title",
+  "ar": "مستندات",
+  "en": "Documents"
+ },
+ {
+  "key": "landing.services.items.3.text",
+  "ar": "الأوراق العاجلة والعقود والمعاملات الحكومية تُسلّم باليد مع إثبات التسليم.",
+  "en": "Urgent papers, contracts and government documents delivered by hand, with proof of delivery."
+ },
+ {
+  "key": "landing.services.items.4.key",
+  "ar": "shopping",
+  "en": "shopping"
+ },
+ {
+  "key": "landing.services.items.4.title",
+  "ar": "تسوق",
+  "en": "Shopping"
+ },
+ {
+  "key": "landing.services.items.4.text",
+  "ar": "يشتري السائق ما تحتاجه ويوصله إلى بابك.",
+  "en": "A driver buys what you need and brings it to your door."
+ },
+ {
+  "key": "landing.services.items.5.key",
+  "ar": "cargo",
+  "en": "cargo"
+ },
+ {
+  "key": "landing.services.items.5.title",
+  "ar": "شحن وشاحنات",
+  "en": "Cargo & trucks"
+ },
+ {
+  "key": "landing.services.items.5.text",
+  "ar": "مركبات أكبر للأثاث والمعدات والبضائع، بسعر معروف قبل الحجز.",
+  "en": "Larger vehicles for furniture, equipment and stock, priced before you book."
+ },
+ {
+  "key": "landing.merchants.eyebrow",
+  "ar": "للمطاعم والمتاجر",
+  "en": "For restaurants & shops"
+ },
+ {
+  "key": "landing.merchants.title",
+  "ar": "أسطول توصيل خاص بك — دون أن توظّف أحداً",
+  "en": "Your own delivery fleet — without hiring one"
+ },
+ {
+  "key": "landing.merchants.lead",
+  "ar": "يمنح وصلي المطاعم والمقاهي والصيدليات والمتاجر سائقين عند الطلب، وتتبعاً مباشراً لعملائك، وكشوفاً شهرية واضحة. لا أسطول، لا رواتب ثابتة، ولا مركبات تحتاج صيانة.",
+  "en": "Wasaly gives restaurants, cafés, pharmacies and shops on-demand drivers, live tracking for your customers and clear monthly statements. No fleet, no fixed salaries, no vehicles to maintain."
+ },
+ {
+  "key": "landing.merchants.points.0.title",
+  "ar": "سائقون عند الطلب",
+  "en": "Drivers on demand"
+ },
+ {
+  "key": "landing.merchants.points.0.text",
+  "ar": "اطلب سائقاً لكل طلب، فيقبله أقرب سائق متاح ويتجه إلى نقطة الاستلام.",
+  "en": "Request a driver for each order; the nearest available driver accepts it and heads to your pickup point."
+ },
+ {
+  "key": "landing.merchants.points.1.title",
+  "ar": "تتبع مباشر لك ولعميلك",
+  "en": "Live tracking for you and your customer"
+ },
+ {
+  "key": "landing.merchants.points.1.text",
+  "ar": "تابع كل طلب على الخريطة مع وقت وصول يراعي الزحام، وشارك الرحلة مع العميل.",
+  "en": "Follow every order on the map with a traffic-aware arrival time, and share the trip with the customer."
+ },
+ {
+  "key": "landing.merchants.points.2.title",
+  "ar": "طلبات جماعية ومجدولة",
+  "en": "Bulk and scheduled orders"
+ },
+ {
+  "key": "landing.merchants.points.2.text",
+  "ar": "أرسل حتى 20 طلباً دفعة واحدة لساعات الذروة أو الولائم أو المسارات اليومية.",
+  "en": "Send up to 20 orders in one go for busy hours, catering or daily routes."
+ },
+ {
+  "key": "landing.merchants.points.3.title",
+  "ar": "اربط نظامك",
+  "en": "Connect your system"
+ },
+ {
+  "key": "landing.merchants.points.3.text",
+  "ar": "واجهة برمجية للتجار تتيح لنقطة البيع أو موقعك أو متجرك الإلكتروني إنشاء التوصيلات وتتبعها تلقائياً.",
+  "en": "A merchant API lets your POS, website or online store create and track deliveries automatically."
+ },
+ {
+  "key": "landing.merchants.points.4.title",
+  "ar": "أسعار واضحة",
+  "en": "Clear pricing"
+ },
+ {
+  "key": "landing.merchants.points.4.text",
+  "ar": "يظهر السعر قبل التأكيد، وضريبة القيمة المضافة (10%) مبيّنة منفصلة في كل فاتورة.",
+  "en": "Prices are shown before you confirm; VAT (10%) is always shown separately on every invoice."
+ },
+ {
+  "key": "landing.merchants.points.5.title",
+  "ar": "كشوف شهرية",
+  "en": "Monthly statements"
+ },
+ {
+  "key": "landing.merchants.points.5.text",
+  "ar": "كل توصيلة مسجلة بمبلغها وحالتها، جاهزة لمحاسبك.",
+  "en": "Every delivery is recorded with its amount and status, ready for your accountant."
+ },
+ {
+  "key": "landing.merchants.steps.title",
+  "ar": "ابدأ في ثلاث خطوات",
+  "en": "Start in three steps"
+ },
+ {
+  "key": "landing.merchants.steps.items.0.title",
+  "ar": "سجّل",
+  "en": "Register"
+ },
+ {
+  "key": "landing.merchants.steps.items.0.text",
+  "ar": "املأ النموذج القصير أدناه ببيانات نشاطك.",
+  "en": "Fill in the short form below with your business details."
+ },
+ {
+  "key": "landing.merchants.steps.items.1.title",
+  "ar": "التوثيق",
+  "en": "Get verified"
+ },
+ {
+  "key": "landing.merchants.steps.items.1.text",
+  "ar": "يتواصل معك فريقنا ويوثّق النشاط ويجهّز حسابك.",
+  "en": "Our team contacts you, verifies the business and sets up your account."
+ },
+ {
+  "key": "landing.merchants.steps.items.2.title",
+  "ar": "أرسل أول طلب",
+  "en": "Send your first order"
+ },
+ {
+  "key": "landing.merchants.steps.items.2.text",
+  "ar": "أنشئ الطلبات من التطبيق أو الويب أو من نظامك عبر الواجهة البرمجية.",
+  "en": "Create orders from the app, the web or your own system through the API."
+ },
+ {
+  "key": "landing.business.eyebrow",
+  "ar": "حسابات الشركات",
+  "en": "Business accounts"
+ },
+ {
+  "key": "landing.business.title",
+  "ar": "حسابات للشركات بتحكم كامل",
+  "en": "Company accounts with full control"
+ },
+ {
+  "key": "landing.business.lead",
+  "ar": "تدخل الشركات عبر Phoenix ID وتحصل على لوحة خاصة لمشاوير وتوصيلات فريقها.",
+  "en": "Companies sign in with Phoenix ID and get a dedicated dashboard for their team’s trips and deliveries."
+ },
+ {
+  "key": "landing.business.points.0.title",
+  "ar": "حد شهري",
+  "en": "Monthly limit"
+ },
+ {
+  "key": "landing.business.points.0.text",
+  "ar": "حدّد سقفاً شهرياً للإنفاق وتابع الاستهلاك مقابله لحظة بلحظة.",
+  "en": "Set a monthly spending limit and watch usage against it in real time."
+ },
+ {
+  "key": "landing.business.points.1.title",
+  "ar": "الموظفون",
+  "en": "Employees"
+ },
+ {
+  "key": "landing.business.points.1.text",
+  "ar": "أضف موظفين يحجزون على حساب الشركة، ومدراء يرون كل شيء.",
+  "en": "Add employees who book on the company account, with managers who see everything."
+ },
+ {
+  "key": "landing.business.points.2.title",
+  "ar": "فاتورة واحدة",
+  "en": "One invoice"
+ },
+ {
+  "key": "landing.business.points.2.text",
+  "ar": "كل المشاوير تُحسب على الشركة مع كشف شهري بدل الإيصالات المتفرقة.",
+  "en": "All trips billed to the company, with a monthly statement instead of scattered receipts."
+ },
+ {
+  "key": "landing.business.points.3.title",
+  "ar": "ملف موثّق",
+  "en": "Verified profile"
+ },
+ {
+  "key": "landing.business.points.3.text",
+  "ar": "اسم الشركة والسجل التجاري موثقان ومقفلان للأمان.",
+  "en": "Company name and commercial registration are verified and locked for security."
+ },
+ {
+  "key": "landing.experience.eyebrow",
+  "ar": "التجربة",
+  "en": "The experience"
+ },
+ {
+  "key": "landing.experience.title",
+  "ar": "مصمم ليكون سهلاً بلا جهد",
+  "en": "Built to feel effortless"
+ },
+ {
+  "key": "landing.experience.items.0.title",
+  "ar": "مباشرة على شاشة القفل",
+  "en": "Live on the lock screen"
+ },
+ {
+  "key": "landing.experience.items.0.text",
+  "ar": "حالة الرحلة ووقت الوصول تبقى على شاشة القفل والإشعارات من الاستلام حتى التسليم.",
+  "en": "The trip status and arrival time stay on the lock screen and notifications from pickup to delivery."
+ },
+ {
+  "key": "landing.experience.items.1.title",
+  "ar": "وقت وصول يراعي الزحام",
+  "en": "Traffic-aware arrival times"
+ },
+ {
+  "key": "landing.experience.items.1.text",
+  "ar": "تقديرات الوصول تتبع حركة المرور الحية، فيعرف الجميع متى يصل السائق فعلاً.",
+  "en": "Arrival estimates follow live traffic, so everyone knows when the driver will really arrive."
+ },
+ {
+  "key": "landing.experience.items.2.title",
+  "ar": "دردشة واتصال",
+  "en": "Chat and call"
+ },
+ {
+  "key": "landing.experience.items.2.text",
+  "ar": "تحدث مع السائق داخل التطبيق أو اتصل أو راسله على واتساب.",
+  "en": "Talk to the driver in the app, call or message on WhatsApp without sharing personal numbers."
+ },
+ {
+  "key": "landing.experience.items.3.title",
+  "ar": "التقييم والسائقون المفضلون",
+  "en": "Ratings and favourite drivers"
+ },
+ {
+  "key": "landing.experience.items.3.text",
+  "ar": "قيّم كل رحلة واحتفظ بالسائقين الذين تثق بهم في المفضلة.",
+  "en": "Rate every trip and keep the drivers you trust as favourites."
+ },
+ {
+  "key": "landing.experience.items.4.title",
+  "ar": "دفع مرن",
+  "en": "Flexible payment"
+ },
+ {
+  "key": "landing.experience.items.4.text",
+  "ar": "ادفع بالبطاقة أو المحفظة أو نقداً، مع أكواد الخصم وإيصال لكل رحلة.",
+  "en": "Pay by card, wallet or cash, with promo codes and receipts for every trip."
+ },
+ {
+  "key": "landing.experience.items.5.title",
+  "ar": "Phoenix ID واحد",
+  "en": "One Phoenix ID"
+ },
+ {
+  "key": "landing.experience.items.5.text",
+  "ar": "دخول آمن واحد لوصلي ولكل أنظمة فينيكس.",
+  "en": "One secure sign-in for Wasaly and every Phoenix system."
+ },
+ {
+  "key": "landing.drivers.eyebrow",
+  "ar": "للسائقين",
+  "en": "For drivers"
+ },
+ {
+  "key": "landing.drivers.title",
+  "ar": "اعمل مع وصلي",
+  "en": "Drive with Wasaly"
+ },
+ {
+  "key": "landing.drivers.lead",
+  "ar": "اختر ساعاتك، واستقبل الطلبات القريبة مع المسار والسعر قبل القبول، وتابع أرباحك في التطبيق.",
+  "en": "Choose your hours, receive nearby orders with the route and price shown before you accept, and follow your earnings in the app."
+ },
+ {
+  "key": "landing.drivers.points.0",
+  "ar": "طلبات قريبة منك مع ظهور الأجرة أولاً",
+  "en": "Orders near you, with the fare shown first"
+ },
+ {
+  "key": "landing.drivers.points.1",
+  "ar": "ملاحة وتنبيهات زحام في كل رحلة",
+  "en": "Navigation and traffic alerts on every trip"
+ },
+ {
+  "key": "landing.drivers.points.2",
+  "ar": "الأرباح والتحويلات في التطبيق",
+  "en": "Earnings and payouts tracked in the app"
+ },
+ {
+  "key": "landing.drivers.points.3",
+  "ar": "عملاء موثقون ودعم داخل التطبيق",
+  "en": "Verified customers and in-app support"
+ },
+ {
+  "key": "landing.drivers.cta",
+  "ar": "انضم كسائق",
+  "en": "Join as a driver"
+ },
+ {
+  "key": "landing.safety.eyebrow",
+  "ar": "الثقة والأمان",
+  "en": "Trust & safety"
+ },
+ {
+  "key": "landing.safety.title",
+  "ar": "الأمان في كل رحلة",
+  "en": "Safety in every trip"
+ },
+ {
+  "key": "landing.safety.items.0.title",
+  "ar": "سائقون موثقون",
+  "en": "Verified drivers"
+ },
+ {
+  "key": "landing.safety.items.0.text",
+  "ar": "كل سائق تتم مراجعته واعتماده قبل استقبال الطلبات.",
+  "en": "Every driver is reviewed and approved before taking orders."
+ },
+ {
+  "key": "landing.safety.items.1.title",
+  "ar": "رحلة مشتركة",
+  "en": "Shared trip"
+ },
+ {
+  "key": "landing.safety.items.1.text",
+  "ar": "كل رحلة تُتتبع مباشرة ويمكن مشاركتها.",
+  "en": "Every trip is tracked live, and the trip can be shared."
+ },
+ {
+  "key": "landing.safety.items.2.title",
+  "ar": "الدعم",
+  "en": "Support"
+ },
+ {
+  "key": "landing.safety.items.2.text",
+  "ar": "فريقنا يتابع الرحلات المفتوحة ويرد على طلبات الدعم.",
+  "en": "Our team follows open trips and answers support requests."
+ },
+ {
+  "key": "landing.faq.title",
+  "ar": "الأسئلة الشائعة",
+  "en": "Frequently asked questions"
+ },
+ {
+  "key": "landing.faq.items.0.q",
+  "ar": "ما المناطق التي يغطيها وصلي؟",
+  "en": "Which areas does Wasaly cover?"
+ },
+ {
+  "key": "landing.faq.items.0.a",
+  "ar": "يعمل وصلي في كل أنحاء مملكة البحرين.",
+  "en": "Wasaly operates across the Kingdom of Bahrain."
+ },
+ {
+  "key": "landing.faq.items.1.q",
+  "ar": "كم تكلفة التوصيل؟",
+  "en": "How much does a delivery cost?"
+ },
+ {
+  "key": "landing.faq.items.1.a",
+  "ar": "يعتمد السعر على المسافة والخدمة وفئة المركبة. ترى السعر دائماً قبل التأكيد، وتظهر ضريبة القيمة المضافة (10%) منفصلة.",
+  "en": "The price depends on the distance, the service and the vehicle class. You always see the price before confirming, and VAT (10%) is shown separately."
+ },
+ {
+  "key": "landing.faq.items.2.q",
+  "ar": "هل أحتاج سائقين خاصين بي؟",
+  "en": "Do I need my own drivers?"
+ },
+ {
+  "key": "landing.faq.items.2.a",
+  "ar": "لا. سائقو وصلي يستلمون طلباتك عند الحاجة، وتدفع فقط مقابل التوصيلات التي ترسلها.",
+  "en": "No. Wasaly drivers take your orders on demand; you only pay for the deliveries you send."
+ },
+ {
+  "key": "landing.faq.items.3.q",
+  "ar": "هل يمكن ربط نقطة البيع أو المتجر الإلكتروني؟",
+  "en": "Can I connect my POS or online store?"
+ },
+ {
+  "key": "landing.faq.items.3.a",
+  "ar": "نعم. الواجهة البرمجية للتجار تتيح لنظامك إنشاء الطلبات ومتابعة حالتها تلقائياً.",
+  "en": "Yes. The merchant API lets your system create orders and follow their status automatically."
+ },
+ {
+  "key": "landing.faq.items.4.q",
+  "ar": "كيف تعمل حسابات الشركات؟",
+  "en": "How do company accounts work?"
+ },
+ {
+  "key": "landing.faq.items.4.a",
+  "ar": "تدخل الشركة عبر Phoenix ID، وتحدد حداً شهرياً، وتضيف موظفيها، وتستلم كشفاً شهرياً واحداً.",
+  "en": "The company signs in with Phoenix ID, sets a monthly limit, adds employees and receives one monthly statement."
+ },
+ {
+  "key": "landing.faq.items.5.q",
+  "ar": "متى يتوفر التطبيق في المتاجر؟",
+  "en": "When is the app available on the stores?"
+ },
+ {
+  "key": "landing.faq.items.5.a",
+  "ar": "إصدارا App Store و Google Play قريباً، وحتى ذلك الحين يمكنك استخدام تطبيق الويب من أي متصفح.",
+  "en": "The App Store and Google Play releases are coming soon. Meanwhile you can use the web app from any browser."
+ },
+ {
+  "key": "landing.form.eyebrow",
+  "ar": "سجّل نشاطك",
+  "en": "Register your business"
+ },
+ {
+  "key": "landing.form.title",
+  "ar": "أضف وصلي إلى مطعمك أو متجرك",
+  "en": "Bring Wasaly to your restaurant or shop"
+ },
+ {
+  "key": "landing.form.lead",
+  "ar": "اترك بياناتك وسيتواصل معك فريقنا لتجهيز حسابك.",
+  "en": "Leave your details and our team will contact you to set up your account."
+ },
+ {
+  "key": "landing.form.name",
+  "ar": "اسمك",
+  "en": "Your name"
+ },
+ {
+  "key": "landing.form.business",
+  "ar": "اسم النشاط",
+  "en": "Business name"
+ },
+ {
+  "key": "landing.form.type",
+  "ar": "نوع النشاط",
+  "en": "Business type"
+ },
+ {
+  "key": "landing.form.types.0",
+  "ar": "مطعم / مقهى",
+  "en": "Restaurant / café"
+ },
+ {
+  "key": "landing.form.types.1",
+  "ar": "متجر / تجزئة",
+  "en": "Shop / retail"
+ },
+ {
+  "key": "landing.form.types.2",
+  "ar": "صيدلية",
+  "en": "Pharmacy"
+ },
+ {
+  "key": "landing.form.types.3",
+  "ar": "متجر إلكتروني",
+  "en": "Online store"
+ },
+ {
+  "key": "landing.form.types.4",
+  "ar": "شركة (مشاوير الموظفين)",
+  "en": "Company (staff trips)"
+ },
+ {
+  "key": "landing.form.types.5",
+  "ar": "أخرى",
+  "en": "Other"
+ },
+ {
+  "key": "landing.form.phone",
+  "ar": "الهاتف / واتساب",
+  "en": "Phone / WhatsApp"
+ },
+ {
+  "key": "landing.form.email",
+  "ar": "البريد الإلكتروني",
+  "en": "E-mail"
+ },
+ {
+  "key": "landing.form.area",
+  "ar": "المنطقة",
+  "en": "Area"
+ },
+ {
+  "key": "landing.form.orders",
+  "ar": "عدد الطلبات المتوقع يومياً",
+  "en": "Expected orders per day"
+ },
+ {
+  "key": "landing.form.notes",
+  "ar": "ملاحظات أخرى؟ (اختياري)",
+  "en": "Anything else? (optional)"
+ },
+ {
+  "key": "landing.form.submit",
+  "ar": "أرسل الطلب",
+  "en": "Send request"
+ },
+ {
+  "key": "landing.form.sending",
+  "ar": "جارٍ الإرسال…",
+  "en": "Sending…"
+ },
+ {
+  "key": "landing.form.ok",
+  "ar": "شكراً لك! سيتواصل معك فريقنا قريباً.",
+  "en": "Thank you! Our team will contact you shortly."
+ },
+ {
+  "key": "landing.form.error",
+  "ar": "تعذّر إرسال الطلب. حاول مرة أخرى أو راسلنا على واتساب.",
+  "en": "The request could not be sent. Please try again or message us on WhatsApp."
+ },
+ {
+  "key": "landing.form.required",
+  "ar": "يرجى تعبئة الحقول المطلوبة.",
+  "en": "Please fill in the required fields."
+ },
+ {
+  "key": "landing.form.whatsapp",
+  "ar": "تفضّل واتساب؟ راسلنا",
+  "en": "Prefer WhatsApp? Message us"
+ },
+ {
+  "key": "landing.footer.by",
+  "ar": "وصلي منتج من فينيكس لحلول البرمجيات، مملكة البحرين.",
+  "en": "Wasaly is a product of Phoenix Software Solutions, Kingdom of Bahrain."
+ },
+ {
+  "key": "landing.footer.home",
+  "ar": "فينيكس سوفتوير",
+  "en": "Phoenix Software"
+ },
+ {
+  "key": "landing.footer.contact",
+  "ar": "تواصل معنا",
+  "en": "Contact"
  }
 ]
